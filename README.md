@@ -117,13 +117,22 @@ Embedding vectors are cached in IndexedDB (keyed by model + text, deterministic)
 
 ## Theoretical Context
 
-Manifold Atlas is a research instrument for the [vector theory](https://stunlaw.blogspot.com/) programme. Key concepts it operationalises:
+Manifold Atlas is a research instrument for the [vector theory](https://stunlaw.blogspot.com/2026/02/vector-theory.html) programme developed by David M. Berry. Vector theory argues that the vectorial turn introduces a new computational regime in which definition is replaced by position, truth by orientation, argument by interpolation, and contradiction by cosine proximity. The embedding layer performs a real abstraction at the level of meaning itself: heterogeneous language is converted into homogeneous geometric coordinates within a proprietary manifold.
 
-- **The embedding API as telescope** -- the one point where the medium exposes its internal vectors to the outside. The telescope sees the stars but does not visit them.
-- **The negation deficit** -- the manifold structurally lacks negation in both mathematical and logical-dialectical senses. The Negation Gauge and Battery produce empirical evidence for this.
-- **Geometric ideology** -- hegemony that operates through topology rather than discourse. The Neighbourhood Map's cluster analysis and density mapping test this.
-- **Manifold sectioning** -- cutting the geometry along critically chosen planes. Semantic Sectioning operationalises this.
-- **The proprietary medium** -- every vector observed through the telescope was computed by a corporation that controls the geometry. The political economy of the method is built into its conditions of possibility.
+The tool operationalises this framework empirically. Key concepts and the features that test them:
+
+- **The embedding API as telescope** -- the one point where the medium exposes its internal vectors to the outside. The telescope sees the stars but does not visit them. All six operations use this as their basic research instrument.
+- **The negation deficit** -- the manifold structurally lacks negation in both mathematical and logical-dialectical senses. The Negation Gauge and Negation Battery produce empirical evidence for this, measuring the cosine similarity between claims and their negations across models.
+- **Geometric ideology** -- hegemony that operates through topology (density, sparsity, trajectory) rather than discourse (propositions, narratives, interpellation). The Neighbourhood Map's cluster analysis, connection mesh, and density mapping test this.
+- **Manifold sectioning** -- cutting the geometry along critically chosen planes to reveal where one domain shades into another. Semantic Sectioning operationalises this directly.
+- **Geometric stress testing** -- embedding the same concept in different contexts to measure how the manifold warps under contextual pressure. Concept Drift operationalises this.
+- **The proprietary medium** -- every vector observed through the telescope was computed by a corporation that controls the geometry. The political economy of the method is built into its conditions of possibility. Multi-model comparison reveals whether geometric politics are structural to the medium or contingent on training decisions.
+
+For the full theoretical framework, see:
+
+- Berry, D.M. (2026) [Vector Theory](https://stunlaw.blogspot.com/2026/02/vector-theory.html). *Stunlaw*.
+- Berry, D.M. (2026) [What is Vector Space?](https://stunlaw.blogspot.com/2026/03/what-is-vector-space.html). *Stunlaw*.
+- Berry, D.M. (2026) [The Vector Medium](https://stunlaw.blogspot.com/). *Stunlaw*.
 
 ## Easter Eggs
 
