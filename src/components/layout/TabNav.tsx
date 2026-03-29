@@ -1,9 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Ruler, Map, Gauge, Crosshair, GitBranch, Waypoints } from "lucide-react";
+import { Ruler, Map, Gauge, Crosshair, GitBranch, Waypoints, Compass, Scale, Volume2 } from "lucide-react";
 
-export type TabId = "distance" | "neighbourhood" | "negation" | "battery" | "sectioning" | "drift";
+export type TabId = "distance" | "neighbourhood" | "negation" | "battery" | "sectioning" | "drift" | "compass" | "sohnrethel" | "silence";
 
 interface TabNavProps {
   activeTab: TabId;
@@ -17,6 +17,9 @@ const TABS: Array<{ id: TabId; label: string; icon: typeof Ruler }> = [
   { id: "battery", label: "Negation Battery", icon: Crosshair },
   { id: "sectioning", label: "Semantic Sectioning", icon: GitBranch },
   { id: "drift", label: "Concept Drift", icon: Waypoints },
+  { id: "compass", label: "Hegemony Compass", icon: Compass },
+  { id: "sohnrethel", label: "Sohn-Rethel Test", icon: Scale },
+  { id: "silence", label: "Silence Detector", icon: Volume2 },
 ];
 
 export function TabNav({ activeTab, onTabChange }: TabNavProps) {
@@ -31,17 +34,17 @@ export function TabNav({ activeTab, onTabChange }: TabNavProps) {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-3 font-sans text-body-sm font-medium whitespace-nowrap",
+                "flex items-center gap-1.5 px-3 py-3 font-sans text-caption font-medium whitespace-nowrap",
                 "border-b-3 transition-all duration-200 relative",
                 isActive
                   ? "border-burgundy text-burgundy bg-background"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:bg-cream/50"
               )}
             >
-              <Icon size={15} />
+              <Icon size={14} />
               {tab.label}
               {isActive && (
-                <span className="absolute bottom-0 left-2 right-2 h-[3px] bg-burgundy rounded-t-full" />
+                <span className="absolute bottom-0 left-1 right-1 h-[3px] bg-burgundy rounded-t-full" />
               )}
             </button>
           );

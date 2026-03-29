@@ -3,8 +3,8 @@
 **Comparative geometry of AI embedding spaces.**
 
 **Author:** David M. Berry
-**Version:** 0.1
-**Date:** 28 March 2026
+**Version:** 0.2
+**Date:** 29 March 2026
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, and projections that reveal the geometry's structure.
 
@@ -31,6 +31,15 @@ Interpolate between two anchor concepts in the embedding space to discover what 
 
 ### Concept Drift
 Measure how much context warps the manifold's positioning of a concept. Embed the same term with different contextual framings ("justice", "justice in the context of punishment", "justice in the context of mercy") and see how far each context displaces it. Large displacement means the manifold is context-sensitive; small displacement means the concept is geometrically rigid.
+
+### Hegemony Compass
+Place a contested concept ("freedom", "democracy", "intelligence") between two competing ideological clusters and measure which side the manifold pulls it toward. Pre-loaded tests for Freedom (market liberalism vs emancipatory politics), Democracy (liberal proceduralism vs radical democracy), Intelligence (techno-rationalism vs embodied cognition), Security, and Progress. The result reveals which ideological framing the geometry has naturalised as the default meaning.
+
+### Sohn-Rethel Test
+Measure how far the manifold has performed the real abstraction. Each pair contrasts a concrete use-value description ("a warm coat that keeps the rain off") with its abstract exchange-value equivalent ("a commodity worth twenty yards of linen"). If the distance is small, the abstraction is already complete in the geometry. If large, the use-value has partially resisted encoding. 12 pre-loaded pairs across domains from clothing to care work.
+
+### Silence Detector
+Measure the local density of the manifold around different domains. Dense regions mean the model compresses diverse realities into few coordinates (low resolution). Sparse regions mean it preserves fine-grained distinctions (high resolution). Pre-loaded comparisons: financial derivatives vs subsistence farming, Silicon Valley vs indigenous ecological knowledge, corporate management vs care work. The density differential reveals where capital has invested in encoding and where it has not.
 
 ## Supported Embedding Providers
 
@@ -126,12 +135,13 @@ src/
     api/ollama/      # Ollama model management (list, pull)
   components/
     operations/      # Concept Distance, Neighbourhood Map, Negation Gauge,
-                     # Negation Battery, Semantic Sectioning, Concept Drift
+                     # Negation Battery, Semantic Sectioning, Concept Drift,
+                     # Hegemony Compass, Sohn-Rethel Test, Silence Detector
     viz/             # ScatterPlot, SimilarityBridge, SimilarityMeter,
                      # GaugeArc, AnalysisPanel, PlotlyPlot
     layout/          # Header, TabNav, StatusBar, SettingsPanel
     shared/          # QueryHistory, ResetButton, ErrorDisplay, ConceptPresets
-    easter-eggs/     # Clippy (type "clippy" or "hacker")
+    easter-eggs/     # Clippy, Hackerman, Geoffrey Hinton, Karl Marx
   context/           # SettingsContext, EmbeddingCacheContext
   lib/
     embeddings/      # Client + provider modules (OpenAI, Voyage, Google, Cohere, Ollama)
@@ -148,11 +158,14 @@ Manifold Atlas is a research instrument for the [vector theory](https://stunlaw.
 
 The tool operationalises this framework empirically. Key concepts and the features that test them:
 
-- **The embedding API as telescope** -- the one point where the medium exposes its internal vectors to the outside. The telescope sees the stars but does not visit them. All six operations use this as their basic research instrument.
+- **The embedding API as telescope** -- the one point where the medium exposes its internal vectors to the outside. The telescope sees the stars but does not visit them. All nine operations use this as their basic research instrument.
 - **The negation deficit** -- the manifold structurally lacks negation in both mathematical and logical-dialectical senses. The Negation Gauge and Negation Battery produce empirical evidence for this, measuring the cosine similarity between claims and their negations across models.
 - **Geometric ideology** -- hegemony that operates through topology (density, sparsity, trajectory) rather than discourse (propositions, narratives, interpellation). The Neighbourhood Map's cluster analysis, connection mesh, and density mapping test this.
 - **Manifold sectioning** -- cutting the geometry along critically chosen planes to reveal where one domain shades into another. Semantic Sectioning operationalises this directly.
 - **Geometric stress testing** -- embedding the same concept in different contexts to measure how the manifold warps under contextual pressure. Concept Drift operationalises this.
+- **Real abstraction** -- the embedding layer performs Sohn-Rethel's real abstraction at the level of meaning. The Sohn-Rethel Test measures how far the manifold has completed this abstraction across domains, from clothing to care work.
+- **Hegemonic defaults** -- the Hegemony Compass measures which ideological framing the geometry has naturalised as the default meaning of contested concepts like "freedom" and "democracy."
+- **The taxonomy of silence** -- the Silence Detector measures density differentials between domains, revealing where capital has invested in encoding and where the manifold thins out.
 - **The proprietary medium** -- every vector observed through the telescope was computed by a corporation that controls the geometry. The political economy of the method is built into its conditions of possibility. Multi-model comparison reveals whether geometric politics are structural to the medium or contingent on training decisions.
 
 For the full theoretical framework, see:
@@ -163,7 +176,7 @@ For the full theoretical framework, see:
 
 ## Easter Eggs
 
-Type `clippy` anywhere (outside a text input) for the Manifold Atlas Clippy. Type `hacker` for Hackerman mode.
+Type `clippy` anywhere (outside a text input) for the Manifold Atlas Clippy. Type `hacker` for Hackerman mode. Type `hinton` to summon Geoffrey Hinton, who appears with his 1977 quote connecting neural representations to Marx's exchange value. Type `marx` for Karl Marx, who cycles through 30 quotations from Capital, the Manifesto, the 1844 Manuscripts, and more.
 
 ## Acknowledgements
 

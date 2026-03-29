@@ -12,6 +12,9 @@ import { NegationGauge } from "@/components/operations/NegationGauge";
 import { NegationBattery } from "@/components/operations/NegationBattery";
 import { SemanticSectioning } from "@/components/operations/SemanticSectioning";
 import { ConceptDrift } from "@/components/operations/ConceptDrift";
+import { HegemonyCompass } from "@/components/operations/HegemonyCompass";
+import { SohnRethelTest } from "@/components/operations/SohnRethelTest";
+import { SilenceDetector } from "@/components/operations/SilenceDetector";
 import { Clippy } from "@/components/easter-eggs/Clippy";
 
 function AppContent() {
@@ -41,6 +44,15 @@ function AppContent() {
         </div>
         <div className={activeTab === "drift" ? "" : "hidden"}>
           <ConceptDrift onQueryTime={setLastQueryTime} />
+        </div>
+        <div className={activeTab === "compass" ? "" : "hidden"}>
+          <HegemonyCompass onQueryTime={setLastQueryTime} />
+        </div>
+        <div className={activeTab === "sohnrethel" ? "" : "hidden"}>
+          <SohnRethelTest onQueryTime={setLastQueryTime} />
+        </div>
+        <div className={activeTab === "silence" ? "" : "hidden"}>
+          <SilenceDetector onQueryTime={setLastQueryTime} />
         </div>
       </main>
 

@@ -15,7 +15,7 @@ export function StatusBar({ lastQueryTime }: StatusBarProps) {
   return (
     <footer className="border-t border-parchment-dark px-6 py-2 flex items-center gap-6 font-sans text-caption text-slate">
       <span>
-        <span className="text-ink font-medium">v0.1.0</span>
+        <span className="text-ink font-medium">v0.2.0</span>
       </span>
       <span className="h-3 w-px bg-parchment-dark" />
       <span>
