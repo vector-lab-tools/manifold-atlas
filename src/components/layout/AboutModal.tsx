@@ -39,10 +39,10 @@ export function AboutModal() {
             <div className="px-6 py-4 space-y-3">
               <div className="grid grid-cols-[120px_1fr] gap-y-2 font-sans text-body-sm">
                 <span className="text-muted-foreground">Version</span>
-                <span className="font-medium">0.2.0</span>
+                <span className="font-medium">0.3.0</span>
 
                 <span className="text-muted-foreground">Date</span>
-                <span className="font-medium">29 March 2026</span>
+                <span className="font-medium">30 March 2026</span>
 
                 <span className="text-muted-foreground">Author</span>
                 <span className="font-medium">David M. Berry</span>

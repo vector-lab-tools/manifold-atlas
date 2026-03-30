@@ -3,8 +3,8 @@
 **Comparative geometry of AI embedding spaces.**
 
 **Author:** David M. Berry
-**Version:** 0.2
-**Date:** 29 March 2026
+**Version:** 0.3
+**Date:** 30 March 2026
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, and projections that reveal the geometry's structure.
 
@@ -30,13 +30,13 @@ Run a battery of 10-40 negation tests automatically against pre-built sets (poli
 Interpolate between two anchor concepts in the embedding space to discover what lies between them. The tool walks from concept A to concept B in 20 steps, finding the nearest real concept at each point. The resulting sequence (e.g. solidarity -> cooperation -> agreement -> conformity -> compliance) reveals where one domain shades into another in the manifold's geometry.
 
 ### Concept Drift
-Measure how much context warps the manifold's positioning of a concept. Embed the same term with different contextual framings ("justice", "justice in the context of punishment", "justice in the context of mercy") and see how far each context displaces it. Large displacement means the manifold is context-sensitive; small displacement means the concept is geometrically rigid.
+Measure how much context warps the manifold's positioning of a concept. Embed the same term with different contextual framings ("justice", "justice in the context of punishment", "justice in the context of mercy") and watch it move through the geometry. Three visualisations per model: a 3D drift cloud showing all positions simultaneously with connecting lines back to the bare concept; sorted displacement bars showing which contexts are most geometrically powerful; and a pairwise pathway heatmap revealing which contextual framings converge (similar routes through the manifold) and which diverge.
 
 ### Hegemony Compass
 Place a contested concept ("freedom", "democracy", "intelligence") between two competing ideological clusters and measure which side the manifold pulls it toward. Pre-loaded tests for Freedom (market liberalism vs emancipatory politics), Democracy (liberal proceduralism vs radical democracy), Intelligence (techno-rationalism vs embodied cognition), Security, and Progress. The result reveals which ideological framing the geometry has naturalised as the default meaning.
 
-### Sohn-Rethel Test
-Measure how far the manifold has performed the real abstraction. Each pair contrasts a concrete use-value description ("a warm coat that keeps the rain off") with its abstract exchange-value equivalent ("a commodity worth twenty yards of linen"). If the distance is small, the abstraction is already complete in the geometry. If large, the use-value has partially resisted encoding. 12 pre-loaded pairs across domains from clothing to care work.
+### Real Abstraction Test
+Measure how far the manifold has performed the real abstraction (after Sohn-Rethel). Each pair contrasts a concrete use-value description ("a warm coat that keeps the rain off") with its abstract exchange-value equivalent ("a commodity worth twenty yards of linen"). If the distance is small, the abstraction is already complete in the geometry. If large, the use-value has partially resisted encoding. 12 pre-loaded pairs across domains from clothing to care work.
 
 ### Silence Detector
 Measure the local density of the manifold around different domains. Dense regions mean the model compresses diverse realities into few coordinates (low resolution). Sparse regions mean it preserves fine-grained distinctions (high resolution). Pre-loaded comparisons: financial derivatives vs subsistence farming, Silicon Valley vs indigenous ecological knowledge, corporate management vs care work. The density differential reveals where capital has invested in encoding and where it has not.
@@ -136,7 +136,7 @@ src/
   components/
     operations/      # Concept Distance, Neighbourhood Map, Negation Gauge,
                      # Negation Battery, Semantic Sectioning, Concept Drift,
-                     # Hegemony Compass, Sohn-Rethel Test, Silence Detector
+                     # Hegemony Compass, Real Abstraction Test, Silence Detector
     viz/             # ScatterPlot, SimilarityBridge, SimilarityMeter,
                      # GaugeArc, AnalysisPanel, PlotlyPlot
     layout/          # Header, TabNav, StatusBar, SettingsPanel
@@ -163,7 +163,7 @@ The tool operationalises this framework empirically. Key concepts and the featur
 - **Geometric ideology** -- hegemony that operates through topology (density, sparsity, trajectory) rather than discourse (propositions, narratives, interpellation). The Neighbourhood Map's cluster analysis, connection mesh, and density mapping test this.
 - **Manifold sectioning** -- cutting the geometry along critically chosen planes to reveal where one domain shades into another. Semantic Sectioning operationalises this directly.
 - **Geometric stress testing** -- embedding the same concept in different contexts to measure how the manifold warps under contextual pressure. Concept Drift operationalises this.
-- **Real abstraction** -- the embedding layer performs Sohn-Rethel's real abstraction at the level of meaning. The Sohn-Rethel Test measures how far the manifold has completed this abstraction across domains, from clothing to care work.
+- **Real abstraction** -- the embedding layer performs Sohn-Rethel's real abstraction at the level of meaning. The Real Abstraction Test measures how far the manifold has completed this abstraction across domains, from clothing to care work.
 - **Hegemonic defaults** -- the Hegemony Compass measures which ideological framing the geometry has naturalised as the default meaning of contested concepts like "freedom" and "democracy."
 - **The taxonomy of silence** -- the Silence Detector measures density differentials between domains, revealing where capital has invested in encoding and where the manifold thins out.
 - **The proprietary medium** -- every vector observed through the telescope was computed by a corporation that controls the geometry. The political economy of the method is built into its conditions of possibility. Multi-model comparison reveals whether geometric politics are structural to the medium or contingent on training decisions.
