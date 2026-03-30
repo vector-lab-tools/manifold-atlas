@@ -48,19 +48,19 @@ export function conceptSimilarityLevel(similarity: number): SimilarityLevel {
  */
 export function negationSimilarityLevel(similarity: number, threshold: number): SimilarityLevel {
   if (similarity >= threshold) return {
-    label: "Collapsed: negation is geometrically trivial",
+    label: "Collapsed: the geometry barely registers the negation",
     color: "#dc2626", bgColor: "rgba(220,38,38,0.1)", severity: "critical",
   };
   if (similarity >= threshold - 0.05) return {
-    label: "Near-collapse: negation produces only a minor perturbation",
+    label: "Near-collapse: the negation nudges the position but little more",
     color: "#ea580c", bgColor: "rgba(234,88,12,0.08)", severity: "high",
   };
   if (similarity >= 0.7) return {
-    label: "Weak distinction: negation shifts position but not categorically",
+    label: "Weak distinction: the claim and its negation remain close neighbours",
     color: "#d97706", bgColor: "rgba(217,119,6,0.08)", severity: "moderate",
   };
   if (similarity >= 0.5) return {
-    label: "Partial distinction: some geometric separation, not yet adequate to logical negation",
+    label: "Partial distinction: some separation, but far less than logic would require",
     color: "#65a30d", bgColor: "rgba(101,163,13,0.08)", severity: "low",
   };
   return {

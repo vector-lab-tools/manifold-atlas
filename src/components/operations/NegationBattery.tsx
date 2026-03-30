@@ -173,9 +173,10 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
           <ResetButton onReset={() => { setResults([]); setCustomStatements(""); setSelectedBattery("Political claims"); setError(null); }} />
         </div>
         <p className="font-sans text-body-sm text-slate mb-4">
-          Run a battery of negation tests automatically. Select a pre-built set or enter your own
-          statements (one per line). Produces a report card showing where each model&apos;s
-          geometric representation of negation is inadequate to its logical weight.
+          Run a battery of negation tests automatically. Select a pre-built set or enter your
+          own statements (one per line). For each statement, the tool embeds the claim and its
+          negation and measures how close they sit in the geometry. The report card shows
+          where each model gives negation the least space.
         </p>
 
         <div className="space-y-3">

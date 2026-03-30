@@ -21,7 +21,7 @@ Measure the geometric relationship between any two concepts. Enter two terms and
 Map the local structure of the manifold around a concept. Enter terms manually, load presets (Philosophy, Carpentry, Critical Theory, Democracy, etc.), or use **Manifold Scan** to auto-generate ~300 related terms and fire them all into the embedding space. Interactive 3D scatter plot with auto-rotation, cluster detection, connection mesh, and cross-domain analysis (border concepts, bridges, inter-manifold distance).
 
 ### Negation Gauge
-Test whether the manifold can distinguish a claim from its negation. The tool embeds both the original statement and its auto-generated negation, measures their cosine similarity, and diagnoses the result on a scale from "clear distinction" to "collapsed: cannot distinguish claim from negation." Includes a similarity meter, detailed metrics, and theoretical context on the negation deficit.
+Negation works differently in the manifold than in logic. Where logic treats "A" and "not A" as categorical opposites, the geometry stores them close together, differing in only a few dimensions out of hundreds. The tool embeds both the original statement and its auto-generated negation, measures their cosine similarity, and shows how much space the manifold actually gives to negation. Includes a similarity meter, detailed metrics, and theoretical context on the negation deficit.
 
 ### Negation Battery
 Run a battery of 10-40 negation tests automatically against pre-built sets (political claims, ethical statements, factual assertions, epistemological claims) or custom statements. Produces a report card with collapse rate, average similarity, per-statement results table, and CSV export.
