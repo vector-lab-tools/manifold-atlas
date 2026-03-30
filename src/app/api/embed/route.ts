@@ -5,9 +5,10 @@ import { embedVoyage } from "@/lib/embeddings/providers/voyage";
 import { embedGoogle } from "@/lib/embeddings/providers/google";
 import { embedCohere } from "@/lib/embeddings/providers/cohere";
 import { embedOllama } from "@/lib/embeddings/providers/ollama";
+import { embedHuggingFace } from "@/lib/embeddings/providers/huggingface";
 
 const EmbedRequestSchema = z.object({
-  provider: z.enum(["openai", "voyage", "google", "cohere", "ollama", "openai-compatible"]),
+  provider: z.enum(["openai", "voyage", "google", "cohere", "huggingface", "ollama", "openai-compatible"]),
   model: z.string().min(1),
   texts: z.array(z.string().min(1)).min(1).max(500),
   baseUrl: z.string().optional(),
@@ -49,6 +50,11 @@ export async function POST(request: NextRequest) {
       case "cohere":
         if (!apiKey) return NextResponse.json({ error: "Cohere API key required" }, { status: 401 });
         vectors = await embedCohere(texts, model, apiKey);
+        break;
+
+      case "huggingface":
+        if (!apiKey) return NextResponse.json({ error: "Hugging Face token required" }, { status: 401 });
+        vectors = await embedHuggingFace(texts, model, apiKey);
         break;
 
       case "ollama":

@@ -29,7 +29,19 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        setSettings(prev => ({ ...prev, ...parsed }));
+        // Deep-merge providers so new providers added in code don't break saved settings
+        const mergedProviders = { ...DEFAULT_SETTINGS.providers };
+        if (parsed.providers) {
+          for (const [key, val] of Object.entries(parsed.providers)) {
+            if (key in mergedProviders) {
+              mergedProviders[key as keyof typeof mergedProviders] = {
+                ...mergedProviders[key as keyof typeof mergedProviders],
+                ...(val as object),
+              };
+            }
+          }
+        }
+        setSettings(prev => ({ ...prev, ...parsed, providers: mergedProviders }));
       }
     } catch (e) {
       console.warn("Failed to load settings:", e);

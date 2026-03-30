@@ -59,7 +59,15 @@ In Manifold Atlas, the **embedding models** are the core instrument. Every opera
 
 You only need to configure the providers you want to use. Enable one or more and ignore the rest.
 
-**Cloud providers** (require a free or paid API key from the provider):
+**Free cloud provider** (free account, no payment required):
+
+| Provider | Models | Sign up |
+|----------|--------|---------|
+| Hugging Face | MiniLM-L6 (384d), BGE Small (384d), Nomic Embed v1.5 (768d) | [huggingface.co](https://huggingface.co/) |
+
+To use Hugging Face: sign up at [huggingface.co](https://huggingface.co/) (free), go to Settings > Access Tokens, create a token, and paste it in Manifold Atlas Settings. Rate-limited but fully functional for research use.
+
+**Paid cloud providers** (require an API key from the provider):
 
 | Provider | Models | Sign up |
 |----------|--------|---------|
@@ -67,7 +75,7 @@ You only need to configure the providers you want to use. Enable one or more and
 | Voyage AI (Anthropic) | voyage-3, voyage-3-large, voyage-3.5 (1024d) | [voyageai.com](https://www.voyageai.com/) |
 | Google Gemini | gemini-embedding-001 (3072d) | [ai.google.dev](https://ai.google.dev/) |
 | Cohere | embed-v3.0 (1024d) | [cohere.com](https://cohere.com/) |
-| OpenAI-compatible | Custom | Varies |
+| OpenRouter (OpenAI-compatible) | Various | [openrouter.ai](https://openrouter.ai/) |
 
 **Local provider** (no API key, no account, runs entirely on your machine):
 

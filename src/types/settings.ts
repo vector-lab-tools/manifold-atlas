@@ -37,6 +37,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
       apiKey: "",
       selectedModels: ["embed-v3.0"],
     },
+    huggingface: {
+      enabled: false,
+      apiKey: "",
+      selectedModels: ["sentence-transformers/all-MiniLM-L6-v2"],
+    },
     ollama: {
       enabled: false,
       apiKey: "",
@@ -46,7 +51,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     "openai-compatible": {
       enabled: false,
       apiKey: "",
-      baseUrl: "",
+      baseUrl: "https://openrouter.ai/api",
       selectedModels: [],
       customModelId: "",
     },
