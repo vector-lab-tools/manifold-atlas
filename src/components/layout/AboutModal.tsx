@@ -1,0 +1,136 @@
+"use client";
+
+import { useState } from "react";
+import { Info, X } from "lucide-react";
+
+export function AboutModal() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="btn-editorial-ghost px-3 py-2"
+        title="About Manifold Atlas"
+      >
+        <Info size={16} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-50" onClick={() => setOpen(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[520px] max-w-[90vw] card-editorial shadow-editorial-lg overflow-hidden animate-fade-in">
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 flex items-start justify-between">
+              <div>
+                <h2 className="font-display text-display-lg font-bold text-burgundy">Manifold Atlas</h2>
+                <p className="font-sans text-caption text-muted-foreground mt-0.5">
+                  Comparative Geometry of AI Embedding Spaces
+                </p>
+              </div>
+              <button onClick={() => setOpen(false)} className="btn-editorial-ghost px-2 py-1">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="thin-rule mx-6" />
+
+            {/* Details */}
+            <div className="px-6 py-4 space-y-3">
+              <div className="grid grid-cols-[120px_1fr] gap-y-2 font-sans text-body-sm">
+                <span className="text-muted-foreground">Version</span>
+                <span className="font-medium">0.2.0</span>
+
+                <span className="text-muted-foreground">Date</span>
+                <span className="font-medium">29 March 2026</span>
+
+                <span className="text-muted-foreground">Author</span>
+                <span className="font-medium">David M. Berry</span>
+
+                <span className="text-muted-foreground">Affiliation</span>
+                <span className="font-medium">University of Sussex</span>
+
+                <span className="text-muted-foreground">Implemented with</span>
+                <span className="font-medium">Claude Code 4.6</span>
+
+                <span className="text-muted-foreground">Design system</span>
+                <span className="font-medium">CCS-WB Editorial</span>
+
+                <span className="text-muted-foreground">Licence</span>
+                <span className="font-medium">MIT</span>
+              </div>
+            </div>
+
+            <div className="thin-rule mx-6" />
+
+            {/* Description */}
+            <div className="px-6 py-4">
+              <p className="font-body text-body-sm text-slate leading-relaxed">
+                Manifold Atlas is a vector-native research tool for studying how large language
+                models organise meaning geometrically. It operationalises{" "}
+                <a
+                  href="https://stunlaw.blogspot.com/2026/02/vector-theory.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-burgundy underline underline-offset-2"
+                >
+                  Vector Theory
+                </a>{" "}
+                by using embedding APIs as a telescope to observe the manifold, cosine
+                similarity as the primary instrument, and critical theory as the interpretive
+                framework. Without the framework, the numbers are curiosities. With it, they
+                are evidence for geometric ideology, the negation deficit, and the proprietary
+                encoding of human language.
+              </p>
+            </div>
+
+            <div className="thin-rule mx-6" />
+
+            {/* Links */}
+            <div className="px-6 py-4 flex items-center gap-4 font-sans text-body-sm">
+              <a
+                href="https://github.com/dmberry/manifold-atlas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://stunlaw.blogspot.com/2026/02/vector-theory.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
+              >
+                Vector Theory
+              </a>
+              <a
+                href="https://stunlaw.blogspot.com/2026/03/what-is-vector-space.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
+              >
+                What is Vector Space?
+              </a>
+              <a
+                href="https://stunlaw.blogspot.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
+              >
+                Stunlaw
+              </a>
+            </div>
+
+            {/* Easter egg hint */}
+            <div className="px-6 pb-5">
+              <p className="font-sans text-[10px] text-muted-foreground italic">
+                Try typing clippy, hacker, hinton, or marx anywhere outside a text field.
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
