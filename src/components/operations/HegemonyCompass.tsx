@@ -349,6 +349,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                   xaxis: { zeroline: true, zerolinecolor: isDark ? "rgba(200,200,220,0.6)" : "rgba(30,30,30,0.7)", zerolinewidth: 2, showgrid: true, gridcolor: gridColor, showticklabels: false, range: [-extent, extent] },
                   yaxis: { zeroline: true, zerolinecolor: isDark ? "rgba(200,200,220,0.6)" : "rgba(30,30,30,0.7)", zerolinewidth: 2, showgrid: true, gridcolor: gridColor, showticklabels: false, range: [-extent, extent], scaleanchor: "x" },
                   showlegend: false,
+                  dragmode: "pan",
                   annotations: [
                     { xref: "paper", yref: "paper", x: 1, y: 0.5, text: `<b>${preset.xAxis.positive.label}</b> →`, showarrow: false, font: { size: 11, color: textColor }, xanchor: "right", yanchor: "top", yshift: -8 },
                     { xref: "paper", yref: "paper", x: 0, y: 0.5, text: `← <b>${preset.xAxis.negative.label}</b>`, showarrow: false, font: { size: 11, color: textColor }, xanchor: "left", yanchor: "top", yshift: -8 },
@@ -363,7 +364,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                   ],
                 };
               })()}
-              config={{ displayModeBar: false, responsive: true }}
+              config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
               style={{ width: "100%", height: "520px" }}
             />
           </div>
@@ -482,6 +483,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                     scaleanchor: "x",
                   },
                   showlegend: false,
+                  dragmode: "pan",
                   // Axis labels at the very ends of each axis
                   annotations: [
                     // Right end of x-axis
@@ -501,7 +503,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                   ],
                 };
               })()}
-              config={{ displayModeBar: false, responsive: true }}
+              config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
               style={{ width: "100%", height: "500px" }}
             />
           </div>
