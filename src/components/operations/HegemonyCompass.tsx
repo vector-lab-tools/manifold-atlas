@@ -90,29 +90,21 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
   const DEFAULT_CONCEPTS = ["democracy", "freedom", "sovereignty", "revolution", "capitalism"];
   let defaultIndex = 0;
 
-  const handleAddConcept = async () => {
-    let concept = conceptInput.trim();
-    if (!concept) {
-      // Cycle through defaults
-      const plotted = new Set(plottedConcepts.map(p => p.concept));
-      const remaining = DEFAULT_CONCEPTS.filter(c => !plotted.has(c));
-      concept = remaining[0] || DEFAULT_CONCEPTS[defaultIndex++ % DEFAULT_CONCEPTS.length];
-      setConceptInput(concept);
-    }
+  const plotConcepts = async (concepts: string[]) => {
+    if (concepts.length === 0) return;
 
     setLoading(true);
     setError(null);
     const start = performance.now();
 
     try {
-      // Embed the concept + all axis terms
       const allAxisTerms = [
         ...preset.xAxis.negative.terms,
         ...preset.xAxis.positive.terms,
         ...preset.yAxis.negative.terms,
         ...preset.yAxis.positive.terms,
       ];
-      const allTexts = [concept, ...allAxisTerms];
+      const allTexts = [...concepts, ...allAxisTerms];
       const modelVectors = await embedAll(allTexts);
       const enabledModels = getEnabledModels();
 
@@ -120,37 +112,40 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
       const xPosCount = preset.xAxis.positive.terms.length;
       const yNegCount = preset.yAxis.negative.terms.length;
 
-      const newPoints: PlottedConcept[] = enabledModels
-        .filter(m => modelVectors.has(m.id))
-        .map(m => {
-          const vectors = modelVectors.get(m.id)!;
-          const conceptVec = vectors[0];
+      const newPoints: PlottedConcept[] = [];
 
-          // Compute avg similarity to each pole
-          let offset = 1;
-          const xNegVecs = vectors.slice(offset, offset + xNegCount); offset += xNegCount;
-          const xPosVecs = vectors.slice(offset, offset + xPosCount); offset += xPosCount;
-          const yNegVecs = vectors.slice(offset, offset + yNegCount); offset += yNegCount;
-          const yPosVecs = vectors.slice(offset);
+      for (const m of enabledModels.filter(m => modelVectors.has(m.id))) {
+        const vectors = modelVectors.get(m.id)!;
+
+        // Axis vectors start after all concepts
+        const axisOffset = concepts.length;
+        let offset = axisOffset;
+        const xNegVecs = vectors.slice(offset, offset + xNegCount); offset += xNegCount;
+        const xPosVecs = vectors.slice(offset, offset + xPosCount); offset += xPosCount;
+        const yNegVecs = vectors.slice(offset, offset + yNegCount); offset += yNegCount;
+        const yPosVecs = vectors.slice(offset);
+
+        for (let ci = 0; ci < concepts.length; ci++) {
+          const conceptVec = vectors[ci];
 
           const avgSimXNeg = xNegVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / xNegVecs.length;
           const avgSimXPos = xPosVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / xPosVecs.length;
           const avgSimYNeg = yNegVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / yNegVecs.length;
           const avgSimYPos = yPosVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / yPosVecs.length;
 
-          // Position: difference in similarity (positive = closer to positive pole)
           const x = avgSimXPos - avgSimXNeg;
           const y = avgSimYPos - avgSimYNeg;
 
           const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
-          return {
-            concept,
+          newPoints.push({
+            concept: concepts[ci],
             x,
             y,
             modelId: m.id,
             modelName: spec?.name || m.id,
-          };
-        });
+          });
+        }
+      }
 
       setPlottedConcepts(prev => [...prev, ...newPoints]);
       setConceptInput("");
@@ -159,6 +154,18 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
       setError(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddConcept = async () => {
+    const input = conceptInput.trim();
+    if (!input) {
+      // Plot all defaults at once
+      await plotConcepts(DEFAULT_CONCEPTS);
+    } else {
+      // Support comma-separated concepts
+      const concepts = input.split(",").map(s => s.trim()).filter(s => s);
+      await plotConcepts(concepts);
     }
   };
 
