@@ -246,11 +246,11 @@ export function Clippy() {
       : 'type "clippy" to dismiss';
 
   return (
-    <div className="fixed bottom-4 right-4 z-[10000] animate-fade-in">
+    <div className="fixed bottom-4 right-4 z-[10000] animate-fade-in pointer-events-none flex flex-col items-end">
       {/* Speech bubble */}
       <div
         key={messageKey}
-        className={`mb-3 p-3 rounded-sm max-w-[320px] text-body-sm shadow-editorial-md animate-fade-in ${bubbleClass}`}
+        className={`mb-3 p-3 rounded-sm max-w-[320px] text-body-sm shadow-editorial-md animate-fade-in pointer-events-auto ${bubbleClass}`}
       >
         <p className="leading-relaxed whitespace-pre-line">{message}</p>
         <p className={`mt-2 text-caption ${isHackerman ? "text-green-700" : isHinton ? "text-[#8b0000]" : isMarx ? "text-[#cc0000]/60" : "text-slate"}`}>
@@ -260,7 +260,7 @@ export function Clippy() {
 
       {/* Character */}
       <div
-        className="cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+        className="cursor-pointer hover:scale-110 active:scale-95 transition-transform inline-block pointer-events-auto"
         onClick={() => {
           if (showHintonQuote) {
             setShowHintonQuote(false);
@@ -340,7 +340,7 @@ export function Clippy() {
       {/* Close button */}
       <button
         onClick={() => setVisible(false)}
-        className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]
+        className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] pointer-events-auto
           ${isHackerman
             ? "bg-black border border-green-500 text-green-400"
             : isHinton
