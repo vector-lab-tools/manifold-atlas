@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Info, X, ChevronRight, ChevronDown } from "lucide-react";
+import { Info, X, ChevronRight } from "lucide-react";
+import { ReadingListModal } from "./ReadingListModal";
 
 export function AboutModal() {
   const [open, setOpen] = useState(false);
@@ -90,27 +91,12 @@ export function AboutModal() {
             {/* Reading List */}
             <div className="px-6 py-4">
               <button
-                onClick={() => setReadingListOpen(!readingListOpen)}
+                onClick={() => setReadingListOpen(true)}
                 className="flex items-center gap-1.5 font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold hover:text-foreground transition-colors"
               >
-                {readingListOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                Reading List (11 texts)
+                <ChevronRight size={12} />
+                Suggested Reading List...
               </button>
-              {readingListOpen && (
-                <div className="mt-3 space-y-2 font-body text-body-sm text-slate">
-                  <p>Ackerman, A., Gefen, A., Somaini, A. and Viewing, P. (eds) (2025) <em>The World Through AI: Exploring Latent Spaces</em>, exhibition catalogue. Paris: Jeu de Paume / JBE Books.</p>
-                  <p>Beguš, N. (2025) <em>Artificial Humanities</em>. University of Michigan Press.</p>
-                  <p>Berry, D.M. (2026) &lsquo;<a href="https://stunlaw.blogspot.com/2026/03/the-vector-medium.html" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">The Vector Medium</a>&rsquo;, <em>Stunlaw</em>.</p>
-                  <p>Berry, D.M. (2026) &lsquo;<a href="https://stunlaw.blogspot.com/2026/02/vector-theory.html" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Vector Theory</a>&rsquo;, <em>Stunlaw</em>.</p>
-                  <p>Berry, D.M. (2026) &lsquo;<a href="https://stunlaw.blogspot.com/2026/03/what-is-vector-space.html" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">What is Vector Space?</a>&rsquo;, <em>Stunlaw</em>.</p>
-                  <p>Goriunova, O. (2025) <em>Ideal Subjects: The Abstract People of AI</em>. University of Minnesota Press.</p>
-                  <p>Impett, L. and Offert, F. (2026) <em>Vector Media</em>. University of Minnesota Press.</p>
-                  <p>Manovich, L. and Arielli, E. (2024) <em><a href="https://manovich.net/index.php/projects/artificial-aesthetics" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Artificial Aesthetics: Generative AI, Arts and Visual Media</a></em>.</p>
-                  <p>Pasquinelli, M. (2023) <em>The Eye of the Master: A Social History of AI</em>. Verso.</p>
-                  <p>Somaini, A. (2023) &lsquo;A Theory of Latent Spaces&rsquo;, <em>Grey Room</em>, 93.</p>
-                  <p>Steyerl, H. (2025) <em>Medium Hot: Images in the Age of Heat</em>. London: Verso.</p>
-                </div>
-              )}
             </div>
 
             <div className="thin-rule mx-6" />
@@ -173,6 +159,9 @@ export function AboutModal() {
           </div>
         </>
       )}
+
+      {/* Reading List modal */}
+      <ReadingListModal open={readingListOpen} onClose={() => setReadingListOpen(false)} />
     </>
   );
 }

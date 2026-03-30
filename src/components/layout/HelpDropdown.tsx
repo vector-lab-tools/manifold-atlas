@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { HelpCircle, X, ChevronRight, ChevronDown } from "lucide-react";
+import { HelpCircle, X, ChevronRight, ChevronDown, BookOpen } from "lucide-react";
+import { ReadingListModal } from "./ReadingListModal";
 
 interface HelpSection {
   title: string;
@@ -56,6 +57,7 @@ const HELP_SECTIONS: HelpSection[] = [
 export function HelpDropdown() {
   const [open, setOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
+  const [readingListOpen, setReadingListOpen] = useState(false);
 
   return (
     <div className="relative">
@@ -116,14 +118,23 @@ export function HelpDropdown() {
               ))}
             </div>
 
-            <div className="p-4 border-t border-parchment">
+            <div className="p-4 border-t border-parchment flex items-center justify-between">
               <p className="font-sans text-caption text-muted-foreground">
                 Based on <a href="https://stunlaw.blogspot.com/2026/02/vector-theory.html" target="_blank" rel="noopener noreferrer" className="text-burgundy underline">Vector Theory</a> by David M. Berry.
               </p>
+              <button
+                onClick={() => { setReadingListOpen(true); setOpen(false); }}
+                className="flex items-center gap-1 font-sans text-caption text-burgundy hover:text-burgundy-900 transition-colors"
+              >
+                <BookOpen size={12} />
+                Suggested Reading List...
+              </button>
             </div>
           </div>
         </>
       )}
+
+      <ReadingListModal open={readingListOpen} onClose={() => setReadingListOpen(false)} />
     </div>
   );
 }
