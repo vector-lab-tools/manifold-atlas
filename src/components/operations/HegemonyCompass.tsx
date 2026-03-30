@@ -199,15 +199,15 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
   const [plottedConcepts, setPlottedConcepts] = useState<PlottedConcept[]>([]);
   const [zoomOverride, setZoomOverride] = useState<number | null>(null);
   const [dashboardOpen, setDashboardOpen] = useState(false);
-  // Custom axis state
-  const [customXNegLabel, setCustomXNegLabel] = useState("");
-  const [customXNegTerms, setCustomXNegTerms] = useState("");
-  const [customXPosLabel, setCustomXPosLabel] = useState("");
-  const [customXPosTerms, setCustomXPosTerms] = useState("");
-  const [customYNegLabel, setCustomYNegLabel] = useState("");
-  const [customYNegTerms, setCustomYNegTerms] = useState("");
-  const [customYPosLabel, setCustomYPosLabel] = useState("");
-  const [customYPosTerms, setCustomYPosTerms] = useState("");
+  // Custom axis state - prepopulated with an example (Nature vs Culture)
+  const [customXNegLabel, setCustomXNegLabel] = useState("Nature");
+  const [customXNegTerms, setCustomXNegTerms] = useState("The natural world has intrinsic value independent of human use, Biodiversity is essential for the health of ecosystems, Wilderness should be preserved from human intervention, Natural processes are self-regulating and should not be disrupted");
+  const [customXPosLabel, setCustomXPosLabel] = useState("Culture");
+  const [customXPosTerms, setCustomXPosTerms] = useState("Human civilisation improves upon the state of nature, Cultural production is what distinguishes humans from animals, The built environment is humanity's greatest achievement, Art and literature are the highest forms of human expression");
+  const [customYNegLabel, setCustomYNegLabel] = useState("Individual");
+  const [customYNegTerms, setCustomYNegTerms] = useState("Individual conscience is the ultimate moral authority, Personal autonomy is the foundation of human dignity, Each person is responsible for their own life choices, Individual creativity is the source of all innovation");
+  const [customYPosLabel, setCustomYPosLabel] = useState("Collective");
+  const [customYPosTerms, setCustomYPosTerms] = useState("The community is more important than any individual, Collective action is necessary to solve social problems, Shared institutions are the foundation of a just society, Solidarity between people is the basis of human flourishing");
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
   const isDark = settings.darkMode;
