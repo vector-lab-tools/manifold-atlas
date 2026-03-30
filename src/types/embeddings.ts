@@ -55,8 +55,8 @@ export const EMBEDDING_PROVIDERS: Record<EmbeddingProviderId, EmbeddingProviderC
   },
   voyage: {
     id: "voyage",
-    name: "Voyage AI (Anthropic)",
-    description: "Voyage AI embedding models, recommended by Anthropic",
+    name: "Voyage AI",
+    description: "Voyage AI embedding models, recommended by Anthropic for use with Claude",
     requiresApiKey: true,
     baseUrlConfigurable: false,
     signupUrl: "https://www.voyageai.com/",
