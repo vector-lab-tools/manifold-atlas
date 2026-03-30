@@ -80,6 +80,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [plottedConcepts, setPlottedConcepts] = useState<PlottedConcept[]>([]);
+  const [zoomOverride, setZoomOverride] = useState<number | null>(null); // null = auto
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
   const isDark = settings.darkMode;
@@ -173,7 +174,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
       <div className="card-editorial p-6">
         <div className="flex items-start justify-between mb-1">
           <h2 className="font-display text-display-md font-bold">Hegemony Compass</h2>
-          <ResetButton onReset={() => { setPlottedConcepts([]); setConceptInput(""); setError(null); }} />
+          <ResetButton onReset={() => { setPlottedConcepts([]); setConceptInput(""); setError(null); setZoomOverride(null); }} />
         </div>
         <p className="font-sans text-body-sm text-slate mb-4">
           A four-pole compass that plots where the manifold positions contested concepts.
@@ -186,7 +187,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
             <label className="font-sans text-body-sm text-slate">Compass:</label>
             <select
               value={selectedPreset}
-              onChange={e => { setSelectedPreset(e.target.value); setPlottedConcepts([]); }}
+              onChange={e => { setSelectedPreset(e.target.value); setPlottedConcepts([]); setZoomOverride(null); }}
               className="input-editorial w-auto py-1.5 px-3 text-body-sm"
             >
               {Object.keys(PRESETS).map(name => (
@@ -229,10 +230,27 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
           </div>
 
           {plottedConcepts.length > 0 && (
-            <p className="font-sans text-caption text-muted-foreground">
-              {new Set(plottedConcepts.map(p => p.concept)).size} concept{new Set(plottedConcepts.map(p => p.concept)).size !== 1 ? "s" : ""} plotted.
-              Add more or reset to start over.
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="font-sans text-caption text-muted-foreground">
+                {new Set(plottedConcepts.map(p => p.concept)).size} concept{new Set(plottedConcepts.map(p => p.concept)).size !== 1 ? "s" : ""} plotted.
+                Add more or reset to start over.
+              </p>
+              <div className="flex items-center gap-2">
+                <label className="font-sans text-caption text-muted-foreground">Zoom:</label>
+                <select
+                  value={zoomOverride === null ? "auto" : String(zoomOverride)}
+                  onChange={e => setZoomOverride(e.target.value === "auto" ? null : Number(e.target.value))}
+                  className="input-editorial w-auto py-1 px-2 text-caption"
+                >
+                  <option value="auto">Auto</option>
+                  <option value="0.01">Very close</option>
+                  <option value="0.02">Close</option>
+                  <option value="0.05">Medium</option>
+                  <option value="0.1">Wide</option>
+                  <option value="0.15">Very wide</option>
+                </select>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -258,51 +276,61 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                   textposition: "top center",
                   textfont: { size: 12, family: "Inter, system-ui, sans-serif", color: textColor },
                   marker: {
-                    size: 10,
+                    size: 12,
                     color: isDark ? "rgba(210,160,60,0.9)" : "rgba(160,110,20,0.9)",
                     line: { color: isDark ? "rgba(210,160,60,0.3)" : "rgba(160,110,20,0.3)", width: 2 },
                   },
                   hoverinfo: "text",
                 },
               ]}
-              layout={{
-                height: 520,
-                margin: { t: 40, r: 60, b: 60, l: 60 },
-                paper_bgcolor: bgColor,
-                plot_bgcolor: bgColor,
-                xaxis: {
-                  zeroline: true,
-                  zerolinecolor: isDark ? "rgba(200,200,220,0.6)" : "rgba(30,30,30,0.7)",
-                  zerolinewidth: 2,
-                  showgrid: true,
-                  gridcolor: gridColor,
-                  showticklabels: false,
-                  range: [-0.15, 0.15],
-                  title: { text: `← ${preset.xAxis.negative.label}          ${preset.xAxis.positive.label} →`, font: { size: 12, color: textColor } },
-                },
-                yaxis: {
-                  zeroline: true,
-                  zerolinecolor: isDark ? "rgba(200,200,220,0.6)" : "rgba(30,30,30,0.7)",
-                  zerolinewidth: 2,
-                  showgrid: true,
-                  gridcolor: gridColor,
-                  showticklabels: false,
-                  range: [-0.15, 0.15],
-                  title: { text: `← ${preset.yAxis.negative.label}          ${preset.yAxis.positive.label} →`, font: { size: 12, color: textColor } },
-                },
-                showlegend: false,
-                // Coloured quadrants
-                shapes: [
-                  // Top-left (red): negative-x, positive-y
-                  { type: "rect", x0: -0.15, x1: 0, y0: 0, y1: 0.15, fillcolor: isDark ? "rgba(220,80,80,0.12)" : "rgba(220,80,80,0.15)", line: { width: 0 }, layer: "below" },
-                  // Top-right (blue): positive-x, positive-y
-                  { type: "rect", x0: 0, x1: 0.15, y0: 0, y1: 0.15, fillcolor: isDark ? "rgba(80,120,220,0.12)" : "rgba(80,120,220,0.15)", line: { width: 0 }, layer: "below" },
-                  // Bottom-left (green): negative-x, negative-y
-                  { type: "rect", x0: -0.15, x1: 0, y0: -0.15, y1: 0, fillcolor: isDark ? "rgba(80,200,80,0.12)" : "rgba(80,200,80,0.15)", line: { width: 0 }, layer: "below" },
-                  // Bottom-right (purple): positive-x, negative-y
-                  { type: "rect", x0: 0, x1: 0.15, y0: -0.15, y1: 0, fillcolor: isDark ? "rgba(160,80,200,0.12)" : "rgba(160,80,200,0.15)", line: { width: 0 }, layer: "below" },
-                ],
-              }}
+              layout={(() => {
+                // Zoom: use override if set, otherwise auto-fit to data
+                let extent: number;
+                if (zoomOverride !== null) {
+                  extent = zoomOverride;
+                } else {
+                  const xs = points.map(p => p.x);
+                  const ys = points.map(p => p.y);
+                  const maxAbsX = Math.max(0.005, ...xs.map(Math.abs));
+                  const maxAbsY = Math.max(0.005, ...ys.map(Math.abs));
+                  extent = Math.max(maxAbsX, maxAbsY) * 1.5; // 50% padding
+                }
+
+                return {
+                  height: 520,
+                  margin: { t: 40, r: 60, b: 60, l: 60 },
+                  paper_bgcolor: bgColor,
+                  plot_bgcolor: bgColor,
+                  xaxis: {
+                    zeroline: true,
+                    zerolinecolor: isDark ? "rgba(200,200,220,0.6)" : "rgba(30,30,30,0.7)",
+                    zerolinewidth: 2,
+                    showgrid: true,
+                    gridcolor: gridColor,
+                    showticklabels: false,
+                    range: [-extent, extent],
+                    title: { text: `← ${preset.xAxis.negative.label}          ${preset.xAxis.positive.label} →`, font: { size: 12, color: textColor } },
+                  },
+                  yaxis: {
+                    zeroline: true,
+                    zerolinecolor: isDark ? "rgba(200,200,220,0.6)" : "rgba(30,30,30,0.7)",
+                    zerolinewidth: 2,
+                    showgrid: true,
+                    gridcolor: gridColor,
+                    showticklabels: false,
+                    range: [-extent, extent],
+                    scaleanchor: "x", // keep square aspect ratio
+                    title: { text: `← ${preset.yAxis.negative.label}          ${preset.yAxis.positive.label} →`, font: { size: 12, color: textColor } },
+                  },
+                  showlegend: false,
+                  shapes: [
+                    { type: "rect", x0: -extent, x1: 0, y0: 0, y1: extent, fillcolor: isDark ? "rgba(220,80,80,0.12)" : "rgba(220,80,80,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: 0, x1: extent, y0: 0, y1: extent, fillcolor: isDark ? "rgba(80,120,220,0.12)" : "rgba(80,120,220,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: -extent, x1: 0, y0: -extent, y1: 0, fillcolor: isDark ? "rgba(80,200,80,0.12)" : "rgba(80,200,80,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: 0, x1: extent, y0: -extent, y1: 0, fillcolor: isDark ? "rgba(160,80,200,0.12)" : "rgba(160,80,200,0.15)", line: { width: 0 }, layer: "below" },
+                  ],
+                };
+              })()}
               config={{ displayModeBar: false, responsive: true }}
               style={{ width: "100%", height: "500px" }}
             />
