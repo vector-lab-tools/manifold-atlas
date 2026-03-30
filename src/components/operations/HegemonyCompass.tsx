@@ -80,12 +80,32 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [plottedConcepts, setPlottedConcepts] = useState<PlottedConcept[]>([]);
-  const [zoomOverride, setZoomOverride] = useState<number | null>(null); // null = auto
+  const [zoomOverride, setZoomOverride] = useState<number | null>(null);
+  // Custom axis state
+  const [customXNegLabel, setCustomXNegLabel] = useState("");
+  const [customXNegTerms, setCustomXNegTerms] = useState("");
+  const [customXPosLabel, setCustomXPosLabel] = useState("");
+  const [customXPosTerms, setCustomXPosTerms] = useState("");
+  const [customYNegLabel, setCustomYNegLabel] = useState("");
+  const [customYNegTerms, setCustomYNegTerms] = useState("");
+  const [customYPosLabel, setCustomYPosLabel] = useState("");
+  const [customYPosTerms, setCustomYPosTerms] = useState("");
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
   const isDark = settings.darkMode;
 
-  const preset = PRESETS[selectedPreset];
+  const isCustom = selectedPreset === "custom";
+  const preset: CompassPreset = isCustom ? {
+    name: "Custom",
+    xAxis: {
+      negative: { label: customXNegLabel || "Left", terms: customXNegTerms.split(",").map(s => s.trim()).filter(s => s) },
+      positive: { label: customXPosLabel || "Right", terms: customXPosTerms.split(",").map(s => s.trim()).filter(s => s) },
+    },
+    yAxis: {
+      negative: { label: customYNegLabel || "Bottom", terms: customYNegTerms.split(",").map(s => s.trim()).filter(s => s) },
+      positive: { label: customYPosLabel || "Top", terms: customYPosTerms.split(",").map(s => s.trim()).filter(s => s) },
+    },
+  } : PRESETS[selectedPreset];
 
   const DEFAULT_CONCEPTS = ["democracy", "freedom", "sovereignty", "revolution", "capitalism"];
   let defaultIndex = 0;
@@ -209,22 +229,52 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
               {Object.keys(PRESETS).map(name => (
                 <option key={name} value={name}>{name}</option>
               ))}
+              <option value="custom">Custom axes</option>
             </select>
           </div>
 
-          {/* Axis labels */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-muted rounded-sm p-2">
-              <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                X-axis: {preset.xAxis.negative.label} &harr; {preset.xAxis.positive.label}
+          {isCustom ? (
+            <div className="space-y-3 border border-parchment rounded-sm p-3">
+              <p className="font-sans text-caption text-muted-foreground">
+                Define four poles. Each pole is a label and a comma-separated list of associated terms.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">X-axis left pole</label>
+                  <input type="text" value={customXNegLabel} onChange={e => setCustomXNegLabel(e.target.value)} placeholder="Label, e.g. Left" className="input-editorial text-body-sm py-1.5" />
+                  <input type="text" value={customXNegTerms} onChange={e => setCustomXNegTerms(e.target.value)} placeholder="Terms (comma separated)" className="input-editorial text-caption py-1" />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">X-axis right pole</label>
+                  <input type="text" value={customXPosLabel} onChange={e => setCustomXPosLabel(e.target.value)} placeholder="Label, e.g. Right" className="input-editorial text-body-sm py-1.5" />
+                  <input type="text" value={customXPosTerms} onChange={e => setCustomXPosTerms(e.target.value)} placeholder="Terms (comma separated)" className="input-editorial text-caption py-1" />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Y-axis bottom pole</label>
+                  <input type="text" value={customYNegLabel} onChange={e => setCustomYNegLabel(e.target.value)} placeholder="Label, e.g. Libertarian" className="input-editorial text-body-sm py-1.5" />
+                  <input type="text" value={customYNegTerms} onChange={e => setCustomYNegTerms(e.target.value)} placeholder="Terms (comma separated)" className="input-editorial text-caption py-1" />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Y-axis top pole</label>
+                  <input type="text" value={customYPosLabel} onChange={e => setCustomYPosLabel(e.target.value)} placeholder="Label, e.g. Authoritarian" className="input-editorial text-body-sm py-1.5" />
+                  <input type="text" value={customYPosTerms} onChange={e => setCustomYPosTerms(e.target.value)} placeholder="Terms (comma separated)" className="input-editorial text-caption py-1" />
+                </div>
               </div>
             </div>
-            <div className="bg-muted rounded-sm p-2">
-              <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                Y-axis: {preset.yAxis.negative.label} &harr; {preset.yAxis.positive.label}
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-muted rounded-sm p-2">
+                <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                  X-axis: {preset.xAxis.negative.label} &harr; {preset.xAxis.positive.label}
+                </div>
+              </div>
+              <div className="bg-muted rounded-sm p-2">
+                <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                  Y-axis: {preset.yAxis.negative.label} &harr; {preset.yAxis.positive.label}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Concept input */}
           <div className="flex items-center gap-3">
@@ -382,11 +432,58 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
               style={{ width: "100%", height: "500px" }}
             />
           </div>
-          <div className="px-5 py-3">
-            <p className="font-sans text-caption text-muted-foreground italic text-center">
-              Position = difference in average cosine similarity between opposing pole clusters.
-              Centre = equidistant from both poles on that axis.
-            </p>
+          <div className="thin-rule mx-5" />
+
+          {/* Explanation */}
+          <div className="px-5 py-5">
+            <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+              How to Read This Diagram
+            </h4>
+            <div className="space-y-2 font-body text-body-sm text-slate leading-relaxed">
+              <p>
+                Each concept is embedded into a high-dimensional vector (typically 768 to 3,072 dimensions).
+                The compass reduces this to two dimensions using a theoretically motivated method rather than
+                a statistical one like PCA or UMAP.
+              </p>
+              <p>
+                <strong>How the axes work:</strong> Each axis is defined by two opposing clusters of terms
+                (e.g. &ldquo;{preset.xAxis.negative.label}&rdquo; vs &ldquo;{preset.xAxis.positive.label}&rdquo;).
+                For each concept, we compute its average cosine similarity to every term in both clusters.
+                The concept&apos;s position on that axis is the <em>difference</em> between these two averages:
+                if it is more similar to the right-hand cluster, it sits to the right; if more similar to
+                the left-hand cluster, it sits to the left.
+              </p>
+              <p>
+                <strong>What the position means:</strong> A concept at the centre of an axis is equidistant
+                from both poles, meaning the manifold does not associate it more strongly with either cluster.
+                A concept far from centre has been pulled toward one pole, meaning the manifold has
+                <em> naturalised</em> that ideological framing as the concept&apos;s default association.
+                This is the geometric signature of hegemony: not a claim, but a tilt.
+              </p>
+              <p>
+                <strong>What the quadrant colours mean:</strong> The four coloured regions correspond to
+                the four combinations of the two axes. A concept in the top-right quadrant, for example,
+                is closer to both the right-hand pole of the x-axis and the upper pole of the y-axis.
+                The quadrants make it easy to see at a glance which ideological region each concept
+                occupies in this model&apos;s geometry.
+              </p>
+              <p>
+                <strong>Why the values are small:</strong> Cosine similarity differences between
+                ideological clusters are typically small (0.01 to 0.05) because most of the
+                embedding&apos;s dimensions encode general semantic content, not political orientation.
+                The signal is real but subtle, which is precisely the point: ideological positioning
+                in the manifold operates at the margin, not at the centre of the geometry. The compass
+                auto-zooms to make these small differences visible.
+              </p>
+              <p>
+                <strong>Limitations:</strong> The axes are defined by the cluster terms chosen, not
+                by the model itself. Different term choices would produce different axes. The compass
+                does not reveal the manifold&apos;s &ldquo;true&rdquo; political structure (if such a
+                thing exists) but rather measures association relative to the ideological vocabulary
+                you provide. This is a feature, not a bug: it lets you test specific theoretical
+                hypotheses about which framings the geometry has absorbed.
+              </p>
+            </div>
           </div>
         </div>
       ))}
