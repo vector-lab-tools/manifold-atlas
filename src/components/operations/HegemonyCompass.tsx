@@ -455,14 +455,32 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
           </div>
 
           {plottedConcepts.length > 0 && (
-            <div className="flex items-center justify-between">
-              <p className="font-sans text-caption text-muted-foreground">
-                {new Set(plottedConcepts.map(p => p.concept)).size} concept{new Set(plottedConcepts.map(p => p.concept)).size !== 1 ? "s" : ""} plotted.
-                Add more or reset to start over.
-              </p>
-              <span className="font-sans text-caption text-muted-foreground">
-                Use +/− on the chart to zoom
-              </span>
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {[...new Set(plottedConcepts.map(p => p.concept))].map(concept => (
+                  <span
+                    key={concept}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-muted rounded-sm font-sans text-body-sm group"
+                  >
+                    {concept}
+                    <button
+                      onClick={() => setPlottedConcepts(prev => prev.filter(p => p.concept !== concept))}
+                      className="text-muted-foreground hover:text-error-500 transition-colors opacity-50 group-hover:opacity-100"
+                      title={`Remove ${concept}`}
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="font-sans text-caption text-muted-foreground">
+                  {new Set(plottedConcepts.map(p => p.concept)).size} plotted. Click &times; to remove.
+                </p>
+                <span className="font-sans text-caption text-muted-foreground">
+                  +/− on chart to zoom
+                </span>
+              </div>
             </div>
           )}
         </div>
