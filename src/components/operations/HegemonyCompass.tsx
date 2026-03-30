@@ -396,16 +396,42 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-muted rounded-sm p-2">
-                <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                  X-axis: {preset.xAxis.negative.label} &harr; {preset.xAxis.positive.label}
+              {[
+                { axis: "X", neg: preset.xAxis.negative, pos: preset.xAxis.positive },
+                { axis: "Y", neg: preset.yAxis.negative, pos: preset.yAxis.positive },
+              ].map(({ axis, neg, pos }) => (
+                <div key={axis} className="bg-muted rounded-sm p-2 space-y-1.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                    {axis}-axis: {neg.label} &harr; {pos.label}
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="group relative flex-1">
+                      <div className="font-sans text-[9px] text-muted-foreground cursor-help underline decoration-dotted underline-offset-2">
+                        {neg.label} ({neg.terms.length} sentences)
+                      </div>
+                      <div className="hidden group-hover:block absolute bottom-full left-0 mb-1 z-20 w-[340px] max-h-[200px] overflow-y-auto bg-card border border-parchment-dark shadow-editorial-lg rounded-sm p-2">
+                        <ul className="space-y-1">
+                          {neg.terms.map((t, i) => (
+                            <li key={i} className="font-sans text-[10px] text-slate leading-snug">&ldquo;{t}&rdquo;</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="group relative flex-1">
+                      <div className="font-sans text-[9px] text-muted-foreground cursor-help underline decoration-dotted underline-offset-2">
+                        {pos.label} ({pos.terms.length} sentences)
+                      </div>
+                      <div className="hidden group-hover:block absolute bottom-full right-0 mb-1 z-20 w-[340px] max-h-[200px] overflow-y-auto bg-card border border-parchment-dark shadow-editorial-lg rounded-sm p-2">
+                        <ul className="space-y-1">
+                          {pos.terms.map((t, i) => (
+                            <li key={i} className="font-sans text-[10px] text-slate leading-snug">&ldquo;{t}&rdquo;</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="bg-muted rounded-sm p-2">
-                <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                  Y-axis: {preset.yAxis.negative.label} &harr; {preset.yAxis.positive.label}
-                </div>
-              </div>
+              ))}
             </div>
           )}
 
@@ -624,7 +650,15 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                 projection where both axes are conceptually interpretable, not just mathematically optimal.
               </p>
               <p>
-                <strong>How the axes work:</strong> Each axis is defined by two opposing clusters of terms
+                <strong>Pole definitions use full sentences, not single words.</strong> Each pole is defined
+                by 8-9 sentences that express clear ideological positions (e.g. &ldquo;The free market is the
+                most efficient mechanism for allocating resources&rdquo; rather than just &ldquo;free market&rdquo;).
+                Embedding models are trained on sentence-level pairs, so sentences produce sharper, more
+                precisely situated vectors than bare terms. You can hover over the axis labels above to see
+                the exact sentences defining each pole.
+              </p>
+              <p>
+                <strong>How the axes work:</strong> Each axis is defined by two opposing clusters of sentences
                 (e.g. &ldquo;{preset.xAxis.negative.label}&rdquo; vs &ldquo;{preset.xAxis.positive.label}&rdquo;).
                 For each concept, we compute its average cosine similarity to every term in both clusters.
                 The concept&apos;s position on that axis is the <em>difference</em> between these two averages:
