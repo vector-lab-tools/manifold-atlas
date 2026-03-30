@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Libre_Baskerville, Source_Serif_4, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -42,8 +43,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
-          suppressHydrationWarning
+        <Script
+          id="dark-mode-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var s=localStorage.getItem('manifold-atlas-settings');if(s&&JSON.parse(s).darkMode)document.documentElement.classList.add('dark')}catch(e){}})()`,
           }}

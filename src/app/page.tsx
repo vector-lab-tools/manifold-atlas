@@ -7,14 +7,17 @@ import { TabNav, type TabId } from "@/components/layout/TabNav";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
 import { ConceptDistance } from "@/components/operations/ConceptDistance";
+import { DistanceMatrix } from "@/components/operations/DistanceMatrix";
 import { NeighbourhoodMap } from "@/components/operations/NeighbourhoodMap";
 import { NegationGauge } from "@/components/operations/NegationGauge";
 import { NegationBattery } from "@/components/operations/NegationBattery";
 import { SemanticSectioning } from "@/components/operations/SemanticSectioning";
 import { ConceptDrift } from "@/components/operations/ConceptDrift";
 import { HegemonyCompass } from "@/components/operations/HegemonyCompass";
+import { AgonismTest } from "@/components/operations/AgonismTest";
 import { SohnRethelTest } from "@/components/operations/SohnRethelTest";
 import { SilenceDetector } from "@/components/operations/SilenceDetector";
+import { AnalogyArithmetic } from "@/components/operations/AnalogyArithmetic";
 import { Clippy } from "@/components/easter-eggs/Clippy";
 
 function AppContent() {
@@ -30,6 +33,9 @@ function AppContent() {
         <div className={activeTab === "distance" ? "" : "hidden"}>
           <ConceptDistance onQueryTime={setLastQueryTime} />
         </div>
+        <div className={activeTab === "matrix" ? "" : "hidden"}>
+          <DistanceMatrix onQueryTime={setLastQueryTime} />
+        </div>
         <div className={activeTab === "neighbourhood" ? "" : "hidden"}>
           <NeighbourhoodMap onQueryTime={setLastQueryTime} />
         </div>
@@ -39,6 +45,9 @@ function AppContent() {
         <div className={activeTab === "battery" ? "" : "hidden"}>
           <NegationBattery onQueryTime={setLastQueryTime} />
         </div>
+        <div className={activeTab === "analogy" ? "" : "hidden"}>
+          <AnalogyArithmetic onQueryTime={setLastQueryTime} />
+        </div>
         <div className={activeTab === "sectioning" ? "" : "hidden"}>
           <SemanticSectioning onQueryTime={setLastQueryTime} />
         </div>
@@ -47,6 +56,9 @@ function AppContent() {
         </div>
         <div className={activeTab === "compass" ? "" : "hidden"}>
           <HegemonyCompass onQueryTime={setLastQueryTime} />
+        </div>
+        <div className={activeTab === "agonism" ? "" : "hidden"}>
+          <AgonismTest onQueryTime={setLastQueryTime} />
         </div>
         <div className={activeTab === "abstraction" ? "" : "hidden"}>
           <SohnRethelTest onQueryTime={setLastQueryTime} />
