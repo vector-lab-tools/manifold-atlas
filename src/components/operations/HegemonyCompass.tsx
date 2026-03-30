@@ -356,10 +356,10 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                     { xref: "paper", yref: "paper", x: 0.5, y: 0, text: `↓ <b>${preset.yAxis.negative.label}</b>`, showarrow: false, font: { size: 11, color: textColor }, xanchor: "left", yanchor: "top", xshift: 8 },
                   ],
                   shapes: [
-                    { type: "rect", x0: -extent, x1: 0, y0: 0, y1: extent, fillcolor: isDark ? "rgba(220,80,80,0.12)" : "rgba(220,80,80,0.15)", line: { width: 0 }, layer: "below" },
-                    { type: "rect", x0: 0, x1: extent, y0: 0, y1: extent, fillcolor: isDark ? "rgba(80,120,220,0.12)" : "rgba(80,120,220,0.15)", line: { width: 0 }, layer: "below" },
-                    { type: "rect", x0: -extent, x1: 0, y0: -extent, y1: 0, fillcolor: isDark ? "rgba(80,200,80,0.12)" : "rgba(80,200,80,0.15)", line: { width: 0 }, layer: "below" },
-                    { type: "rect", x0: 0, x1: extent, y0: -extent, y1: 0, fillcolor: isDark ? "rgba(160,80,200,0.12)" : "rgba(160,80,200,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: -10, x1: 0, y0: 0, y1: 10, fillcolor: isDark ? "rgba(220,80,80,0.12)" : "rgba(220,80,80,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: 0, x1: 10, y0: 0, y1: 10, fillcolor: isDark ? "rgba(80,120,220,0.12)" : "rgba(80,120,220,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: -10, x1: 0, y0: -10, y1: 0, fillcolor: isDark ? "rgba(80,200,80,0.12)" : "rgba(80,200,80,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: 0, x1: 10, y0: -10, y1: 0, fillcolor: isDark ? "rgba(160,80,200,0.12)" : "rgba(160,80,200,0.15)", line: { width: 0 }, layer: "below" },
                   ],
                 };
               })()}
@@ -494,10 +494,10 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                     { xref: "paper", yref: "paper", x: 0.5, y: 0, text: `↓ <b>${preset.yAxis.negative.label}</b>`, showarrow: false, font: { size: 11, color: textColor }, xanchor: "left", yanchor: "top", xshift: 8 },
                   ],
                   shapes: [
-                    { type: "rect", x0: -extent, x1: 0, y0: 0, y1: extent, fillcolor: isDark ? "rgba(220,80,80,0.12)" : "rgba(220,80,80,0.15)", line: { width: 0 }, layer: "below" },
-                    { type: "rect", x0: 0, x1: extent, y0: 0, y1: extent, fillcolor: isDark ? "rgba(80,120,220,0.12)" : "rgba(80,120,220,0.15)", line: { width: 0 }, layer: "below" },
-                    { type: "rect", x0: -extent, x1: 0, y0: -extent, y1: 0, fillcolor: isDark ? "rgba(80,200,80,0.12)" : "rgba(80,200,80,0.15)", line: { width: 0 }, layer: "below" },
-                    { type: "rect", x0: 0, x1: extent, y0: -extent, y1: 0, fillcolor: isDark ? "rgba(160,80,200,0.12)" : "rgba(160,80,200,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: -10, x1: 0, y0: 0, y1: 10, fillcolor: isDark ? "rgba(220,80,80,0.12)" : "rgba(220,80,80,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: 0, x1: 10, y0: 0, y1: 10, fillcolor: isDark ? "rgba(80,120,220,0.12)" : "rgba(80,120,220,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: -10, x1: 0, y0: -10, y1: 0, fillcolor: isDark ? "rgba(80,200,80,0.12)" : "rgba(80,200,80,0.15)", line: { width: 0 }, layer: "below" },
+                    { type: "rect", x0: 0, x1: 10, y0: -10, y1: 0, fillcolor: isDark ? "rgba(160,80,200,0.12)" : "rgba(160,80,200,0.15)", line: { width: 0 }, layer: "below" },
                   ],
                 };
               })()}
