@@ -39,7 +39,7 @@ Place a contested concept ("freedom", "democracy", "intelligence") between two c
 Measure how far the manifold has performed the real abstraction (after Sohn-Rethel). Each pair contrasts a concrete use-value description ("a warm coat that keeps the rain off") with its abstract exchange-value equivalent ("a commodity worth twenty yards of linen"). If the distance is small, the abstraction is already complete in the geometry. If large, the use-value has partially resisted encoding. 12 pre-loaded pairs across domains from clothing to care work.
 
 ### Silence Detector
-Measure the local density of the manifold around different domains. Dense regions mean the model compresses diverse realities into few coordinates (low resolution). Sparse regions mean it preserves fine-grained distinctions (high resolution). Pre-loaded comparisons: financial derivatives vs subsistence farming, Silicon Valley vs indigenous ecological knowledge, corporate management vs care work. The density differential reveals where capital has invested in encoding and where it has not.
+Compare how much geometric space the manifold allocates to different domains. When terms within a domain are spread apart (low pairwise similarity), the manifold distinguishes between them, allocating more representational space. When terms are packed together (high pairwise similarity), the manifold compresses them, treating distinct concepts as near-interchangeable. Pre-loaded comparisons: financial derivatives vs subsistence farming, Silicon Valley vs indigenous ecological knowledge, corporate management vs care work. The differential reveals which domains the geometry takes seriously and which it flattens.
 
 ## Supported Embedding Providers
 
@@ -173,7 +173,7 @@ The tool operationalises this framework empirically. Key concepts and the featur
 - **Geometric stress testing** -- embedding the same concept in different contexts to measure how the manifold warps under contextual pressure. Concept Drift operationalises this.
 - **Real abstraction** -- the embedding layer performs Sohn-Rethel's real abstraction at the level of meaning. The Real Abstraction Test measures how far the manifold has completed this abstraction across domains, from clothing to care work.
 - **Hegemonic defaults** -- the Hegemony Compass measures which ideological framing the geometry has naturalised as the default meaning of contested concepts like "freedom" and "democracy."
-- **The taxonomy of silence** -- the Silence Detector measures density differentials between domains, revealing where capital has invested in encoding and where the manifold thins out.
+- **The taxonomy of silence** -- the Silence Detector compares how much geometric space the manifold allocates to different domains. Where terms are packed together, the geometry compresses; where they are spread apart, it distinguishes. The differential reveals which domains the geometry takes seriously.
 - **The proprietary medium** -- every vector observed through the telescope was computed by a corporation that controls the geometry. The political economy of the method is built into its conditions of possibility. Multi-model comparison reveals whether geometric politics are structural to the medium or contingent on training decisions.
 
 For the full theoretical framework, see:

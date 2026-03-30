@@ -132,11 +132,12 @@ export function SilenceDetector({ onQueryTime }: SilenceDetectorProps) {
           <ResetButton onReset={() => { setResults([]); setError(null); }} />
         </div>
         <p className="font-sans text-body-sm text-slate mb-4">
-          Measure the local density of the manifold around different domains. Dense regions
-          mean high resolution: the model distinguishes fine-grained differences. Sparse regions
-          mean low resolution: the model compresses diverse realities into a few coordinates.
-          The density differential reveals where capital has invested in encoding and where
-          it has not. The sparse regions are the taxonomy of silence made visible.
+          Compare how much geometric space the manifold allocates to different domains.
+          When terms within a domain are spread apart (low pairwise similarity), the manifold
+          distinguishes between them, allocating more representational space. When terms are packed
+          tightly together (high pairwise similarity), the manifold compresses them, treating
+          distinct concepts as near-interchangeable. The differential reveals which domains
+          the geometry takes seriously and which it flattens.
         </p>
 
         <div className="space-y-3">
@@ -239,8 +240,8 @@ export function SilenceDetector({ onQueryTime }: SilenceDetectorProps) {
               Density Comparison
             </h4>
             <p className="font-sans text-caption text-muted-foreground mb-4">
-              Higher internal similarity = denser region = more terms packed closely together.
-              Lower internal similarity = sparser region = terms more spread out, more resolution.
+              Higher pairwise similarity = terms packed together = less geometric space allocated = lower resolution.
+              Lower pairwise similarity = terms spread apart = more geometric space allocated = higher resolution.
             </p>
 
             <SimilarityBridge
