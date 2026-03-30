@@ -107,7 +107,12 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
     },
   } : PRESETS[selectedPreset];
 
-  const DEFAULT_CONCEPTS = ["democracy", "freedom", "sovereignty", "revolution", "capitalism"];
+  const DEFAULT_CONCEPTS: Record<string, string[]> = {
+    "Political Compass": ["democracy", "freedom", "sovereignty", "revolution", "capitalism"],
+    "Technology Compass": ["artificial intelligence", "Wikipedia", "blockchain", "surveillance", "open source"],
+    "Knowledge Compass": ["ethnography", "machine learning", "psychoanalysis", "randomised controlled trial", "deconstruction"],
+    "custom": ["concept one", "concept two", "concept three"],
+  };
   let defaultIndex = 0;
 
   const plotConcepts = async (concepts: string[]) => {
@@ -180,8 +185,8 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
   const handleAddConcept = async () => {
     const input = conceptInput.trim();
     if (!input) {
-      // Plot all defaults at once
-      await plotConcepts(DEFAULT_CONCEPTS);
+      // Plot all defaults for the selected compass
+      await plotConcepts(DEFAULT_CONCEPTS[selectedPreset] || DEFAULT_CONCEPTS["Political Compass"]);
     } else {
       // Support comma-separated concepts
       const concepts = input.split(",").map(s => s.trim()).filter(s => s);
