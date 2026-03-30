@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, ChevronRight, ChevronDown, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
@@ -64,10 +64,15 @@ const PRESETS: Record<string, CompassPreset> = {
 
 interface PlottedConcept {
   concept: string;
-  x: number; // position on x-axis (-1 to +1)
-  y: number; // position on y-axis (-1 to +1)
+  x: number;
+  y: number;
   modelId: string;
   modelName: string;
+  // Raw pole similarities for the technical dashboard
+  simXNeg: number;
+  simXPos: number;
+  simYNeg: number;
+  simYPos: number;
 }
 
 interface HegemonyCompassProps {
@@ -81,6 +86,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
   const [error, setError] = useState<unknown>(null);
   const [plottedConcepts, setPlottedConcepts] = useState<PlottedConcept[]>([]);
   const [zoomOverride, setZoomOverride] = useState<number | null>(null);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
   // Custom axis state
   const [customXNegLabel, setCustomXNegLabel] = useState("");
   const [customXNegTerms, setCustomXNegTerms] = useState("");
@@ -168,6 +174,10 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
             y,
             modelId: m.id,
             modelName: spec?.name || m.id,
+            simXNeg: avgSimXNeg,
+            simXPos: avgSimXPos,
+            simYNeg: avgSimYNeg,
+            simYPos: avgSimYPos,
           });
         }
       }
@@ -533,6 +543,132 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
               </p>
             </div>
           </div>
+
+          <div className="thin-rule mx-5" />
+
+          {/* Technical Dashboard toggle */}
+          <div className="px-5 py-3">
+            <button
+              onClick={() => setDashboardOpen(!dashboardOpen)}
+              className="flex items-center gap-1.5 font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold hover:text-foreground transition-colors"
+            >
+              {dashboardOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              Technical Dashboard
+            </button>
+          </div>
+
+          {dashboardOpen && (
+            <div className="px-5 pb-5 space-y-4">
+              {/* Summary stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-muted rounded-sm p-2.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Concepts Plotted</div>
+                  <div className="font-sans text-body-sm font-bold mt-0.5">{points.length}</div>
+                </div>
+                <div className="bg-muted rounded-sm p-2.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">X-axis Range</div>
+                  <div className="font-sans text-body-sm font-bold mt-0.5 tabular-nums">
+                    {Math.min(...points.map(p => p.x)).toFixed(4)} to {Math.max(...points.map(p => p.x)).toFixed(4)}
+                  </div>
+                </div>
+                <div className="bg-muted rounded-sm p-2.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Y-axis Range</div>
+                  <div className="font-sans text-body-sm font-bold mt-0.5 tabular-nums">
+                    {Math.min(...points.map(p => p.y)).toFixed(4)} to {Math.max(...points.map(p => p.y)).toFixed(4)}
+                  </div>
+                </div>
+                <div className="bg-muted rounded-sm p-2.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Axis Terms</div>
+                  <div className="font-sans text-body-sm font-bold mt-0.5">
+                    {preset.xAxis.negative.terms.length + preset.xAxis.positive.terms.length + preset.yAxis.negative.terms.length + preset.yAxis.positive.terms.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Per-concept table */}
+              <div className="overflow-x-auto">
+                <table className="w-full font-sans text-body-sm">
+                  <thead>
+                    <tr className="border-b border-parchment">
+                      <th className="text-left px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Concept</th>
+                      <th className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Sim to {preset.xAxis.negative.label}</th>
+                      <th className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Sim to {preset.xAxis.positive.label}</th>
+                      <th className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">X pos</th>
+                      <th className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Sim to {preset.yAxis.negative.label}</th>
+                      <th className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Sim to {preset.yAxis.positive.label}</th>
+                      <th className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Y pos</th>
+                      <th className="text-left px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Quadrant</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-parchment">
+                    {points.map((p, i) => {
+                      const quadrant =
+                        p.x >= 0 && p.y >= 0 ? `${preset.xAxis.positive.label} / ${preset.yAxis.positive.label}` :
+                        p.x < 0 && p.y >= 0 ? `${preset.xAxis.negative.label} / ${preset.yAxis.positive.label}` :
+                        p.x >= 0 && p.y < 0 ? `${preset.xAxis.positive.label} / ${preset.yAxis.negative.label}` :
+                        `${preset.xAxis.negative.label} / ${preset.yAxis.negative.label}`;
+                      return (
+                        <tr key={i} className="hover:bg-cream/30 transition-colors">
+                          <td className="px-2 py-1.5 font-medium">{p.concept}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{p.simXNeg.toFixed(4)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{p.simXPos.toFixed(4)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums font-semibold" style={{ color: p.x >= 0 ? "#3b82f6" : "#ef4444" }}>{p.x >= 0 ? "+" : ""}{p.x.toFixed(4)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{p.simYNeg.toFixed(4)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{p.simYPos.toFixed(4)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums font-semibold" style={{ color: p.y >= 0 ? "#3b82f6" : "#ef4444" }}>{p.y >= 0 ? "+" : ""}{p.y.toFixed(4)}</td>
+                          <td className="px-2 py-1.5 text-caption">{quadrant}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pole terms reference */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted rounded-sm p-2.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{preset.xAxis.negative.label} (X−)</div>
+                  <p className="font-sans text-caption text-muted-foreground mt-1">{preset.xAxis.negative.terms.join(", ")}</p>
+                </div>
+                <div className="bg-muted rounded-sm p-2.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{preset.xAxis.positive.label} (X+)</div>
+                  <p className="font-sans text-caption text-muted-foreground mt-1">{preset.xAxis.positive.terms.join(", ")}</p>
+                </div>
+                <div className="bg-muted rounded-sm p-2.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{preset.yAxis.negative.label} (Y−)</div>
+                  <p className="font-sans text-caption text-muted-foreground mt-1">{preset.yAxis.negative.terms.join(", ")}</p>
+                </div>
+                <div className="bg-muted rounded-sm p-2.5">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{preset.yAxis.positive.label} (Y+)</div>
+                  <p className="font-sans text-caption text-muted-foreground mt-1">{preset.yAxis.positive.terms.join(", ")}</p>
+                </div>
+              </div>
+
+              {/* Export */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    const rows = ["concept,sim_x_neg,sim_x_pos,x_position,sim_y_neg,sim_y_pos,y_position,quadrant"];
+                    for (const p of points) {
+                      const q = p.x >= 0 && p.y >= 0 ? "top-right" : p.x < 0 && p.y >= 0 ? "top-left" : p.x >= 0 && p.y < 0 ? "bottom-right" : "bottom-left";
+                      rows.push(`"${p.concept}",${p.simXNeg.toFixed(6)},${p.simXPos.toFixed(6)},${p.x.toFixed(6)},${p.simYNeg.toFixed(6)},${p.simYPos.toFixed(6)},${p.y.toFixed(6)},${q}`);
+                    }
+                    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `hegemony-compass-${modelName}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="btn-editorial-ghost text-caption px-3 py-1.5"
+                >
+                  <Download size={14} className="mr-1" />
+                  Export CSV
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
