@@ -48,15 +48,14 @@ export default function RootLayout({
       className={`${libreBaskerville.variable} ${sourceSerif.variable} ${inter.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <Script
-          id="dark-mode-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem('manifold-atlas-settings');if(s&&JSON.parse(s).darkMode)document.documentElement.classList.add('dark')}catch(e){}})()`,
-          }}
-        />
-      </head>
+      <head />
+      <Script
+        id="dark-mode-init"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var s=localStorage.getItem('manifold-atlas-settings');if(s&&JSON.parse(s).darkMode)document.documentElement.classList.add('dark')}catch(e){}})()`,
+        }}
+      />
       <body className="font-body antialiased bg-ivory text-ink selection:bg-burgundy/20 selection:text-burgundy-900">
         {children}
       </body>

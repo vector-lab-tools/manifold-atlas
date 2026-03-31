@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { useRef } from "react";
 import { Loader2, Waypoints, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
@@ -11,6 +12,8 @@ import { projectPCA3D } from "@/lib/geometry/pca";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
 import { similarityColor } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
+import { Plot3DControls } from "@/components/viz/Plot3DControls";
+import type { PlotlyPlotHandle } from "@/components/viz/PlotlyPlot";
 
 const PlotlyPlot = dynamic(
   () => import("@/components/viz/PlotlyPlot").then(mod => ({ default: mod.PlotlyPlot })),
@@ -341,68 +344,14 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
                 geometric identity. If they scatter, the embedding model is highly sensitive to
                 how the concept is expressed.
               </p>
-              <div className="rounded-sm overflow-hidden border border-parchment" style={{ background: bgColor }}>
-                <PlotlyPlot
-                  data={(() => {
-                    // Group by category for colour coding
-                    const categories = ["bare", "definitional", "propositional", "negation", "cultural"];
-                    return categories.map(cat => {
-                      const indices = sensitivityResult.variants
-                        .map((v, i) => v.category === cat ? i : -1)
-                        .filter(i => i >= 0);
-                      if (indices.length === 0) return null;
-                      // Short labels: truncate to ~30 chars for readability
-                      const shortLabels = indices.map(i => {
-                        const t = sensitivityResult.variants[i].text;
-                        return t.length > 35 ? t.slice(0, 32) + "..." : t;
-                      });
-                      return {
-                        x: indices.map(i => projection[i][0]),
-                        y: indices.map(i => projection[i][1]),
-                        z: indices.map(i => projection[i][2]),
-                        text: shortLabels,
-                        hovertext: indices.map(i => sensitivityResult.variants[i].text),
-                        mode: "markers+text",
-                        type: "scatter3d",
-                        textposition: "top center",
-                        textfont: { size: cat === "bare" ? 14 : 11, family: "Inter, system-ui, sans-serif", color: CATEGORY_COLORS[cat] },
-                        marker: {
-                          size: cat === "bare" ? 12 : 7,
-                          color: CATEGORY_COLORS[cat],
-                          symbol: cat === "bare" ? "diamond" : "circle",
-                        },
-                        hoverinfo: "text",
-                        name: cat,
-                        showlegend: false,
-                      };
-                    }).filter(Boolean);
-                  })()}
-                  layout={{
-                    height: 450,
-                    margin: { t: 0, r: 0, b: 0, l: 0 },
-                    paper_bgcolor: bgColor,
-                    scene: {
-                      bgcolor: bgColor,
-                      xaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
-                      yaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
-                      zaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
-                      camera: { eye: { x: 1.8, y: 1.8, z: 1.0 } },
-                    },
-                    showlegend: false,
-                  }}
-                  config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
-                  style={{ width: "100%", height: "450px" }}
-                />
-              </div>
-              {/* Legend */}
-              <div className="flex flex-wrap gap-3 mt-2 justify-center">
-                {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
-                  <span key={cat} className="flex items-center gap-1 font-sans text-[10px] text-muted-foreground">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                    {cat}
-                  </span>
-                ))}
-              </div>
+              <Sensitivity3DPlot
+                bgColor={bgColor}
+                gridColor={gridColor}
+                projection={projection}
+                variants={sensitivityResult.variants}
+                concept={sensitivityResult.concept}
+                modelId={m.modelId}
+              />
             </div>
 
             <div className="thin-rule mx-5" />
@@ -821,5 +770,72 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
         </div>
       </div>
     </div>
+  );
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function Sensitivity3DPlot({ bgColor, gridColor, projection, variants, concept, modelId }: {
+  bgColor: string; gridColor: string; projection: [number, number, number][]; variants: LabelledVariant[]; concept: string; modelId: string;
+}) {
+  const plotRef = useRef<PlotlyPlotHandle>(null);
+
+  const categories = ["bare", "definitional", "propositional", "negation", "cultural"];
+  const traces: any[] = categories.map(cat => {
+    const indices = variants.map((v, i) => v.category === cat ? i : -1).filter(i => i >= 0);
+    if (indices.length === 0) return null;
+    const shortLabels = indices.map(i => {
+      const t = variants[i].text;
+      return t.length > 35 ? t.slice(0, 32) + "..." : t;
+    });
+    return {
+      x: indices.map(i => projection[i][0]),
+      y: indices.map(i => projection[i][1]),
+      z: indices.map(i => projection[i][2]),
+      text: shortLabels,
+      hovertext: indices.map(i => variants[i].text),
+      mode: "markers+text",
+      type: "scatter3d",
+      textposition: "top center",
+      textfont: { size: cat === "bare" ? 14 : 11, family: "Inter, system-ui, sans-serif", color: CATEGORY_COLORS[cat] },
+      marker: { size: cat === "bare" ? 12 : 7, color: CATEGORY_COLORS[cat], symbol: cat === "bare" ? "diamond" : "circle" },
+      hoverinfo: "text",
+      name: cat,
+      showlegend: false,
+    };
+  }).filter(Boolean);
+
+  return (
+    <>
+      <div className="relative rounded-sm overflow-hidden border border-parchment" style={{ background: bgColor }}>
+        <Plot3DControls plotRef={plotRef} exportFilename={`sensitivity-${concept}-${modelId}`} />
+        <PlotlyPlot
+          ref={plotRef}
+          data={traces}
+          layout={{
+            height: 450,
+            margin: { t: 0, r: 0, b: 0, l: 0 },
+            paper_bgcolor: bgColor,
+            scene: {
+              bgcolor: bgColor,
+              xaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
+              yaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
+              zaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
+              camera: { eye: { x: 1.8, y: 1.8, z: 1.0 } },
+            },
+            showlegend: false,
+          }}
+          config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
+          style={{ width: "100%", height: "450px" }}
+        />
+      </div>
+      <div className="flex flex-wrap gap-3 mt-2 justify-center">
+        {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
+          <span key={cat} className="flex items-center gap-1 font-sans text-[10px] text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+            {cat}
+          </span>
+        ))}
+      </div>
+    </>
   );
 }
