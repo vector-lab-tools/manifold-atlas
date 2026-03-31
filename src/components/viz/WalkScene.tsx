@@ -292,41 +292,19 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
   );
 }
 
-// Zoom controls overlay
-function ZoomButtons({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement | null> }) {
-  const zoom = (factor: number) => {
-    // Access the Three.js camera via the canvas's store
-    const canvas = canvasRef.current?.querySelector("canvas");
-    if (!canvas) return;
-    // @ts-expect-error - accessing R3F internals
-    const store = canvas.__r3f;
-    if (!store) return;
-    const camera = store.getState().camera;
-    if (camera) {
-      camera.position.multiplyScalar(factor);
-    }
+// Camera zoom helper - lives inside the Canvas to access useThree
+function CameraZoomHandler({ zoomRef }: { zoomRef: React.MutableRefObject<((factor: number) => void) | null> }) {
+  const { camera } = useThree();
+  zoomRef.current = (factor: number) => {
+    camera.position.multiplyScalar(factor);
   };
-
-  return (
-    <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
-      <button
-        onClick={() => zoom(0.8)}
-        className="w-7 h-7 rounded-sm bg-card/80 border border-parchment-dark text-foreground hover:bg-card flex items-center justify-center font-sans text-body-sm font-bold shadow-editorial"
-        title="Zoom in"
-      >+</button>
-      <button
-        onClick={() => zoom(1.25)}
-        className="w-7 h-7 rounded-sm bg-card/80 border border-parchment-dark text-foreground hover:bg-card flex items-center justify-center font-sans text-body-sm font-bold shadow-editorial"
-        title="Zoom out"
-      >−</button>
-    </div>
-  );
+  return null;
 }
 
 export function WalkScene(props: WalkSceneProps) {
   const bgColor = props.isDark ? "#0a0a1a" : "#f5f2ec";
   const [crashed, setCrashed] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const zoomRef = useRef<((factor: number) => void) | null>(null);
 
   if (crashed) {
     return (
@@ -341,11 +319,22 @@ export function WalkScene(props: WalkSceneProps) {
 
   return (
     <div
-      ref={containerRef}
       className="rounded-sm overflow-hidden border border-parchment relative"
       style={{ height: 500, background: bgColor }}
     >
-      <ZoomButtons canvasRef={containerRef} />
+      {/* Zoom buttons */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+        <button
+          onClick={() => zoomRef.current?.(0.8)}
+          className="w-7 h-7 rounded-sm bg-card/80 border border-parchment-dark text-foreground hover:bg-card flex items-center justify-center font-sans text-body-sm font-bold shadow-editorial"
+          title="Zoom in"
+        >+</button>
+        <button
+          onClick={() => zoomRef.current?.(1.25)}
+          className="w-7 h-7 rounded-sm bg-card/80 border border-parchment-dark text-foreground hover:bg-card flex items-center justify-center font-sans text-body-sm font-bold shadow-editorial"
+          title="Zoom out"
+        >−</button>
+      </div>
       <Canvas
         camera={{ position: [15, 15, 10], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
@@ -365,6 +354,7 @@ export function WalkScene(props: WalkSceneProps) {
         }}
       >
         <color attach="background" args={[bgColor]} />
+        <CameraZoomHandler zoomRef={zoomRef} />
         <Scene {...props} />
       </Canvas>
       <div className="absolute bottom-2 left-2 font-sans text-[9px] text-muted-foreground opacity-60">
