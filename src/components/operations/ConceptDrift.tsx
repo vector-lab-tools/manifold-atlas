@@ -20,15 +20,15 @@ const PlotlyPlot = dynamic(
 const DEFAULT_CONCEPT = "justice";
 const DEFAULT_CONTEXTS = [
   "justice",
-  "justice in the context of punishment",
-  "justice in the context of mercy",
-  "justice in the context of economics",
-  "justice in the context of war",
-  "justice in the context of technology",
-  "justice in the context of gender",
-  "justice in the context of race",
-  "justice in the context of climate",
-  "justice in the context of algorithms",
+  "Justice requires that the punishment fit the crime",
+  "Justice is tempered by mercy and the capacity for forgiveness",
+  "Economic justice demands the fair distribution of wealth and resources",
+  "Justice in wartime means holding combatants accountable for their actions",
+  "Algorithmic justice requires that automated decisions do not discriminate",
+  "Gender justice means the equal treatment of all people regardless of gender",
+  "Racial justice demands the dismantling of systemic discrimination",
+  "Climate justice holds polluting nations responsible for environmental harm",
+  "Restorative justice focuses on repairing harm rather than imposing punishment",
 ];
 
 interface DriftModelResult {
@@ -128,10 +128,12 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
           <ResetButton onReset={() => { setConcept(""); setContextsText(""); setResult(null); setError(null); }} />
         </div>
         <p className="font-sans text-body-sm text-slate mb-4">
-          How much does context warp the manifold? Embed the same concept with different
-          contextual framings and watch it move through the geometry. The 3D drift cloud
-          shows all positions simultaneously; the pathway heatmap reveals which contexts
-          are geometrically close to each other and which create divergent routes through the manifold.
+          How much does context warp the manifold? Embed the same concept in different
+          propositional sentences and watch it move through the geometry. Use full claims
+          rather than bare phrases: &ldquo;Justice requires that the punishment fit the
+          crime&rdquo; produces a sharper embedding than &ldquo;justice in the context of
+          punishment.&rdquo; The 3D drift cloud shows all positions simultaneously; the
+          pathway heatmap reveals which framings converge and which diverge.
         </p>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -153,7 +155,8 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
           />
           <div className="flex items-center justify-between">
             <p className="font-sans text-caption text-muted-foreground">
-              One variant per line. First line is the bare concept. Remaining lines are contextual framings.
+              One variant per line. First line is the bare concept. Remaining lines should be
+              full propositional sentences that situate the concept in different domains.
             </p>
             <button
               onClick={handleCompute}
