@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useEffect, useState, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Text, Line } from "@react-three/drei";
+import { OrbitControls, Text, Line, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 
 interface WalkStep {
@@ -126,15 +126,16 @@ function RefDot({ position, label, isNearby, rank, isDark }: {
         />
       </mesh>
       {isNearby && (
-        <Text
-          position={[0, size + 0.05, 0]}
-          fontSize={fontSize}
-          color={isDark ? "#f0e8d0" : "#3a3020"}
-          anchorX="center"
-          anchorY="bottom"
-        >
-          {label}
-        </Text>
+        <Billboard position={[0, size + 0.05, 0]}>
+          <Text
+            fontSize={fontSize}
+            color={isDark ? "#f0e8d0" : "#3a3020"}
+            anchorX="center"
+            anchorY="bottom"
+          >
+            {label}
+          </Text>
+        </Billboard>
       )}
     </group>
   );
@@ -152,16 +153,16 @@ function AnchorMarker({ position, label, color }: {
         <boxGeometry args={[0.12, 0.12, 0.12]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
       </mesh>
-      <Text
-        position={[0, 0.2, 0]}
-        fontSize={0.1}
-        color={color}
-        anchorX="center"
-        anchorY="bottom"
-        fontWeight="bold"
-      >
-        {label}
-      </Text>
+      <Billboard position={[0, 0.2, 0]}>
+        <Text
+          fontSize={0.1}
+          color={color}
+          anchorX="center"
+          anchorY="bottom"
+        >
+          {label}
+        </Text>
+      </Billboard>
     </group>
   );
 }
@@ -262,26 +263,28 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
       <Particle position={currentScaled} color="#ef4444" />
 
       {/* Blend ratio label above particle */}
-      <Text
-        position={[currentScaled[0], currentScaled[1] + 0.25, currentScaled[2]]}
-        fontSize={0.06}
-        color={isDark ? "#aaaacc" : "#666655"}
-        anchorX="center"
-        anchorY="bottom"
-      >
-        {`${Math.round((1 - currentStep.position) * 100)}% ${anchorA}  ${Math.round(currentStep.position * 100)}% ${anchorB}`}
-      </Text>
+      <Billboard position={[currentScaled[0], currentScaled[1] + 0.25, currentScaled[2]]}>
+        <Text
+          fontSize={0.06}
+          color={isDark ? "#aaaacc" : "#666655"}
+          anchorX="center"
+          anchorY="bottom"
+        >
+          {`${Math.round((1 - currentStep.position) * 100)}% ${anchorA}  ${Math.round(currentStep.position * 100)}% ${anchorB}`}
+        </Text>
+      </Billboard>
 
       {/* Nearest concept label below particle */}
-      <Text
-        position={[currentScaled[0], currentScaled[1] - 0.2, currentScaled[2]]}
-        fontSize={0.09}
-        color="#ef4444"
-        anchorX="center"
-        anchorY="top"
-      >
-        {currentStep.nearestConcept}
-      </Text>
+      <Billboard position={[currentScaled[0], currentScaled[1] - 0.2, currentScaled[2]]}>
+        <Text
+          fontSize={0.09}
+          color="#ef4444"
+          anchorX="center"
+          anchorY="top"
+        >
+          {currentStep.nearestConcept}
+        </Text>
+      </Billboard>
 
       {/* Camera controls */}
       {!firstPerson && <OrbitControls enableDamping dampingFactor={0.05} enableZoom enableRotate enablePan />}
@@ -290,9 +293,41 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
   );
 }
 
+// Zoom controls overlay
+function ZoomButtons({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement | null> }) {
+  const zoom = (factor: number) => {
+    // Access the Three.js camera via the canvas's store
+    const canvas = canvasRef.current?.querySelector("canvas");
+    if (!canvas) return;
+    // @ts-expect-error - accessing R3F internals
+    const store = canvas.__r3f;
+    if (!store) return;
+    const camera = store.getState().camera;
+    if (camera) {
+      camera.position.multiplyScalar(factor);
+    }
+  };
+
+  return (
+    <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+      <button
+        onClick={() => zoom(0.8)}
+        className="w-7 h-7 rounded-sm bg-card/80 border border-parchment-dark text-foreground hover:bg-card flex items-center justify-center font-sans text-body-sm font-bold shadow-editorial"
+        title="Zoom in"
+      >+</button>
+      <button
+        onClick={() => zoom(1.25)}
+        className="w-7 h-7 rounded-sm bg-card/80 border border-parchment-dark text-foreground hover:bg-card flex items-center justify-center font-sans text-body-sm font-bold shadow-editorial"
+        title="Zoom out"
+      >−</button>
+    </div>
+  );
+}
+
 export function WalkScene(props: WalkSceneProps) {
   const bgColor = props.isDark ? "#0a0a1a" : "#f5f2ec";
   const [crashed, setCrashed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   if (crashed) {
     return (
@@ -307,9 +342,11 @@ export function WalkScene(props: WalkSceneProps) {
 
   return (
     <div
+      ref={containerRef}
       className="rounded-sm overflow-hidden border border-parchment relative"
       style={{ height: 500, background: bgColor }}
     >
+      <ZoomButtons canvasRef={containerRef} />
       <Canvas
         camera={{ position: [15, 15, 10], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
