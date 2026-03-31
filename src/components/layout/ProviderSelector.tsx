@@ -19,12 +19,14 @@ export function ProviderSelector() {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // All enabled models across all providers
+  // All enabled models across all providers (only if provider is usable)
   const allEnabled: Array<{ providerId: EmbeddingProviderId; modelId: string; modelName: string; providerName: string }> = [];
   for (const [pid, ps] of Object.entries(settings.providers)) {
     if (!ps.enabled) continue;
     const provider = EMBEDDING_PROVIDERS[pid as EmbeddingProviderId];
     if (!provider) continue;
+    // Skip if provider requires API key but none is configured
+    if (provider.requiresApiKey && !ps.apiKey) continue;
     for (const mid of ps.selectedModels) {
       const spec = EMBEDDING_MODELS.find(m => m.id === mid && m.providerId === pid);
       if (spec) {
@@ -150,6 +152,9 @@ export function ProviderSelector() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-sans text-caption font-semibold text-foreground">
                       {provider.name}
+                      {ps.enabled && provider.requiresApiKey && !ps.apiKey && (
+                        <span className="ml-1.5 text-[9px] text-warning-500 font-normal">needs key</span>
+                      )}
                     </span>
                     <button
                       onClick={() => updateProvider(pid, { enabled: !ps.enabled })}
