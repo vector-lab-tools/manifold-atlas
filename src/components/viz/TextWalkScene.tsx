@@ -1,32 +1,30 @@
 "use client";
 
-import { useRef, useMemo, useEffect, useState, useCallback } from "react";
+import { useRef, useMemo, useState, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Text, Line, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 
-interface WalkStep {
-  position: number;
-  nearestConcept: string;
-  nearestSimilarity: number;
+interface TextWalkStep {
+  wordIndex: number;
+  word: string;
+  textPosition: number;
   coords: [number, number, number];
-  nearby: Array<{ concept: string; similarity: number; coordIdx: number }>;
+  nearby: Array<{ word: string; similarity: number; coordIdx: number }>;
 }
 
-interface ReferencePoint {
-  concept: string;
+interface WordPoint {
+  word: string;
   coords: [number, number, number];
+  frequency: number;
 }
 
-interface WalkSceneProps {
-  steps: WalkStep[];
-  anchorA: string;
-  anchorB: string;
-  anchorCoords: { a: [number, number, number]; b: [number, number, number] };
-  referencePoints: ReferencePoint[];
+interface TextWalkSceneProps {
+  steps: TextWalkStep[];
+  wordPoints: WordPoint[];
   walking: boolean;
   firstPerson: boolean;
-  progress: number; // 0 to steps.length - 1
+  progress: number;
   onProgressChange: (p: number) => void;
   isDark: boolean;
 }
@@ -75,63 +73,88 @@ function CameraFollower({ target, lookAt, active }: {
   return null;
 }
 
-// The path line
-function PathLine({ points, color, width = 1 }: { points: [number, number, number][]; color: string; width?: number }) {
-  return (
-    <Line
-      points={points}
-      color={color}
-      lineWidth={width}
-      transparent
-      opacity={0.5}
-    />
-  );
-}
-
-// Trail behind the particle
-function Trail({ points, color }: { points: [number, number, number][]; color: string }) {
+// Trail behind the particle — fades from soft pink (old) to bright red (recent)
+function Trail({ points }: { points: [number, number, number][] }) {
   if (points.length < 2) return null;
-  return (
-    <Line
-      points={points}
-      color={color}
-      lineWidth={3}
-      transparent
-      opacity={0.8}
-    />
-  );
+
+  // Split trail into segments with fading colour
+  const totalSegs = points.length - 1;
+  const segments = [];
+
+  for (let i = 0; i < totalSegs; i++) {
+    const age = (totalSegs - i) / totalSegs; // 1 = oldest, 0 = newest
+    const opacity = 0.15 + (1 - age) * 0.7; // 0.15 (old) → 0.85 (new)
+    // Blend from soft pink to bright red
+    const r = Math.round(239 - age * 80);  // 159..239
+    const g = Math.round(68 - age * 40);   // 28..68
+    const b = Math.round(68 - age * 20);   // 48..68
+    const color = `rgb(${r},${g},${b})`;
+
+    segments.push(
+      <Line
+        key={i}
+        points={[points[i], points[i + 1]]}
+        color={color}
+        lineWidth={Math.max(1, 3 - age * 2)}
+        transparent
+        opacity={opacity}
+      />
+    );
+  }
+
+  return <>{segments}</>;
 }
 
-// Reference concept dot
-function RefDot({ position, label, isNearby, rank, isDark }: {
+// Word dot in the cloud
+function WordDot({ position, label, isCurrent, isNearby, rank, frequency, maxFreq, isDark }: {
   position: [number, number, number];
   label: string;
+  isCurrent: boolean;
   isNearby: boolean;
-  rank: number; // 0 = nearest, higher = further
+  rank: number;
+  frequency: number;
+  maxFreq: number;
   isDark: boolean;
 }) {
-  const size = isNearby ? Math.max(0.04, 0.1 - rank * 0.008) : 0.015;
-  const fontSize = isNearby ? Math.max(0.06, 0.12 - rank * 0.008) : 0;
+  const freqScale = Math.min(frequency / Math.max(maxFreq, 1), 1);
+  const baseSize = isCurrent ? 0.12 : isNearby ? Math.max(0.04, 0.09 - rank * 0.006) : 0.02 + freqScale * 0.03;
+  const fontSize = isCurrent ? 0.1 : isNearby ? Math.max(0.06, 0.1 - rank * 0.006) : 0.035 + freqScale * 0.015;
+
+  const color = isCurrent
+    ? "#ef4444"
+    : isNearby
+      ? "#d4a017"
+      : (isDark ? "#555566" : "#bbb0a5");
+
+  const emissive = isCurrent ? "#ef4444" : isNearby ? "#d4a017" : "#000000";
+  const emissiveIntensity = isCurrent ? 0.8 : isNearby ? 0.4 : 0;
+  const opacity = isCurrent ? 1 : isNearby ? 0.9 : 0.15 + freqScale * 0.2;
+
+  const textColor = isCurrent
+    ? "#ef4444"
+    : isNearby
+      ? (isDark ? "#f0e8d0" : "#3a3020")
+      : (isDark ? "#666677" : "#aaa099");
 
   return (
     <group position={position}>
       <mesh>
-        <sphereGeometry args={[size, 12, 12]} />
+        <sphereGeometry args={[baseSize, 12, 12]} />
         <meshStandardMaterial
-          color={isNearby ? "#d4a017" : (isDark ? "#444455" : "#ccc4b8")}
-          emissive={isNearby ? "#d4a017" : "#000000"}
-          emissiveIntensity={isNearby ? 0.4 : 0}
+          color={color}
+          emissive={emissive}
+          emissiveIntensity={emissiveIntensity}
           transparent
-          opacity={isNearby ? 0.95 : 0.08}
+          opacity={opacity}
         />
       </mesh>
-      <Billboard position={[0, size + 0.03, 0]}>
+      <Billboard position={[0, baseSize + 0.03, 0]}>
         <Text
-          fontSize={isNearby ? fontSize : 0.03}
-          color={isNearby ? (isDark ? "#f0e8d0" : "#3a3020") : (isDark ? "#666677" : "#aaa099")}
+          fontSize={fontSize}
+          color={textColor}
           anchorX="center"
           anchorY="bottom"
-          fillOpacity={isNearby ? 1 : 0.35}
+          fillOpacity={isCurrent ? 1 : isNearby ? 1 : 0.45}
         >
           {label}
         </Text>
@@ -140,33 +163,7 @@ function RefDot({ position, label, isNearby, rank, isDark }: {
   );
 }
 
-// Anchor diamond
-function AnchorMarker({ position, label, color }: {
-  position: [number, number, number];
-  label: string;
-  color: string;
-}) {
-  return (
-    <group position={position}>
-      <mesh rotation={[0, 0, Math.PI / 4]}>
-        <boxGeometry args={[0.12, 0.12, 0.12]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
-      </mesh>
-      <Billboard position={[0, 0.2, 0]}>
-        <Text
-          fontSize={0.1}
-          color={color}
-          anchorX="center"
-          anchorY="bottom"
-        >
-          {label}
-        </Text>
-      </Billboard>
-    </group>
-  );
-}
-
-// Connecting lines from particle to nearby concepts
+// Connecting lines from particle to nearby words
 function NearbyLines({ from, tos, color }: {
   from: [number, number, number];
   tos: [number, number, number][];
@@ -188,21 +185,29 @@ function NearbyLines({ from, tos, color }: {
   );
 }
 
-function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking, firstPerson, progress, isDark, rideDistance }: Omit<WalkSceneProps, "onProgressChange"> & { rideDistance: number }) {
+function Scene({ steps, wordPoints, walking, firstPerson, progress, isDark, rideDistance }: Omit<TextWalkSceneProps, "onProgressChange"> & { rideDistance: number }) {
   const currentStep = steps[progress] || steps[0];
   const nearby = currentStep?.nearby || [];
   const nearbySet = new Set(nearby.map(n => n.coordIdx));
 
-  const scaledSteps = useMemo(() => steps.map(s => scaleCoords(s.coords)), [steps]);
-  const scaledRefs = useMemo(() => referencePoints.map(r => scaleCoords(r.coords)), [referencePoints]);
-  const scaledAnchorA = useMemo(() => scaleCoords(anchorCoords.a), [anchorCoords.a]);
-  const scaledAnchorB = useMemo(() => scaleCoords(anchorCoords.b), [anchorCoords.b]);
-  const currentScaled = scaleCoords(currentStep.coords);
-  const trailPoints = scaledSteps.slice(0, progress + 1);
+  const scaledWords = useMemo(() => wordPoints.map(w => scaleCoords(w.coords)), [wordPoints]);
+  const maxFreq = useMemo(() => Math.max(...wordPoints.map(w => w.frequency)), [wordPoints]);
+
+  const currentScaled = scaledWords[currentStep.wordIndex];
+
+  // Build trail: sequence of positions the particle has visited
+  const trailPoints = useMemo(() => {
+    const pts: [number, number, number][] = [];
+    for (let i = 0; i <= progress; i++) {
+      const step = steps[i];
+      if (step) pts.push(scaledWords[step.wordIndex]);
+    }
+    return pts;
+  }, [progress, steps, scaledWords]);
 
   // Camera target for first-person: behind particle, looking forward
   const nextStep = steps[Math.min(progress + 1, steps.length - 1)];
-  const nextScaled = scaleCoords(nextStep.coords);
+  const nextScaled = scaledWords[nextStep.wordIndex];
   const dx = nextScaled[0] - currentScaled[0];
   const dy = nextScaled[1] - currentScaled[1];
   const dz = nextScaled[2] - currentScaled[2];
@@ -226,22 +231,22 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
       {/* Grid */}
       <gridHelper args={[20, 20, isDark ? "#222233" : "#ccccbb", isDark ? "#1a1a2a" : "#e0ddd5"]} rotation={[Math.PI / 2, 0, 0]} />
 
-      {/* Full path */}
-      <PathLine points={scaledSteps} color={isDark ? "#444466" : "#999988"} width={2} />
-
       {/* Trail */}
-      <Trail points={trailPoints} color="#ef4444" />
+      <Trail points={trailPoints} />
 
-      {/* Reference concepts */}
-      {referencePoints.map((ref, i) => {
+      {/* Word cloud */}
+      {wordPoints.map((wp, i) => {
         const nearbyIdx = nearby.findIndex(n => n.coordIdx === i);
         return (
-          <RefDot
+          <WordDot
             key={i}
-            position={scaledRefs[i]}
-            label={ref.concept}
+            position={scaledWords[i]}
+            label={wp.word}
+            isCurrent={i === currentStep.wordIndex}
             isNearby={nearbySet.has(i)}
             rank={nearbyIdx >= 0 ? nearbyIdx : 99}
+            frequency={wp.frequency}
+            maxFreq={maxFreq}
             isDark={isDark}
           />
         );
@@ -250,38 +255,35 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
       {/* Nearby connecting lines */}
       <NearbyLines
         from={currentScaled}
-        tos={nearby.slice(0, 6).map(n => scaledRefs[n.coordIdx])}
+        tos={nearby.slice(0, 6).map(n => scaledWords[n.coordIdx])}
         color="#d4a017"
       />
-
-      {/* Anchors */}
-      <AnchorMarker position={scaledAnchorA} label={anchorA} color="#d4a017" />
-      <AnchorMarker position={scaledAnchorB} label={anchorB} color="#7aa0ff" />
 
       {/* Particle */}
       <Particle position={currentScaled} color="#ef4444" />
 
-      {/* Blend ratio label above particle */}
-      <Billboard position={[currentScaled[0], currentScaled[1] + 0.25, currentScaled[2]]}>
+      {/* Current word label above particle */}
+      <Billboard position={[currentScaled[0], currentScaled[1] + 0.3, currentScaled[2]]}>
         <Text
-          fontSize={0.06}
-          color={isDark ? "#aaaacc" : "#666655"}
+          fontSize={0.12}
+          color="#ef4444"
           anchorX="center"
           anchorY="bottom"
+          fontWeight="bold"
         >
-          {`${Math.round((1 - currentStep.position) * 100)}% ${anchorA}  ${Math.round(currentStep.position * 100)}% ${anchorB}`}
+          {currentStep.word}
         </Text>
       </Billboard>
 
-      {/* Nearest concept label below particle */}
+      {/* Position label below particle */}
       <Billboard position={[currentScaled[0], currentScaled[1] - 0.2, currentScaled[2]]}>
         <Text
-          fontSize={0.09}
-          color="#ef4444"
+          fontSize={0.05}
+          color={isDark ? "#aaaacc" : "#666655"}
           anchorX="center"
           anchorY="top"
         >
-          {currentStep.nearestConcept}
+          {`word ${currentStep.textPosition + 1} / ${steps.length}`}
         </Text>
       </Billboard>
 
@@ -292,7 +294,7 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
   );
 }
 
-// Camera zoom helper - lives inside the Canvas to access useThree
+// Camera zoom helper
 function CameraZoomHandler({ zoomRef }: { zoomRef: React.MutableRefObject<((factor: number) => void) | null> }) {
   const { camera } = useThree();
   zoomRef.current = (factor: number) => {
@@ -301,7 +303,7 @@ function CameraZoomHandler({ zoomRef }: { zoomRef: React.MutableRefObject<((fact
   return null;
 }
 
-export function WalkScene(props: WalkSceneProps) {
+export function TextWalkScene(props: TextWalkSceneProps) {
   const bgColor = props.isDark ? "#0a0a1a" : "#f5f2ec";
   const [crashCount, setCrashCount] = useState(0);
   const [canvasKey, setCanvasKey] = useState(0);
@@ -309,12 +311,14 @@ export function WalkScene(props: WalkSceneProps) {
   const zoomRef = useRef<((factor: number) => void) | null>(null);
   const mountTime = useRef(Date.now());
 
+  // Auto-retry up to 3 times on context loss, then show crash screen
   const showCrashScreen = crashCount >= 3;
 
   const handleContextLoss = useCallback((e: Event) => {
     e.preventDefault();
     const elapsed = Date.now() - mountTime.current;
     if (elapsed < 2000 || crashCount < 2) {
+      // Early crash or first few — auto-retry by remounting Canvas
       setTimeout(() => {
         setCrashCount(c => c + 1);
         setCanvasKey(k => k + 1);
@@ -361,7 +365,7 @@ export function WalkScene(props: WalkSceneProps) {
       </div>
       <Canvas
         key={canvasKey}
-        camera={{ position: [15, 15, 10], fov: 50 }}
+        camera={{ position: [4, 4, 3], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
         gl={{
           antialias: false,

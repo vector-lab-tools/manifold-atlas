@@ -108,3 +108,61 @@ export function projectPCA3D(vectors: number[][]): [number, number, number][] {
 
   return vectors.map((_, i) => [x[i], y[i], z[i]]);
 }
+
+/**
+ * Spread 3D points apart using iterative repulsion to reduce overlap.
+ * Fixed indices are not moved (e.g. anchors, walk path).
+ * Only movable points (reference concepts) are repelled from each other
+ * and from fixed points.
+ *
+ * @param points All 3D coordinates
+ * @param fixedIndices Indices that should not be moved
+ * @param minDist Minimum desired distance between any two movable points
+ * @param iterations Number of repulsion passes
+ * @returns New array of spread coordinates
+ */
+export function spreadPoints3D(
+  points: [number, number, number][],
+  fixedIndices: Set<number>,
+  minDist = 0.06,
+  iterations = 60,
+): [number, number, number][] {
+  // Work on a copy
+  const pts: [number, number, number][] = points.map(p => [p[0], p[1], p[2]]);
+  const n = pts.length;
+
+  // Collect movable indices
+  const movable: number[] = [];
+  for (let i = 0; i < n; i++) {
+    if (!fixedIndices.has(i)) movable.push(i);
+  }
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const strength = 0.3 * (1 - iter / iterations); // decay
+
+    for (const i of movable) {
+      let fx = 0, fy = 0, fz = 0;
+
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        const dx = pts[i][0] - pts[j][0];
+        const dy = pts[i][1] - pts[j][1];
+        const dz = pts[i][2] - pts[j][2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.001;
+
+        if (dist < minDist) {
+          const push = (minDist - dist) / dist * strength;
+          fx += dx * push;
+          fy += dy * push;
+          fz += dz * push;
+        }
+      }
+
+      pts[i][0] += fx;
+      pts[i][1] += fy;
+      pts[i][2] += fz;
+    }
+  }
+
+  return pts;
+}

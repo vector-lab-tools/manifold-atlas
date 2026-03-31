@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Ruler, Map, Scale } from "lucide-react";
 
-export type TabId = "distance" | "matrix" | "negation" | "battery" | "neighbourhood" | "sectioning" | "drift" | "walk" | "compass" | "abstraction" | "silence" | "agonism" | "analogy";
+export type TabId = "distance" | "matrix" | "negation" | "battery" | "neighbourhood" | "sectioning" | "drift" | "walk" | "textvec" | "compass" | "abstraction" | "silence" | "agonism" | "analogy";
 export type GroupId = "measure" | "map" | "critique";
 
 interface TabGroup {
@@ -38,6 +38,7 @@ const GROUPS: TabGroup[] = [
       { id: "sectioning", label: "Semantic Sectioning" },
       { id: "drift", label: "Vector Drift" },
       { id: "walk", label: "Vector Walk" },
+      { id: "textvec", label: "Text Vectorisation" },
     ],
   },
   {

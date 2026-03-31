@@ -12,7 +12,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { cosineSimilarity } from "@/lib/geometry/cosine";
-import { projectPCA3D } from "@/lib/geometry/pca";
+import { projectPCA3D, spreadPoints3D } from "@/lib/geometry/pca";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
 
@@ -130,7 +130,17 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
           }
 
           const allVecs = [vecA, vecB, ...interpolated, ...refVectors];
-          const allCoords = projectPCA3D(allVecs);
+          const rawCoords = projectPCA3D(allVecs);
+
+          // Fixed indices: anchors (0,1) + walk path (2..2+INTERPOLATION_STEPS)
+          const fixedIndices = new Set<number>();
+          fixedIndices.add(0); // anchor A
+          fixedIndices.add(1); // anchor B
+          for (let j = 0; j <= INTERPOLATION_STEPS; j++) {
+            fixedIndices.add(2 + j); // walk path steps
+          }
+          // Spread reference concepts apart (indices after the walk path)
+          const allCoords = spreadPoints3D(rawCoords, fixedIndices, 0.08, 80);
 
           const anchorCoords = {
             a: allCoords[0] as [number, number, number],

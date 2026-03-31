@@ -26,6 +26,7 @@ import { NegationBattery } from "@/components/operations/NegationBattery";
 import { SemanticSectioning } from "@/components/operations/SemanticSectioning";
 import { ConceptDrift } from "@/components/operations/VectorDrift";
 import { VectorWalk } from "@/components/operations/VectorWalk";
+import { TextVectorisation } from "@/components/operations/TextVectorisation";
 import { HegemonyCompass } from "@/components/operations/HegemonyCompass";
 import { AgonismTest } from "@/components/operations/AgonismTest";
 import { SohnRethelTest } from "@/components/operations/SohnRethelTest";
@@ -52,6 +53,7 @@ function AppContent() {
         {activeTab === "sectioning" && <SemanticSectioning onQueryTime={setLastQueryTime} />}
         {activeTab === "drift" && <ConceptDrift onQueryTime={setLastQueryTime} />}
         {activeTab === "walk" && <VectorWalk onQueryTime={setLastQueryTime} />}
+        {activeTab === "textvec" && <TextVectorisation onQueryTime={setLastQueryTime} />}
         {activeTab === "compass" && <HegemonyCompass onQueryTime={setLastQueryTime} />}
         {activeTab === "agonism" && <AgonismTest onQueryTime={setLastQueryTime} />}
         {activeTab === "abstraction" && <SohnRethelTest onQueryTime={setLastQueryTime} />}

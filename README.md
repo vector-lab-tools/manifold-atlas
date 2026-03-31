@@ -3,7 +3,7 @@
 **Comparative geometry of AI vector spaces.**
 
 **Author:** David M. Berry
-**Version:** 0.6.0
+**Version:** 0.7.0
 **Date:** 31 March 2026
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, and projections that reveal the geometry's structure.
@@ -30,10 +30,10 @@ Run a battery of 10-40 negation tests automatically against pre-built sets (poli
 Interpolate between two anchor concepts in the embedding space to discover what lies between them. The tool walks from concept A to concept B in 20 steps, finding the nearest real concept at each point. The resulting sequence (e.g. solidarity -> cooperation -> agreement -> conformity -> compliance) reveals where one domain shades into another in the manifold's geometry.
 
 ### Vector Walk
-Watch a particle walk through the manifold from one concept to another. Built with Three.js for smooth 60fps animation. The path is a linear interpolation in the high-dimensional embedding space, projected to 3D. As the particle moves, the 8 nearest concepts light up around it with connecting lines, showing the local neighbourhood at each step. Press Walk to animate, use the slider to scrub manually, or click Ride to attach the camera to the particle and travel through the manifold in first person. Eight presets for distant concept pairs (love → algorithm, nature → computation, democracy → surveillance, etc.).
+Watch a particle walk through the manifold from one concept to another. Built with Three.js for smooth 60fps animation. The path is a linear interpolation in the high-dimensional embedding space, projected to 3D via PCA with post-projection repulsion to spread overlapping concepts apart. 80 reference concepts across 7 domains (political, economic, knowledge, technology, nature, everyday life, science) are distributed through the space as a grey point cloud with labels. As the particle moves, the 20 nearest concepts light up in gold with connecting lines, showing the local neighbourhood at each step. Press Walk to animate, use the slider to scrub manually, or click Ride to attach the camera to the particle and travel through the manifold in first person. Zoom in/out buttons for both orbital and ride views. Eight presets for distant concept pairs (love → algorithm, nature → computation, democracy → surveillance, etc.).
 
 ### Vector Drift
-Measure how much context warps the manifold's positioning of a concept. Embed the same term with different contextual framings ("justice", "justice in the context of punishment", "justice in the context of mercy") and watch it move through the geometry. Three visualisations per model: a 3D drift cloud showing all positions simultaneously with connecting lines back to the bare concept; sorted displacement bars showing which contexts are most geometrically powerful; and a pairwise pathway heatmap revealing which contextual framings converge (similar routes through the manifold) and which diverge.
+Measure how much context displaces a concept's position in the manifold. Embed the same term as a propositional sentence with different contextual framings and watch it move through the geometry. Three visualisations per model: a 3D drift cloud showing all positions simultaneously with connecting lines back to the bare concept; sorted displacement bars showing which contexts produce the largest geometric displacement; and a pairwise pathway heatmap revealing which contextual framings converge (similar routes through the manifold) and which diverge. Includes Sentence Sensitivity mode, which auto-generates 15 phrasings per concept across five categories (definitional, contextual, negational, propositional, metaphorical) and fires them all into the embedding space.
 
 ### Hegemony Compass
 Place a contested concept ("freedom", "democracy", "intelligence") between two competing ideological clusters and measure which side the manifold pulls it toward. Pre-loaded tests for Freedom (market liberalism vs emancipatory politics), Democracy (liberal proceduralism vs radical democracy), Intelligence (techno-rationalism vs embodied cognition), Security, and Progress. The result reveals which ideological framing the geometry has naturalised as the default meaning.
@@ -52,6 +52,9 @@ The classic word2vec operation (A - B + C = ?) applied to modern embedding model
 
 ### Silence Detector
 Compare how much geometric space the manifold allocates to different domains. When terms within a domain are spread apart (low pairwise similarity), the manifold distinguishes between them, allocating more representational space. When terms are packed together (high pairwise similarity), the manifold compresses them, treating distinct concepts as near-interchangeable. Pre-loaded comparisons: financial derivatives vs subsistence farming, Silicon Valley vs indigenous ecological knowledge, corporate management vs care work. The differential reveals which domains the geometry takes seriously and which it flattens.
+
+### Text Vectorisation
+Paste a passage of text and watch a particle trace its reading path through the manifold. Every word is embedded and projected to 3D. The particle visits each word in reading order, with the 6 nearest words in the embedding space highlighted by connecting lines at each step. The trail fades from soft pink (old) to bright red (recent), showing the geometric trajectory of reading. When a word repeats, the particle returns to the same position, revealing how the text loops back through semantic space. The source text is displayed above the 3D scene with the current word highlighted in red. Seven preset passages: Hinton (1977) on distributed representations, Deleuze on societies of control, Impett and Offert on vector media, Kittler on the absence of software, Rosenblatt on the perceptron as brain model, Weizenbaum on the programmer as lawgiver, and Berry on vector theory. Deep dive panel with summary metrics, word frequency table with nearest neighbours, BPE subword token preview (approximate, using cl100k_base), reading path, and CSV export.
 
 ## Supported Embedding Providers
 
@@ -141,6 +144,7 @@ Then enable Ollama in Manifold Atlas settings. No API key needed.
 | Language | TypeScript 5 (strict) |
 | Styling | Tailwind CSS 3, CCS-WB editorial design system |
 | Visualisation | Plotly.js (GL3D), Three.js (@react-three/fiber), custom SVG |
+| Tokenisation | gpt-tokenizer (cl100k_base BPE, approximate preview) |
 | Dimensionality Reduction | umap-js (browser-side), custom PCA |
 | Caching | IndexedDB via idb |
 | Validation | Zod |
@@ -156,10 +160,12 @@ src/
   components/
     operations/      # Concept Distance, Distance Matrix, Negation Gauge,
                      # Negation Battery, Analogy Arithmetic, Neighbourhood Map,
-                     # Semantic Sectioning, Concept Drift, Hegemony Compass,
-                     # Agonism Test, Real Abstraction Test, Silence Detector
+                     # Semantic Sectioning, Vector Drift, Vector Walk,
+                     # Text Vectorisation, Hegemony Compass, Agonism Test,
+                     # Real Abstraction Test, Silence Detector
     viz/             # ScatterPlot, SimilarityBridge, SimilarityMeter,
-                     # GaugeArc, AnalysisPanel, PlotlyPlot
+                     # GaugeArc, AnalysisPanel, PlotlyPlot, WalkScene,
+                     # TextWalkScene, Plot3DControls
     layout/          # Header, TabNav, StatusBar, SettingsPanel
     shared/          # QueryHistory, ResetButton, ErrorDisplay, ConceptPresets
     easter-eggs/     # Clippy, Hackerman, Geoffrey Hinton, Karl Marx
@@ -167,6 +173,7 @@ src/
   lib/
     embeddings/      # Client + provider modules (OpenAI, Voyage, Google, Cohere, Ollama)
     geometry/        # cosine, pca, umap-wrapper, clusters
+    text/            # stopwords, tokenisation
     similarity-scale, negation, history, expand, utils
   types/             # embeddings, settings, type declarations
 ```
@@ -179,7 +186,7 @@ Manifold Atlas is a research instrument for the [vector theory](https://stunlaw.
 
 The tool operationalises this framework empirically. Key concepts and the features that test them:
 
-- **The embedding API as telescope** -- the embedding API returns processed, averaged representations from a separately-trained model, not a direct window into the frontier model's internal geometry. This makes the telescope metaphor more precise, not less: a telescope does not show you the star itself but light refracted through lenses. You are studying a proprietary geometry through a proprietary aperture. All nine operations use this as their basic research instrument.
+- **The embedding API as telescope** -- the embedding API returns processed, averaged representations from a separately-trained model, not a direct window into the frontier model's internal geometry. This makes the telescope metaphor more precise, not less: a telescope does not show you the star itself but light refracted through lenses. You are studying a proprietary geometry through a proprietary aperture. All fourteen operations use this as their basic research instrument.
 - **The negation deficit** -- the manifold's geometric representation of negation is structurally inadequate to the logical and dialectical weight that negation carries. Negation in the geometry is likely a small rotation in a few dimensions, drowned out by overwhelming similarity across all other dimensions. The Negation Gauge and Battery measure this empirically: not that the manifold has zero capacity for negation, but that its capacity is geometrically trivial relative to the conceptual work negation performs.
 - **Geometric ideology** -- hegemony that operates through topology (density, sparsity, trajectory) rather than discourse (propositions, narratives, interpellation). The Neighbourhood Map's cluster analysis, connection mesh, and density mapping test this.
 - **Manifold sectioning** -- cutting the geometry along critically chosen planes to reveal where one domain shades into another. Semantic Sectioning operationalises this directly.
