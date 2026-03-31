@@ -51,10 +51,25 @@ export const PlotlyPlot = forwardRef<PlotlyPlotHandle, PlotlyPlotProps>(
       };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Track whether this is the initial render
+    const initialRender = useRef(true);
+
     useEffect(() => {
       if (!containerRef.current || !plotlyRef.current) return;
-      plotlyRef.current.react(containerRef.current, data, layout, config);
-    }, [data, layout, config]);
+      if (initialRender.current) {
+        initialRender.current = false;
+        return; // skip — newPlot already ran
+      }
+      // On data updates, only update data traces without resetting the camera
+      // by omitting the layout (which contains the initial camera position)
+      plotlyRef.current.react(containerRef.current, data);
+    }, [data]);
+
+    // Layout-only updates (rare, e.g. theme change)
+    useEffect(() => {
+      if (!containerRef.current || !plotlyRef.current || initialRender.current) return;
+      plotlyRef.current.relayout(containerRef.current, layout);
+    }, [layout]);
 
     return <div ref={containerRef} style={style} />;
   }
