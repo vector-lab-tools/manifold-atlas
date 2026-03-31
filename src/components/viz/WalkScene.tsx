@@ -103,27 +103,33 @@ function Trail({ points, color }: { points: [number, number, number][]; color: s
 }
 
 // Reference concept dot
-function RefDot({ position, label, isNearby, isDark }: {
+function RefDot({ position, label, isNearby, rank, isDark }: {
   position: [number, number, number];
   label: string;
   isNearby: boolean;
+  rank: number; // 0 = nearest, higher = further
   isDark: boolean;
 }) {
+  const size = isNearby ? Math.max(0.04, 0.1 - rank * 0.008) : 0.025;
+  const fontSize = isNearby ? Math.max(0.06, 0.12 - rank * 0.008) : 0;
+
   return (
     <group position={position}>
       <mesh>
-        <sphereGeometry args={[isNearby ? 0.06 : 0.03, 8, 8]} />
+        <sphereGeometry args={[size, 12, 12]} />
         <meshStandardMaterial
           color={isNearby ? "#d4a017" : (isDark ? "#555566" : "#aaa099")}
+          emissive={isNearby ? "#d4a017" : "#000000"}
+          emissiveIntensity={isNearby ? 0.4 : 0}
           transparent
-          opacity={isNearby ? 0.9 : 0.3}
+          opacity={isNearby ? 0.95 : 0.2}
         />
       </mesh>
       {isNearby && (
         <Text
-          position={[0, 0.15, 0]}
-          fontSize={0.08}
-          color={isDark ? "#ddddee" : "#444433"}
+          position={[0, size + 0.05, 0]}
+          fontSize={fontSize}
+          color={isDark ? "#f0e8d0" : "#3a3020"}
           anchorX="center"
           anchorY="bottom"
         >
@@ -227,15 +233,19 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
       <Trail points={trailPoints} color="#ef4444" />
 
       {/* Reference concepts */}
-      {referencePoints.map((ref, i) => (
-        <RefDot
-          key={i}
-          position={scaledRefs[i]}
-          label={ref.concept}
-          isNearby={nearbySet.has(i)}
-          isDark={isDark}
-        />
-      ))}
+      {referencePoints.map((ref, i) => {
+        const nearbyIdx = nearby.findIndex(n => n.coordIdx === i);
+        return (
+          <RefDot
+            key={i}
+            position={scaledRefs[i]}
+            label={ref.concept}
+            isNearby={nearbySet.has(i)}
+            rank={nearbyIdx >= 0 ? nearbyIdx : 99}
+            isDark={isDark}
+          />
+        );
+      })}
 
       {/* Nearby connecting lines */}
       <NearbyLines
@@ -273,15 +283,27 @@ export function WalkScene(props: WalkSceneProps) {
   const bgColor = props.isDark ? "#0a0a1a" : "#f5f2ec";
 
   return (
-    <div className="rounded-sm overflow-hidden border border-parchment" style={{ height: 500, background: bgColor }}>
+    <div
+      className="rounded-sm overflow-hidden border border-parchment relative"
+      style={{ height: 500, background: bgColor }}
+      onWheel={e => e.stopPropagation()}
+    >
       <Canvas
         camera={{ position: [15, 15, 10], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
         gl={{ antialias: true }}
+        onCreated={({ gl }) => {
+          // Prevent page scroll when scrolling inside canvas
+          gl.domElement.style.touchAction = "none";
+        }}
       >
         <color attach="background" args={[bgColor]} />
         <Scene {...props} />
       </Canvas>
+      {/* Zoom hint */}
+      <div className="absolute bottom-2 left-2 font-sans text-[9px] text-muted-foreground opacity-60">
+        Scroll to zoom. Drag to rotate. Right-drag to pan.
+      </div>
     </div>
   );
 }

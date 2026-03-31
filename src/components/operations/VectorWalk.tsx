@@ -22,16 +22,29 @@ const WalkScene = dynamic(
 );
 
 const REFERENCE_CONCEPTS = [
-  "cooperation", "agreement", "conformity", "obedience", "submission",
-  "resistance", "loyalty", "duty", "consent", "coercion",
-  "unity", "harmony", "discipline", "deference", "acquiescence",
-  "alliance", "fellowship", "community", "order", "control",
-  "authority", "obligation", "commitment", "allegiance", "devotion",
-  "freedom", "justice", "fairness", "equity", "mercy",
-  "punishment", "law", "rights", "democracy", "sovereignty",
-  "violence", "peace", "trust", "betrayal", "power",
-  "knowledge", "truth", "belief", "ideology", "critique",
+  // Political/social
+  "cooperation", "agreement", "conformity", "obedience", "resistance",
+  "loyalty", "duty", "consent", "coercion", "unity",
+  "authority", "obligation", "freedom", "justice", "democracy",
+  "sovereignty", "violence", "peace", "power", "revolution",
+  // Economic
   "labour", "capital", "profit", "exploitation", "value",
+  "market", "commodity", "property", "debt", "growth",
+  // Knowledge/culture
+  "knowledge", "truth", "belief", "ideology", "critique",
+  "art", "beauty", "creativity", "imagination", "narrative",
+  // Technology
+  "algorithm", "computation", "data", "automation", "network",
+  "surveillance", "platform", "code", "interface", "optimisation",
+  // Nature/body
+  "nature", "ecology", "body", "touch", "warmth",
+  "water", "forest", "soil", "energy", "climate",
+  // Everyday life
+  "home", "food", "work", "sleep", "play",
+  "friendship", "love", "grief", "memory", "hope",
+  // Science/abstraction
+  "experiment", "measurement", "theory", "model", "causation",
+  "mathematics", "physics", "biology", "consciousness", "reason",
 ];
 
 const DEFAULT_A = "solidarity";
@@ -331,6 +344,29 @@ function WalkPlayer({ result, isDark }: { result: WalkResult; isDark: boolean })
           onProgressChange={setProgress}
           isDark={isDark}
         />
+      </div>
+
+      <div className="thin-rule mx-5" />
+
+      {/* Current neighbourhood panel */}
+      <div className="px-5 py-4">
+        <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+          Current Neighbourhood (Step {progress + 1})
+        </h4>
+        <p className="font-sans text-caption text-muted-foreground mb-3">
+          The 8 concepts closest to the particle&apos;s current position in the manifold.
+          As the particle moves, the neighbourhood changes, revealing the local topology.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {(currentStep?.nearby || []).map((n, i) => (
+            <div key={i} className="bg-muted rounded-sm px-2.5 py-1.5">
+              <div className="font-sans text-body-sm font-medium">{n.concept}</div>
+              <div className="font-sans text-[10px] text-muted-foreground tabular-nums">
+                sim: {n.similarity.toFixed(4)}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="thin-rule mx-5" />
