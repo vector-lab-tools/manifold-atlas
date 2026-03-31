@@ -43,45 +43,19 @@ function AppContent() {
       <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="flex-1 px-6 py-6 max-w-6xl mx-auto w-full">
-        <div className={activeTab === "distance" ? "" : "hidden"}>
-          <ConceptDistance onQueryTime={setLastQueryTime} />
-        </div>
-        {activeTab === "matrix" && (
-          <DistanceMatrix onQueryTime={setLastQueryTime} />
-        )}
-        {activeTab === "neighbourhood" && (
-          <NeighbourhoodMap onQueryTime={setLastQueryTime} />
-        )}
-        <div className={activeTab === "negation" ? "" : "hidden"}>
-          <NegationGauge onQueryTime={setLastQueryTime} />
-        </div>
-        <div className={activeTab === "battery" ? "" : "hidden"}>
-          <NegationBattery onQueryTime={setLastQueryTime} />
-        </div>
-        <div className={activeTab === "analogy" ? "" : "hidden"}>
-          <AnalogyArithmetic onQueryTime={setLastQueryTime} />
-        </div>
-        <div className={activeTab === "sectioning" ? "" : "hidden"}>
-          <SemanticSectioning onQueryTime={setLastQueryTime} />
-        </div>
-        {activeTab === "drift" && (
-          <ConceptDrift onQueryTime={setLastQueryTime} />
-        )}
-        {activeTab === "walk" && (
-          <VectorWalk onQueryTime={setLastQueryTime} />
-        )}
-        <div className={activeTab === "compass" ? "" : "hidden"}>
-          <HegemonyCompass onQueryTime={setLastQueryTime} />
-        </div>
-        <div className={activeTab === "agonism" ? "" : "hidden"}>
-          <AgonismTest onQueryTime={setLastQueryTime} />
-        </div>
-        <div className={activeTab === "abstraction" ? "" : "hidden"}>
-          <SohnRethelTest onQueryTime={setLastQueryTime} />
-        </div>
-        <div className={activeTab === "silence" ? "" : "hidden"}>
-          <SilenceDetector onQueryTime={setLastQueryTime} />
-        </div>
+        {activeTab === "distance" && <ConceptDistance onQueryTime={setLastQueryTime} />}
+        {activeTab === "matrix" && <DistanceMatrix onQueryTime={setLastQueryTime} />}
+        {activeTab === "neighbourhood" && <NeighbourhoodMap onQueryTime={setLastQueryTime} />}
+        {activeTab === "negation" && <NegationGauge onQueryTime={setLastQueryTime} />}
+        {activeTab === "battery" && <NegationBattery onQueryTime={setLastQueryTime} />}
+        {activeTab === "analogy" && <AnalogyArithmetic onQueryTime={setLastQueryTime} />}
+        {activeTab === "sectioning" && <SemanticSectioning onQueryTime={setLastQueryTime} />}
+        {activeTab === "drift" && <ConceptDrift onQueryTime={setLastQueryTime} />}
+        {activeTab === "walk" && <VectorWalk onQueryTime={setLastQueryTime} />}
+        {activeTab === "compass" && <HegemonyCompass onQueryTime={setLastQueryTime} />}
+        {activeTab === "agonism" && <AgonismTest onQueryTime={setLastQueryTime} />}
+        {activeTab === "abstraction" && <SohnRethelTest onQueryTime={setLastQueryTime} />}
+        {activeTab === "silence" && <SilenceDetector onQueryTime={setLastQueryTime} />}
       </main>
 
       <StatusBar lastQueryTime={lastQueryTime} />
