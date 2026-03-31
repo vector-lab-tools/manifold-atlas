@@ -29,7 +29,6 @@ interface WalkSceneProps {
   progress: number; // 0 to steps.length - 1
   onProgressChange: (p: number) => void;
   isDark: boolean;
-  rideDistance: number;
 }
 
 function scaleCoords(coords: [number, number, number], scale = 5): [number, number, number] {
@@ -189,7 +188,7 @@ function NearbyLines({ from, tos, color }: {
   );
 }
 
-function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking, firstPerson, progress, isDark, rideDistance }: Omit<WalkSceneProps, "onProgressChange">) {
+function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking, firstPerson, progress, isDark, rideDistance }: Omit<WalkSceneProps, "onProgressChange"> & { rideDistance: number }) {
   const currentStep = steps[progress] || steps[0];
   const nearby = currentStep?.nearby || [];
   const nearbySet = new Set(nearby.map(n => n.coordIdx));
@@ -363,7 +362,7 @@ export function WalkScene(props: WalkSceneProps) {
       >
         <color attach="background" args={[bgColor]} />
         <CameraZoomHandler zoomRef={zoomRef} />
-        <Scene {...props} />
+        <Scene {...props} rideDistance={rideDistance} />
       </Canvas>
       <div className="absolute bottom-2 left-2 font-sans text-[9px] text-muted-foreground opacity-60">
         Scroll to zoom. Drag to rotate. Right-drag to pan.
