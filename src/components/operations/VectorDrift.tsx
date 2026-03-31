@@ -351,15 +351,21 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
                         .map((v, i) => v.category === cat ? i : -1)
                         .filter(i => i >= 0);
                       if (indices.length === 0) return null;
+                      // Short labels: truncate to ~30 chars for readability
+                      const shortLabels = indices.map(i => {
+                        const t = sensitivityResult.variants[i].text;
+                        return t.length > 35 ? t.slice(0, 32) + "..." : t;
+                      });
                       return {
                         x: indices.map(i => projection[i][0]),
                         y: indices.map(i => projection[i][1]),
                         z: indices.map(i => projection[i][2]),
-                        text: indices.map(i => sensitivityResult.variants[i].text),
-                        mode: cat === "bare" ? "markers+text" : "markers",
+                        text: shortLabels,
+                        hovertext: indices.map(i => sensitivityResult.variants[i].text),
+                        mode: "markers+text",
                         type: "scatter3d",
                         textposition: "top center",
-                        textfont: { size: 14, family: "Inter, system-ui, sans-serif", color: CATEGORY_COLORS[cat] },
+                        textfont: { size: cat === "bare" ? 14 : 11, family: "Inter, system-ui, sans-serif", color: CATEGORY_COLORS[cat] },
                         marker: {
                           size: cat === "bare" ? 12 : 7,
                           color: CATEGORY_COLORS[cat],
@@ -383,7 +389,6 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
                       camera: { eye: { x: 1.8, y: 1.8, z: 1.0 } },
                     },
                     showlegend: false,
-                    dragmode: "pan",
                   }}
                   config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
                   style={{ width: "100%", height: "450px" }}
@@ -445,6 +450,60 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
                 }
               </p>
             </div>
+
+            <div className="thin-rule mx-5" />
+
+            {/* Technical Detail */}
+            <details className="px-5 py-3">
+              <summary className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold cursor-pointer hover:text-foreground transition-colors">
+                Technical Detail
+              </summary>
+              <div className="mt-3 space-y-3">
+                <div className="overflow-x-auto">
+                  <table className="w-full font-sans text-caption">
+                    <thead>
+                      <tr className="border-b border-parchment">
+                        <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Phrasing</th>
+                        <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Category</th>
+                        <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Similarity to Bare</th>
+                        <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Displacement</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-parchment">
+                      {m.displacements.map((d, i) => (
+                        <tr key={i}>
+                          <td className="px-2 py-1">{d.text}</td>
+                          <td className="px-2 py-1">
+                            <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: CATEGORY_COLORS[d.category] }} />
+                            {d.category}
+                          </td>
+                          <td className="px-2 py-1 text-right tabular-nums">{d.similarity.toFixed(6)}</td>
+                          <td className="px-2 py-1 text-right tabular-nums">{d.displacement.toFixed(6)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      const rows = ["phrasing,category,similarity_to_bare,displacement"];
+                      m.displacements.forEach(d => rows.push(`"${d.text}","${d.category}",${d.similarity.toFixed(6)},${d.displacement.toFixed(6)}`));
+                      const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `sentence-sensitivity-${sensitivityResult.concept}-${m.modelId}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="btn-editorial-ghost text-caption px-3 py-1.5"
+                  >
+                    <Download size={14} className="mr-1" />Export CSV
+                  </button>
+                </div>
+              </div>
+            </details>
           </div>
         );
       })}
