@@ -3,7 +3,7 @@
 **Comparative geometry of AI vector spaces.**
 
 **Author:** David M. Berry
-**Version:** 0.5.0
+**Version:** 0.6.0
 **Date:** 31 March 2026
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, and projections that reveal the geometry's structure.
@@ -30,7 +30,7 @@ Run a battery of 10-40 negation tests automatically against pre-built sets (poli
 Interpolate between two anchor concepts in the embedding space to discover what lies between them. The tool walks from concept A to concept B in 20 steps, finding the nearest real concept at each point. The resulting sequence (e.g. solidarity -> cooperation -> agreement -> conformity -> compliance) reveals where one domain shades into another in the manifold's geometry.
 
 ### Vector Walk
-Watch a particle walk through the manifold from one concept to another. The path is a linear interpolation in the high-dimensional embedding space, projected to 3D. At each step, the nearest real concept from a reference vocabulary is identified. Press Walk to animate the particle along the path, showing what the manifold places between the two endpoints. Includes a concept sequence showing the full path as text.
+Watch a particle walk through the manifold from one concept to another. Built with Three.js for smooth 60fps animation. The path is a linear interpolation in the high-dimensional embedding space, projected to 3D. As the particle moves, the 8 nearest concepts light up around it with connecting lines, showing the local neighbourhood at each step. Press Walk to animate, use the slider to scrub manually, or click Ride to attach the camera to the particle and travel through the manifold in first person. Eight presets for distant concept pairs (love → algorithm, nature → computation, democracy → surveillance, etc.).
 
 ### Vector Drift
 Measure how much context warps the manifold's positioning of a concept. Embed the same term with different contextual framings ("justice", "justice in the context of punishment", "justice in the context of mercy") and watch it move through the geometry. Three visualisations per model: a 3D drift cloud showing all positions simultaneously with connecting lines back to the bare concept; sorted displacement bars showing which contexts are most geometrically powerful; and a pairwise pathway heatmap revealing which contextual framings converge (similar routes through the manifold) and which diverge.
@@ -140,7 +140,7 @@ Then enable Ollama in Manifold Atlas settings. No API key needed.
 | Framework | Next.js 16 (App Router), React 19 |
 | Language | TypeScript 5 (strict) |
 | Styling | Tailwind CSS 3, CCS-WB editorial design system |
-| Visualisation | Plotly.js (GL3D), custom SVG |
+| Visualisation | Plotly.js (GL3D), Three.js (@react-three/fiber), custom SVG |
 | Dimensionality Reduction | umap-js (browser-side), custom PCA |
 | Caching | IndexedDB via idb |
 | Validation | Zod |

@@ -1,3 +1,8 @@
+/**
+ * Manifold Atlas — Vector Walk
+ * Concept and Design: David M. Berry, University of Sussex
+ */
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -9,13 +14,11 @@ import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { projectPCA3D } from "@/lib/geometry/pca";
 import { ResetButton } from "@/components/shared/ResetButton";
-import { Plot3DControls } from "@/components/viz/Plot3DControls";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
-import type { PlotlyPlotHandle } from "@/components/viz/PlotlyPlot";
 
-const PlotlyPlot = dynamic(
-  () => import("@/components/viz/PlotlyPlot").then(mod => ({ default: mod.PlotlyPlot })),
-  { ssr: false, loading: () => <div className="h-[500px] flex items-center justify-center bg-card text-slate text-body-sm">Loading...</div> }
+const WalkScene = dynamic(
+  () => import("@/components/viz/WalkScene").then(mod => ({ default: mod.WalkScene })),
+  { ssr: false, loading: () => <div className="h-[500px] flex items-center justify-center bg-card text-slate text-body-sm rounded-sm">Loading 3D scene...</div> }
 );
 
 const REFERENCE_CONCEPTS = [
@@ -33,6 +36,7 @@ const REFERENCE_CONCEPTS = [
 
 const DEFAULT_A = "solidarity";
 const DEFAULT_B = "compliance";
+const INTERPOLATION_STEPS = 30;
 
 const WALK_PRESETS = [
   { a: "solidarity", b: "compliance", label: "solidarity → compliance" },
@@ -44,20 +48,19 @@ const WALK_PRESETS = [
   { a: "freedom", b: "efficiency", label: "freedom → efficiency" },
   { a: "care", b: "profit", label: "care → profit" },
 ];
-const INTERPOLATION_STEPS = 30;
 
 interface NearbyRef {
   concept: string;
   similarity: number;
-  coordIdx: number; // index into referencePoints
+  coordIdx: number;
 }
 
 interface WalkStep {
-  position: number; // 0 to 1
+  position: number;
   nearestConcept: string;
   nearestSimilarity: number;
   coords: [number, number, number];
-  nearby: NearbyRef[]; // top N nearest reference concepts at this step
+  nearby: NearbyRef[];
 }
 
 interface WalkResult {
@@ -107,14 +110,12 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
           const vecB = vectors[1];
           const refVectors = vectors.slice(2);
 
-          // Interpolate between A and B
           const interpolated: number[][] = [];
           for (let i = 0; i <= INTERPOLATION_STEPS; i++) {
             const t = i / INTERPOLATION_STEPS;
             interpolated.push(vecA.map((a, d) => a * (1 - t) + vecB[d] * t));
           }
 
-          // Project everything to 3D: anchors + interpolated + reference
           const allVecs = [vecA, vecB, ...interpolated, ...refVectors];
           const allCoords = projectPCA3D(allVecs);
 
@@ -124,7 +125,6 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
           };
 
           const steps: WalkStep[] = interpolated.map((interpVec, i) => {
-            // Compute similarity to all reference concepts
             const sims = refVectors.map((rv, r) => ({
               concept: REFERENCE_CONCEPTS[r],
               similarity: cosineSimilarity(interpVec, rv),
@@ -177,95 +177,60 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
         <p className="font-sans text-body-sm text-slate mb-4">
           Watch a particle walk through the manifold from one concept to another.
           The path is a linear interpolation in the high-dimensional embedding space,
-          projected to 3D. At each step, the nearest real concept from the reference
-          vocabulary is identified, revealing what the manifold places between the
-          two endpoints.
+          projected to 3D. At each step, the nearest real concepts light up around it.
+          Use Ride to follow the particle from its perspective.
         </p>
-        <div className="flex items-center gap-3">
-          <input type="text" value={anchorA} onChange={e => setAnchorA(e.target.value)}
-            placeholder={DEFAULT_A} className="input-editorial flex-1"
-            onKeyDown={e => e.key === "Enter" && handleCompute()} />
-          <span className="font-sans text-body-sm text-muted-foreground">&rarr;</span>
-          <input type="text" value={anchorB} onChange={e => setAnchorB(e.target.value)}
-            placeholder={DEFAULT_B} className="input-editorial flex-1"
-            onKeyDown={e => e.key === "Enter" && handleCompute()} />
-          <button onClick={handleCompute} disabled={loading}
-            className="btn-editorial-primary disabled:opacity-50">
-            {loading ? <Loader2 size={16} className="animate-spin" /> : "Walk"}
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {WALK_PRESETS.map((p, i) => (
-            <button
-              key={i}
-              onClick={() => { setAnchorA(p.a); setAnchorB(p.b); }}
-              className="btn-editorial-ghost text-caption px-2 py-1"
-            >
-              {p.label}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <input type="text" value={anchorA} onChange={e => setAnchorA(e.target.value)}
+              placeholder={DEFAULT_A} className="input-editorial flex-1"
+              onKeyDown={e => e.key === "Enter" && handleCompute()} />
+            <span className="font-sans text-body-sm text-muted-foreground">&rarr;</span>
+            <input type="text" value={anchorB} onChange={e => setAnchorB(e.target.value)}
+              placeholder={DEFAULT_B} className="input-editorial flex-1"
+              onKeyDown={e => e.key === "Enter" && handleCompute()} />
+            <button onClick={handleCompute} disabled={loading}
+              className="btn-editorial-primary disabled:opacity-50">
+              {loading ? <Loader2 size={16} className="animate-spin" /> : "Walk"}
             </button>
-          ))}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {WALK_PRESETS.map((p, i) => (
+              <button key={i} onClick={() => { setAnchorA(p.a); setAnchorB(p.b); }}
+                className="btn-editorial-ghost text-caption px-2 py-1">
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {error != null && <ErrorDisplay error={error} onRetry={handleCompute} />}
 
       {results.map(r => (
-        <WalkVisualization key={r.modelId} result={r} isDark={isDark} />
+        <WalkPlayer key={r.modelId} result={r} isDark={isDark} />
       ))}
     </div>
   );
 }
 
-function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boolean }) {
-  const plotRef = useRef<PlotlyPlotHandle>(null);
-  const [walkProgress, setWalkProgress] = useState(0);
+function WalkPlayer({ result, isDark }: { result: WalkResult; isDark: boolean }) {
+  const [progress, setProgress] = useState(0);
   const [walking, setWalking] = useState(false);
   const [firstPerson, setFirstPerson] = useState(false);
   const rafRef = useRef<number | null>(null);
   const progressRef = useRef(0);
 
-  // Update camera to follow particle in first-person mode
-  useEffect(() => {
-    if (!firstPerson || !plotRef.current) return;
-    const handle = plotRef.current;
-    const div = handle.getDiv();
-    const Plotly = handle.getPlotly();
-    if (!div || !Plotly) return;
-
-    const step = result.steps[walkProgress];
-    const nextStep = result.steps[Math.min(walkProgress + 1, result.steps.length - 1)];
-    if (!step) return;
-
-    // Camera sits slightly behind and above the particle, looking forward
-    const dx = nextStep.coords[0] - step.coords[0];
-    const dy = nextStep.coords[1] - step.coords[1];
-    const dz = nextStep.coords[2] - step.coords[2];
-    const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01;
-
-    Plotly.relayout(div, {
-      "scene.camera.eye": {
-        x: step.coords[0] - (dx / len) * 0.15,
-        y: step.coords[1] - (dy / len) * 0.15,
-        z: step.coords[2] + 0.05,
-      },
-      "scene.camera.center": {
-        x: step.coords[0] + (dx / len) * 0.1,
-        y: step.coords[1] + (dy / len) * 0.1,
-        z: step.coords[2],
-      },
-    });
-  }, [walkProgress, firstPerson, result.steps]);
-
   const startWalk = useCallback(() => {
     progressRef.current = 0;
-    setWalkProgress(0);
+    setProgress(0);
 
     const step = () => {
-      progressRef.current += 0.12;
+      progressRef.current += 0.05;
       if (progressRef.current > INTERPOLATION_STEPS) {
         progressRef.current = 0;
       }
-      setWalkProgress(Math.floor(progressRef.current));
+      setProgress(Math.floor(progressRef.current));
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
@@ -284,123 +249,7 @@ function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boo
     return stopWalk;
   }, [walking, startWalk, stopWalk]);
 
-  const currentStep = result.steps[walkProgress] || result.steps[0];
-  const nearby = currentStep?.nearby || [];
-  const bgColor = isDark ? "#0a0a1a" : "#f5f2ec";
-  const gridColor = isDark ? "rgba(60,60,100,0.3)" : "rgba(140,130,110,0.35)";
-
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  const traces: any[] = [
-    // Path line
-    {
-      x: result.steps.map(s => s.coords[0]),
-      y: result.steps.map(s => s.coords[1]),
-      z: result.steps.map(s => s.coords[2]),
-      mode: "lines",
-      type: "scatter3d",
-      line: { color: isDark ? "rgba(200,200,220,0.4)" : "rgba(80,70,60,0.3)", width: 3 },
-      hoverinfo: "skip",
-      showlegend: false,
-    },
-    // Reference concepts (small, faded — except nearby ones which are highlighted)
-    (() => {
-      const nearbyIndices = new Set(nearby.map(n => n.coordIdx));
-      // Faded references (not nearby)
-      const fadedIndices = result.referencePoints.map((_, i) => i).filter(i => !nearbyIndices.has(i));
-      return {
-        x: fadedIndices.map(i => result.referencePoints[i].coords[0]),
-        y: fadedIndices.map(i => result.referencePoints[i].coords[1]),
-        z: fadedIndices.map(i => result.referencePoints[i].coords[2]),
-        text: fadedIndices.map(i => result.referencePoints[i].concept),
-        mode: "markers",
-        type: "scatter3d",
-        marker: { size: 3, color: isDark ? "rgba(150,150,170,0.2)" : "rgba(120,110,100,0.15)" },
-        hoverinfo: "text",
-        showlegend: false,
-      };
-    })(),
-    // Nearby concepts (highlighted, labelled)
-    {
-      x: nearby.map(n => result.referencePoints[n.coordIdx].coords[0]),
-      y: nearby.map(n => result.referencePoints[n.coordIdx].coords[1]),
-      z: nearby.map(n => result.referencePoints[n.coordIdx].coords[2]),
-      text: nearby.map(n => n.concept),
-      mode: "markers+text",
-      type: "scatter3d",
-      textposition: "top center",
-      textfont: { size: 11, color: isDark ? "rgba(200,200,220,0.8)" : "rgba(80,70,60,0.8)", family: "Inter, system-ui, sans-serif" },
-      marker: {
-        size: nearby.map((_, i) => 7 - i * 0.5), // largest = nearest
-        color: isDark ? "rgba(210,160,60,0.7)" : "rgba(160,110,20,0.7)",
-      },
-      hoverinfo: "text",
-      showlegend: false,
-    },
-    // Lines from particle to nearby concepts
-    ...nearby.slice(0, 4).map(n => ({
-      x: [currentStep.coords[0], result.referencePoints[n.coordIdx].coords[0]],
-      y: [currentStep.coords[1], result.referencePoints[n.coordIdx].coords[1]],
-      z: [currentStep.coords[2], result.referencePoints[n.coordIdx].coords[2]],
-      mode: "lines",
-      type: "scatter3d",
-      line: { color: isDark ? "rgba(210,160,60,0.2)" : "rgba(160,110,20,0.15)", width: 1.5 },
-      hoverinfo: "skip",
-      showlegend: false,
-    })),
-    // Anchor A (gold diamond)
-    {
-      x: [result.anchorCoords.a[0]],
-      y: [result.anchorCoords.a[1]],
-      z: [result.anchorCoords.a[2]],
-      text: [result.anchorA],
-      mode: "markers+text",
-      type: "scatter3d",
-      textposition: "top center",
-      textfont: { size: 14, color: "#d4a017", family: "Inter, system-ui, sans-serif" },
-      marker: { size: 12, color: "#d4a017", symbol: "diamond" },
-      hoverinfo: "text",
-      showlegend: false,
-    },
-    // Anchor B (blue diamond)
-    {
-      x: [result.anchorCoords.b[0]],
-      y: [result.anchorCoords.b[1]],
-      z: [result.anchorCoords.b[2]],
-      text: [result.anchorB],
-      mode: "markers+text",
-      type: "scatter3d",
-      textposition: "top center",
-      textfont: { size: 14, color: "rgba(120, 160, 255, 0.9)", family: "Inter, system-ui, sans-serif" },
-      marker: { size: 12, color: "rgba(120, 160, 255, 0.9)", symbol: "diamond" },
-      hoverinfo: "text",
-      showlegend: false,
-    },
-    // Walking particle
-    {
-      x: [currentStep.coords[0]],
-      y: [currentStep.coords[1]],
-      z: [currentStep.coords[2]],
-      text: [currentStep.nearestConcept],
-      mode: "markers+text",
-      type: "scatter3d",
-      textposition: "bottom center",
-      textfont: { size: 13, color: "#ef4444", family: "Inter, system-ui, sans-serif" },
-      marker: { size: 10, color: "#ef4444", line: { color: "rgba(239,68,68,0.4)", width: 3 } },
-      hoverinfo: "text",
-      showlegend: false,
-    },
-    // Trail (path already walked, brighter)
-    {
-      x: result.steps.slice(0, walkProgress + 1).map(s => s.coords[0]),
-      y: result.steps.slice(0, walkProgress + 1).map(s => s.coords[1]),
-      z: result.steps.slice(0, walkProgress + 1).map(s => s.coords[2]),
-      mode: "lines",
-      type: "scatter3d",
-      line: { color: "#ef4444", width: 4 },
-      hoverinfo: "skip",
-      showlegend: false,
-    },
-  ];
+  const currentStep = result.steps[progress] || result.steps[0];
 
   // Deduplicated concept sequence
   const sequence: string[] = [];
@@ -427,18 +276,14 @@ function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boo
           <button
             onClick={() => setFirstPerson(!firstPerson)}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-sm text-body-sm font-medium transition-colors ${
-              firstPerson
-                ? "bg-gold text-white"
-                : "btn-editorial-ghost"
+              firstPerson ? "bg-gold text-white" : "btn-editorial-ghost"
             }`}
-            title={firstPerson ? "Switch to overhead view" : "Ride the vector (first-person camera)"}
           >
             {firstPerson ? "Riding" : "Ride"}
           </button>
           <button
-            onClick={() => { setWalking(false); setWalkProgress(0); progressRef.current = 0; setFirstPerson(false); }}
+            onClick={() => { setWalking(false); setProgress(0); progressRef.current = 0; setFirstPerson(false); }}
             className="btn-editorial-ghost px-2 py-1.5"
-            title="Reset walk"
           >
             <RotateCcw size={14} />
           </button>
@@ -447,54 +292,45 @@ function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boo
 
       <div className="thin-rule mx-5" />
 
-      {/* Current position indicator */}
+      {/* Progress bar and current concept */}
       <div className="px-5 py-3 bg-muted/30">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <span className="font-sans text-caption text-muted-foreground">
-            Step {walkProgress + 1} of {INTERPOLATION_STEPS + 1}
+            Step {progress + 1} of {INTERPOLATION_STEPS + 1}
           </span>
           <span className="font-sans text-body-sm font-bold" style={{ color: "#ef4444" }}>
-            Nearest: {currentStep.nearestConcept}
+            {currentStep?.nearestConcept}
           </span>
           <span className="font-sans text-caption tabular-nums text-muted-foreground">
-            sim: {currentStep.nearestSimilarity.toFixed(4)}
+            sim: {currentStep?.nearestSimilarity?.toFixed(4)}
           </span>
         </div>
-        {/* Progress bar */}
-        <div className="h-1.5 bg-muted rounded-full mt-2 overflow-hidden">
-          <div
-            className="h-full bg-error-500 rounded-full transition-all duration-100"
-            style={{ width: `${(walkProgress / INTERPOLATION_STEPS) * 100}%` }}
-          />
-        </div>
+        <input
+          type="range"
+          min={0}
+          max={INTERPOLATION_STEPS}
+          value={progress}
+          onChange={e => { setProgress(Number(e.target.value)); progressRef.current = Number(e.target.value); }}
+          className="w-full h-1.5 bg-parchment rounded-full appearance-none cursor-pointer accent-burgundy"
+        />
       </div>
 
       <div className="thin-rule mx-5" />
 
-      {/* 3D visualization */}
+      {/* Three.js scene */}
       <div className="px-2 py-2">
-        <div className="relative rounded-sm overflow-hidden border border-parchment" style={{ background: bgColor }}>
-          <Plot3DControls plotRef={plotRef} exportFilename={`vector-walk-${result.anchorA}-${result.anchorB}-${result.modelId}`} />
-          <PlotlyPlot
-            ref={plotRef}
-            data={traces}
-            layout={{
-              height: 500,
-              margin: { t: 0, r: 0, b: 0, l: 0 },
-              paper_bgcolor: bgColor,
-              scene: {
-                bgcolor: bgColor,
-                xaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
-                yaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
-                zaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
-                camera: { eye: { x: 1.8, y: 1.8, z: 1.0 } },
-              },
-              showlegend: false,
-            }}
-            config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
-            style={{ width: "100%", height: "500px" }}
-          />
-        </div>
+        <WalkScene
+          steps={result.steps}
+          anchorA={result.anchorA}
+          anchorB={result.anchorB}
+          anchorCoords={result.anchorCoords}
+          referencePoints={result.referencePoints}
+          walking={walking}
+          firstPerson={firstPerson}
+          progress={progress}
+          onProgressChange={setProgress}
+          isDark={isDark}
+        />
       </div>
 
       <div className="thin-rule mx-5" />
@@ -513,12 +349,11 @@ function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boo
             </span>
           ))}
           <span className="text-muted-foreground">&rarr;</span>
-          <span className="font-sans text-body-sm font-bold" style={{ color: "rgba(120, 160, 255, 0.9)" }}>{result.anchorB}</span>
+          <span className="font-sans text-body-sm font-bold" style={{ color: "#7aa0ff" }}>{result.anchorB}</span>
         </div>
         <p className="font-sans text-caption text-muted-foreground mt-2 italic">
-          This is the manifold&apos;s path between the two concepts. The particle shows
-          which real concepts it passes through at each interpolation step. Press Walk to
-          animate, or use the progress bar above to scrub manually.
+          Drag to rotate. Scroll to zoom. Use the slider to scrub manually.
+          Click Ride to follow the particle through the manifold.
         </p>
       </div>
     </div>

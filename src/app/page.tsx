@@ -46,12 +46,12 @@ function AppContent() {
         <div className={activeTab === "distance" ? "" : "hidden"}>
           <ConceptDistance onQueryTime={setLastQueryTime} />
         </div>
-        <div className={activeTab === "matrix" ? "" : "hidden"}>
+        {activeTab === "matrix" && (
           <DistanceMatrix onQueryTime={setLastQueryTime} />
-        </div>
-        <div className={activeTab === "neighbourhood" ? "" : "hidden"}>
+        )}
+        {activeTab === "neighbourhood" && (
           <NeighbourhoodMap onQueryTime={setLastQueryTime} />
-        </div>
+        )}
         <div className={activeTab === "negation" ? "" : "hidden"}>
           <NegationGauge onQueryTime={setLastQueryTime} />
         </div>
@@ -64,12 +64,12 @@ function AppContent() {
         <div className={activeTab === "sectioning" ? "" : "hidden"}>
           <SemanticSectioning onQueryTime={setLastQueryTime} />
         </div>
-        <div className={activeTab === "drift" ? "" : "hidden"}>
+        {activeTab === "drift" && (
           <ConceptDrift onQueryTime={setLastQueryTime} />
-        </div>
-        <div className={activeTab === "walk" ? "" : "hidden"}>
+        )}
+        {activeTab === "walk" && (
           <VectorWalk onQueryTime={setLastQueryTime} />
-        </div>
+        )}
         <div className={activeTab === "compass" ? "" : "hidden"}>
           <HegemonyCompass onQueryTime={setLastQueryTime} />
         </div>
