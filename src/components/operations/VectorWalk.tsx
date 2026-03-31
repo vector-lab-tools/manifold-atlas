@@ -391,6 +391,24 @@ function WalkPlayer({ result, isDark }: { result: WalkResult; isDark: boolean })
           Drag to rotate. Scroll to zoom. Use the slider to scrub manually.
           Click Ride to follow the particle through the manifold.
         </p>
+
+        <div className="mt-4 p-3 bg-muted rounded-sm">
+          <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+            How This Works
+          </h4>
+          <p className="font-sans text-caption text-muted-foreground leading-relaxed">
+            The walk interpolates between the two endpoint vectors in the high-dimensional
+            embedding space (typically 768 to 3,072 dimensions). At each of the 30 steps, the
+            tool creates a synthetic vector that blends the two endpoints in increasing
+            proportions (100% A at the start, 100% B at the end). This synthetic vector
+            does not correspond to any real concept, but it occupies a position in the manifold.
+            The 20 nearest real concepts from the reference vocabulary are identified at each
+            step by cosine similarity, revealing what the manifold places at that position.
+            As the particle moves, the neighbourhood shifts from concepts associated with
+            the starting point to concepts associated with the endpoint. The 3D visualisation
+            is a PCA projection of these high-dimensional positions.
+          </p>
+        </div>
       </div>
     </div>
   );
