@@ -125,18 +125,17 @@ function RefDot({ position, label, isNearby, rank, isDark }: {
           opacity={isNearby ? 0.95 : 0.08}
         />
       </mesh>
-      {isNearby && (
-        <Billboard position={[0, size + 0.05, 0]}>
-          <Text
-            fontSize={fontSize}
-            color={isDark ? "#f0e8d0" : "#3a3020"}
-            anchorX="center"
-            anchorY="bottom"
-          >
-            {label}
-          </Text>
-        </Billboard>
-      )}
+      <Billboard position={[0, size + 0.03, 0]}>
+        <Text
+          fontSize={isNearby ? fontSize : 0.035}
+          color={isNearby ? (isDark ? "#f0e8d0" : "#3a3020") : (isDark ? "#666677" : "#aaa099")}
+          anchorX="center"
+          anchorY="bottom"
+          fillOpacity={isNearby ? 1 : 0.4}
+        >
+          {label}
+        </Text>
+      </Billboard>
     </group>
   );
 }
