@@ -33,6 +33,17 @@ const REFERENCE_CONCEPTS = [
 
 const DEFAULT_A = "solidarity";
 const DEFAULT_B = "compliance";
+
+const WALK_PRESETS = [
+  { a: "solidarity", b: "compliance", label: "solidarity → compliance" },
+  { a: "love", b: "algorithm", label: "love → algorithm" },
+  { a: "nature", b: "computation", label: "nature → computation" },
+  { a: "democracy", b: "surveillance", label: "democracy → surveillance" },
+  { a: "craft", b: "automation", label: "craft → automation" },
+  { a: "poetry", b: "data", label: "poetry → data" },
+  { a: "freedom", b: "efficiency", label: "freedom → efficiency" },
+  { a: "care", b: "profit", label: "care → profit" },
+];
 const INTERPOLATION_STEPS = 30;
 
 interface NearbyRef {
@@ -182,6 +193,17 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
             className="btn-editorial-primary disabled:opacity-50">
             {loading ? <Loader2 size={16} className="animate-spin" /> : "Walk"}
           </button>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {WALK_PRESETS.map((p, i) => (
+            <button
+              key={i}
+              onClick={() => { setAnchorA(p.a); setAnchorB(p.b); }}
+              className="btn-editorial-ghost text-caption px-2 py-1"
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
