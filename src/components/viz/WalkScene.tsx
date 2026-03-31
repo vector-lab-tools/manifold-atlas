@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useMemo, useEffect, useState, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Text, Line } from "@react-three/drei";
 import * as THREE from "three";
@@ -284,7 +284,7 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
       </Text>
 
       {/* Camera controls */}
-      {!firstPerson && <OrbitControls enableDamping dampingFactor={0.05} />}
+      {!firstPerson && <OrbitControls enableDamping dampingFactor={0.05} enableZoom enableRotate enablePan />}
       <CameraFollower target={cameraTarget} lookAt={cameraLookAt} active={firstPerson} />
     </>
   );
@@ -292,33 +292,45 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
 
 export function WalkScene(props: WalkSceneProps) {
   const bgColor = props.isDark ? "#0a0a1a" : "#f5f2ec";
+  const [crashed, setCrashed] = useState(false);
+
+  if (crashed) {
+    return (
+      <div className="rounded-sm overflow-hidden border border-parchment flex items-center justify-center flex-col gap-3" style={{ height: 500, background: bgColor }}>
+        <p className="font-sans text-body-sm text-muted-foreground">3D renderer lost context.</p>
+        <button onClick={() => setCrashed(false)} className="btn-editorial-secondary text-body-sm px-3 py-1.5">
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
       className="rounded-sm overflow-hidden border border-parchment relative"
       style={{ height: 500, background: bgColor }}
-      onWheel={e => e.stopPropagation()}
     >
       <Canvas
         camera={{ position: [15, 15, 10], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
-        gl={{ antialias: true, powerPreference: "default" }}
+        gl={{
+          antialias: false,
+          powerPreference: "low-power",
+          failIfMajorPerformanceCaveat: false,
+          preserveDrawingBuffer: false,
+        }}
         onCreated={({ gl }) => {
-          gl.domElement.style.touchAction = "none";
-          // Handle WebGL context loss gracefully
+          // Allow touch events for OrbitControls
+          gl.domElement.style.touchAction = "pan-y";
           gl.domElement.addEventListener("webglcontextlost", (e) => {
             e.preventDefault();
-            console.warn("WebGL context lost — will restore on next render");
-          });
-          gl.domElement.addEventListener("webglcontextrestored", () => {
-            console.log("WebGL context restored");
+            setCrashed(true);
           });
         }}
       >
         <color attach="background" args={[bgColor]} />
         <Scene {...props} />
       </Canvas>
-      {/* Zoom hint */}
       <div className="absolute bottom-2 left-2 font-sans text-[9px] text-muted-foreground opacity-60">
         Scroll to zoom. Drag to rotate. Right-drag to pan.
       </div>
