@@ -250,7 +250,7 @@ function Scene({ steps, anchorA, anchorB, anchorCoords, referencePoints, walking
       {/* Nearby connecting lines */}
       <NearbyLines
         from={currentScaled}
-        tos={nearby.slice(0, 4).map(n => scaledRefs[n.coordIdx])}
+        tos={nearby.slice(0, 6).map(n => scaledRefs[n.coordIdx])}
         color="#d4a017"
       />
 

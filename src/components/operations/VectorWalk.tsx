@@ -150,7 +150,7 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
               nearestConcept: sims[0].concept,
               nearestSimilarity: sims[0].similarity,
               coords: allCoords[2 + i] as [number, number, number],
-              nearby: sims.slice(0, 8),
+              nearby: sims.slice(0, 20),
             };
           });
 
@@ -190,7 +190,7 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
         <p className="font-sans text-body-sm text-slate mb-4">
           Watch a particle walk through the manifold from one concept to another.
           The path is a linear interpolation in the high-dimensional embedding space,
-          projected to 3D. At each step, the nearest real concepts light up around it.
+          projected to 3D. At each step, the 20 nearest concepts light up around it.
           Use Ride to follow the particle from its perspective.
         </p>
         <div className="space-y-3">
@@ -354,7 +354,7 @@ function WalkPlayer({ result, isDark }: { result: WalkResult; isDark: boolean })
           Current Neighbourhood (Step {progress + 1})
         </h4>
         <p className="font-sans text-caption text-muted-foreground mb-3">
-          The 8 concepts closest to the particle&apos;s current position in the manifold.
+          The 20 concepts closest to the particle&apos;s current position in the manifold.
           As the particle moves, the neighbourhood changes, revealing the local topology.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
