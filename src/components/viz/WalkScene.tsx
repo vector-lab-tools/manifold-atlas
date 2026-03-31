@@ -302,10 +302,17 @@ export function WalkScene(props: WalkSceneProps) {
       <Canvas
         camera={{ position: [15, 15, 10], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
-        gl={{ antialias: true }}
+        gl={{ antialias: true, powerPreference: "default" }}
         onCreated={({ gl }) => {
-          // Prevent page scroll when scrolling inside canvas
           gl.domElement.style.touchAction = "none";
+          // Handle WebGL context loss gracefully
+          gl.domElement.addEventListener("webglcontextlost", (e) => {
+            e.preventDefault();
+            console.warn("WebGL context lost — will restore on next render");
+          });
+          gl.domElement.addEventListener("webglcontextrestored", () => {
+            console.log("WebGL context restored");
+          });
         }}
       >
         <color attach="background" args={[bgColor]} />
