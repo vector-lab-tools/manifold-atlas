@@ -280,6 +280,7 @@ export function ScatterPlot({ modelName, providerId, points, method, dimensions,
           config={{
             displayModeBar: false,
             responsive: true,
+            scrollZoom: true,
           }}
           style={{ width: "100%", height: "550px" }}
         />
@@ -387,7 +388,7 @@ export function ScatterPlot({ modelName, providerId, points, method, dimensions,
           yaxis: { showgrid: true, gridcolor: "hsl(40, 24%, 89%)", zeroline: false, showticklabels: false },
           showlegend: false, hovermode: "closest",
         }}
-        config={{ displayModeBar: false, responsive: true }}
+        config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
         style={{ width: "100%", height: "350px" }}
       />
     </div>

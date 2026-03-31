@@ -28,7 +28,7 @@ export function AboutModal() {
               <div>
                 <h2 className="font-display text-display-lg font-bold text-burgundy">Manifold Atlas</h2>
                 <p className="font-sans text-caption text-muted-foreground mt-0.5">
-                  Comparative Geometry of AI Embedding Spaces
+                  Comparative Geometry of AI Vector Spaces
                 </p>
               </div>
               <button onClick={() => setOpen(false)} className="btn-editorial-ghost px-2 py-1">

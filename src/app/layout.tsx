@@ -34,7 +34,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Manifold Atlas",
-  description: "Comparative geometry of AI embedding spaces. Vector-native methods for studying the manifold.",
+  description: "Comparative geometry of AI vector spaces. Vector-native methods for studying the manifold.",
 };
 
 export default function RootLayout({

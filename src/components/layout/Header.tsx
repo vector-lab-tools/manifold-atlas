@@ -16,7 +16,7 @@ export function Header() {
           Manifold Atlas
         </h1>
         <p className="font-sans text-caption text-slate mt-0.5">
-          Comparative Geometry of AI Embedding Spaces
+          Comparative Geometry of AI Vector Spaces
         </p>
       </div>
       <div className="flex items-center gap-2">

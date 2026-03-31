@@ -31,32 +31,39 @@ const DEFAULT_CONTEXTS = [
   "Restorative justice focuses on repairing harm rather than imposing punishment",
 ];
 
-/**
- * Generate sentence sensitivity phrasings for any concept.
- * Tests how different linguistic framings of the same concept
- * displace it in the manifold.
- */
-function generateSensitivityVariants(concept: string): string[] {
+interface LabelledVariant {
+  text: string;
+  category: "bare" | "definitional" | "propositional" | "negation" | "cultural";
+}
+
+function generateSensitivityVariants(concept: string): LabelledVariant[] {
   const c = concept.trim();
-  const capitalised = c.charAt(0).toUpperCase() + c.slice(1);
+  const cap = c.charAt(0).toUpperCase() + c.slice(1);
   return [
-    c,
-    `the concept of ${c}`,
-    `the meaning of ${c}`,
-    `${capitalised} is a fundamental value`,
-    `${capitalised} is an important idea in contemporary thought`,
-    `what we mean when we talk about ${c}`,
-    `the definition of ${c} in philosophy`,
-    `${c} as understood in everyday language`,
-    `the absence of ${c}`,
-    `the opposite of ${c}`,
-    `${capitalised} is essential to a good society`,
-    `${capitalised} is a contested and ambiguous concept`,
-    `the history of ${c} as an idea`,
-    `${c} according to the Western philosophical tradition`,
-    `${c} in non-Western thought`,
+    { text: c, category: "bare" },
+    { text: `the concept of ${c}`, category: "definitional" },
+    { text: `the meaning of ${c}`, category: "definitional" },
+    { text: `the definition of ${c} in philosophy`, category: "definitional" },
+    { text: `${cap} is a fundamental value`, category: "propositional" },
+    { text: `${cap} is essential to a good society`, category: "propositional" },
+    { text: `${cap} is a contested and ambiguous concept`, category: "propositional" },
+    { text: `what we mean when we talk about ${c}`, category: "propositional" },
+    { text: `the absence of ${c}`, category: "negation" },
+    { text: `the opposite of ${c}`, category: "negation" },
+    { text: `${c} as understood in everyday language`, category: "cultural" },
+    { text: `the history of ${c} as an idea`, category: "cultural" },
+    { text: `${c} according to the Western philosophical tradition`, category: "cultural" },
+    { text: `${c} in non-Western thought`, category: "cultural" },
   ];
 }
+
+const CATEGORY_COLORS: Record<string, string> = {
+  bare: "#d4a017",
+  definitional: "rgba(120, 160, 255, 0.9)",
+  propositional: "rgba(210, 160, 60, 0.9)",
+  negation: "rgba(220, 80, 80, 0.9)",
+  cultural: "rgba(100, 220, 180, 0.9)",
+};
 
 interface DriftModelResult {
   modelId: string;
@@ -153,6 +160,18 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
     }
   };
 
+  const [sensitivityResult, setSensitivityResult] = useState<{
+    concept: string;
+    variants: LabelledVariant[];
+    models: Array<{
+      modelId: string;
+      modelName: string;
+      vectors: number[][];
+      displacements: Array<{ text: string; category: string; similarity: number; displacement: number }>;
+      pairwise: number[][];
+    }>;
+  } | null>(null);
+
   const handleSensitivity = async () => {
     const defaultConcepts = "justice, freedom, democracy, truth, labour";
     const conceptList = (sensitivityConcepts.trim() || defaultConcepts)
@@ -161,30 +180,26 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
 
     setLoading(true);
     setError(null);
+    setResult(null);
     const start = performance.now();
 
     try {
-      // Process each concept: generate variants, embed, compute drift
-      // Show results for the first concept fully, then summary for others
       const firstConcept = conceptList[0];
-      const variants = generateSensitivityVariants(firstConcept);
+      const labelled = generateSensitivityVariants(firstConcept);
+      const variantTexts = labelled.map(v => v.text);
 
-      // Set the main concept and contexts so the drift panel renders
-      setConcept(firstConcept);
-      setContextsText(variants.join("\n"));
-
-      const modelVectors = await embedAll(variants);
+      const modelVectors = await embedAll(variantTexts);
       const enabledModels = getEnabledModels();
 
-      const models: DriftModelResult[] = enabledModels
+      const models = enabledModels
         .filter(m => modelVectors.has(m.id))
         .map(m => {
           const vectors = modelVectors.get(m.id)!;
-          const baseVec = vectors[0];
+          const baseVec = vectors[0]; // bare word
 
-          const drifts = variants.map((variant, i) => {
+          const displacements = labelled.map((v, i) => {
             const sim = cosineSimilarity(baseVec, vectors[i]);
-            return { variant, similarity: sim, displacement: 1 - sim };
+            return { text: v.text, category: v.category, similarity: sim, displacement: 1 - sim };
           });
 
           const pairwise: number[][] = [];
@@ -196,10 +211,10 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
           }
 
           const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
-          return { modelId: m.id, modelName: spec?.name || m.id, vectors, drifts, pairwise };
+          return { modelId: m.id, modelName: spec?.name || m.id, vectors, displacements, pairwise };
         });
 
-      setResult({ concept: firstConcept, variants, models });
+      setSensitivityResult({ concept: firstConcept, variants: labelled, models });
       onQueryTime((performance.now() - start) / 1000);
     } catch (e) {
       setError(e);
@@ -296,7 +311,146 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
 
       {error != null && <ErrorDisplay error={error} onRetry={handleCompute} />}
 
-      {result && result.models.map(m => (
+      {/* Sensitivity results */}
+      {sensitivityResult && mode === "sensitivity" && sensitivityResult.models.map(m => {
+        const projection = projectPCA3D(m.vectors);
+        const bgColor = isDark ? "#0a0a1a" : "#f5f2ec";
+        const gridColor = isDark ? "rgba(60,60,100,0.3)" : "rgba(140,130,110,0.35)";
+        const sorted = [...m.displacements].filter(d => d.category !== "bare").sort((a, b) => b.displacement - a.displacement);
+        const maxDisp = Math.max(...sorted.map(d => d.displacement));
+
+        return (
+          <div key={m.modelId} className="card-editorial overflow-hidden">
+            <div className="px-5 pt-5 pb-3">
+              <span className="font-sans text-body-sm font-semibold">{m.modelName}</span>
+              <span className="font-sans text-caption text-muted-foreground ml-2">
+                Sentence Sensitivity for &ldquo;{sensitivityResult.concept}&rdquo;
+              </span>
+            </div>
+
+            <div className="thin-rule mx-5" />
+
+            {/* 3D plot with all phrasings as peers, coloured by category */}
+            <div className="px-5 py-4">
+              <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                Phrasing Cloud
+              </h4>
+              <p className="font-sans text-caption text-muted-foreground mb-3">
+                Each dot is a different phrasing of &ldquo;{sensitivityResult.concept}&rdquo;.
+                Colour indicates phrasing type. If dots cluster tightly, the concept has a stable
+                geometric identity. If they scatter, the embedding model is highly sensitive to
+                how the concept is expressed.
+              </p>
+              <div className="rounded-sm overflow-hidden border border-parchment" style={{ background: bgColor }}>
+                <PlotlyPlot
+                  data={(() => {
+                    // Group by category for colour coding
+                    const categories = ["bare", "definitional", "propositional", "negation", "cultural"];
+                    return categories.map(cat => {
+                      const indices = sensitivityResult.variants
+                        .map((v, i) => v.category === cat ? i : -1)
+                        .filter(i => i >= 0);
+                      if (indices.length === 0) return null;
+                      return {
+                        x: indices.map(i => projection[i][0]),
+                        y: indices.map(i => projection[i][1]),
+                        z: indices.map(i => projection[i][2]),
+                        text: indices.map(i => sensitivityResult.variants[i].text),
+                        mode: cat === "bare" ? "markers+text" : "markers",
+                        type: "scatter3d",
+                        textposition: "top center",
+                        textfont: { size: 14, family: "Inter, system-ui, sans-serif", color: CATEGORY_COLORS[cat] },
+                        marker: {
+                          size: cat === "bare" ? 12 : 7,
+                          color: CATEGORY_COLORS[cat],
+                          symbol: cat === "bare" ? "diamond" : "circle",
+                        },
+                        hoverinfo: "text",
+                        name: cat,
+                        showlegend: false,
+                      };
+                    }).filter(Boolean);
+                  })()}
+                  layout={{
+                    height: 450,
+                    margin: { t: 0, r: 0, b: 0, l: 0 },
+                    paper_bgcolor: bgColor,
+                    scene: {
+                      bgcolor: bgColor,
+                      xaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
+                      yaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
+                      zaxis: { showgrid: true, gridcolor: gridColor, zeroline: false, showticklabels: false, title: { text: "" }, showspikes: false },
+                      camera: { eye: { x: 1.8, y: 1.8, z: 1.0 } },
+                    },
+                    showlegend: false,
+                    dragmode: "pan",
+                  }}
+                  config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
+                  style={{ width: "100%", height: "450px" }}
+                />
+              </div>
+              {/* Legend */}
+              <div className="flex flex-wrap gap-3 mt-2 justify-center">
+                {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
+                  <span key={cat} className="flex items-center gap-1 font-sans text-[10px] text-muted-foreground">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="thin-rule mx-5" />
+
+            {/* Displacement from bare word */}
+            <div className="px-5 py-5">
+              <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                Displacement from Bare Word
+              </h4>
+              <p className="font-sans text-caption text-muted-foreground mb-4">
+                How far does each phrasing move &ldquo;{sensitivityResult.concept}&rdquo; from its
+                bare-word position? Large displacement means the embedding model is sensitive to
+                that type of framing.
+              </p>
+              <div className="space-y-1.5">
+                {sorted.map((d, i) => {
+                  const barWidth = maxDisp > 0 ? (d.displacement / maxDisp) * 100 : 0;
+                  return (
+                    <div key={i} className="space-y-0.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-sans text-body-sm truncate mr-2">{d.text}</span>
+                        <span className="font-sans text-caption tabular-nums font-semibold flex-shrink-0" style={{ color: CATEGORY_COLORS[d.category] }}>
+                          {d.displacement.toFixed(4)}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${barWidth}%`, backgroundColor: CATEGORY_COLORS[d.category] }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="thin-rule mx-5" />
+
+            {/* Interpretation */}
+            <div className="px-5 py-5">
+              <p className="font-body text-body-sm text-slate italic">
+                {sorted[0]?.displacement > 0.1
+                  ? `The embedding model is highly sensitive to phrasing for "${sensitivityResult.concept}". The most displaced variant is ${sorted[0].displacement.toFixed(4)} away from the bare word. This means that HOW you embed a concept matters as much as WHICH concept you embed. Researchers should use consistent phrasing patterns across experiments.`
+                  : sorted[0]?.displacement > 0.03
+                    ? `The embedding model shows moderate sensitivity to phrasing for "${sensitivityResult.concept}". Different formulations produce noticeably different positions, but the concept retains a recognisable geometric neighbourhood. Propositional sentences produce the sharpest, most contextually specific embeddings.`
+                    : `The embedding model treats "${sensitivityResult.concept}" as geometrically stable across phrasings. The bare word and the propositional sentences land in similar positions. This concept has a robust geometric identity that resists linguistic displacement.`
+                }
+              </p>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Drift results */}
+      {result && mode === "drift" && result.models.map(m => (
         <DriftModelPanel
           key={m.modelId}
           model={m}
@@ -485,7 +639,7 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
           <PlotlyPlot
             data={traces}
             layout={layout}
-            config={{ displayModeBar: false, responsive: true }}
+            config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
             style={{ width: "100%", height: "450px" }}
           />
         </div>
@@ -544,7 +698,7 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
         <PlotlyPlot
           data={heatmapTraces}
           layout={heatmapLayout}
-          config={{ displayModeBar: false, responsive: true }}
+          config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
           style={{ width: "100%", height: "350px" }}
         />
       </div>

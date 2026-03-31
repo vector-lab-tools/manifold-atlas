@@ -1,6 +1,6 @@
 # Manifold Atlas
 
-**Comparative geometry of AI embedding spaces.**
+**Comparative geometry of AI vector spaces.**
 
 **Author:** David M. Berry
 **Version:** 0.4.0

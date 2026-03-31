@@ -282,7 +282,7 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
                 xaxis: { side: "bottom", tickangle: -45, tickfont: { size: r.concepts.length > 12 ? 9 : 11 } },
                 yaxis: { autorange: "reversed", tickfont: { size: r.concepts.length > 12 ? 9 : 11 } },
               }}
-              config={{ displayModeBar: false, responsive: true }}
+              config={{ displayModeBar: false, responsive: true, scrollZoom: true }}
               style={{ width: "100%", height: `${Math.max(400, r.concepts.length * 30 + 120)}px` }}
             />
           </div>

@@ -1,6 +1,6 @@
 /**
  * Manifold Atlas
- * Comparative Geometry of AI Embedding Spaces
+ * Comparative Geometry of AI Vector Spaces
  *
  * Concept and Design: David M. Berry
  * University of Sussex
