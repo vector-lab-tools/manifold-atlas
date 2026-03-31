@@ -35,11 +35,18 @@ const DEFAULT_A = "solidarity";
 const DEFAULT_B = "compliance";
 const INTERPOLATION_STEPS = 30;
 
+interface NearbyRef {
+  concept: string;
+  similarity: number;
+  coordIdx: number; // index into referencePoints
+}
+
 interface WalkStep {
   position: number; // 0 to 1
   nearestConcept: string;
   nearestSimilarity: number;
   coords: [number, number, number];
+  nearby: NearbyRef[]; // top N nearest reference concepts at this step
 }
 
 interface WalkResult {
@@ -106,19 +113,20 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
           };
 
           const steps: WalkStep[] = interpolated.map((interpVec, i) => {
-            // Find nearest reference concept
-            let bestIdx = 0;
-            let bestSim = -Infinity;
-            for (let r = 0; r < refVectors.length; r++) {
-              const sim = cosineSimilarity(interpVec, refVectors[r]);
-              if (sim > bestSim) { bestSim = sim; bestIdx = r; }
-            }
+            // Compute similarity to all reference concepts
+            const sims = refVectors.map((rv, r) => ({
+              concept: REFERENCE_CONCEPTS[r],
+              similarity: cosineSimilarity(interpVec, rv),
+              coordIdx: r,
+            }));
+            sims.sort((a, b) => b.similarity - a.similarity);
 
             return {
               position: i / INTERPOLATION_STEPS,
-              nearestConcept: REFERENCE_CONCEPTS[bestIdx],
-              nearestSimilarity: bestSim,
+              nearestConcept: sims[0].concept,
+              nearestSimilarity: sims[0].similarity,
               coords: allCoords[2 + i] as [number, number, number],
+              nearby: sims.slice(0, 8),
             };
           });
 
@@ -188,17 +196,50 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
 
 function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boolean }) {
   const plotRef = useRef<PlotlyPlotHandle>(null);
-  const [walkProgress, setWalkProgress] = useState(0); // 0 to INTERPOLATION_STEPS
+  const [walkProgress, setWalkProgress] = useState(0);
   const [walking, setWalking] = useState(false);
+  const [firstPerson, setFirstPerson] = useState(false);
   const rafRef = useRef<number | null>(null);
   const progressRef = useRef(0);
+
+  // Update camera to follow particle in first-person mode
+  useEffect(() => {
+    if (!firstPerson || !plotRef.current) return;
+    const handle = plotRef.current;
+    const div = handle.getDiv();
+    const Plotly = handle.getPlotly();
+    if (!div || !Plotly) return;
+
+    const step = result.steps[walkProgress];
+    const nextStep = result.steps[Math.min(walkProgress + 1, result.steps.length - 1)];
+    if (!step) return;
+
+    // Camera sits slightly behind and above the particle, looking forward
+    const dx = nextStep.coords[0] - step.coords[0];
+    const dy = nextStep.coords[1] - step.coords[1];
+    const dz = nextStep.coords[2] - step.coords[2];
+    const len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01;
+
+    Plotly.relayout(div, {
+      "scene.camera.eye": {
+        x: step.coords[0] - (dx / len) * 0.15,
+        y: step.coords[1] - (dy / len) * 0.15,
+        z: step.coords[2] + 0.05,
+      },
+      "scene.camera.center": {
+        x: step.coords[0] + (dx / len) * 0.1,
+        y: step.coords[1] + (dy / len) * 0.1,
+        z: step.coords[2],
+      },
+    });
+  }, [walkProgress, firstPerson, result.steps]);
 
   const startWalk = useCallback(() => {
     progressRef.current = 0;
     setWalkProgress(0);
 
     const step = () => {
-      progressRef.current += 0.15;
+      progressRef.current += 0.12;
       if (progressRef.current > INTERPOLATION_STEPS) {
         progressRef.current = 0;
       }
@@ -222,6 +263,7 @@ function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boo
   }, [walking, startWalk, stopWalk]);
 
   const currentStep = result.steps[walkProgress] || result.steps[0];
+  const nearby = currentStep?.nearby || [];
   const bgColor = isDark ? "#0a0a1a" : "#f5f2ec";
   const gridColor = isDark ? "rgba(60,60,100,0.3)" : "rgba(140,130,110,0.35)";
 
@@ -238,18 +280,51 @@ function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boo
       hoverinfo: "skip",
       showlegend: false,
     },
-    // Reference concepts (small, faded)
+    // Reference concepts (small, faded — except nearby ones which are highlighted)
+    (() => {
+      const nearbyIndices = new Set(nearby.map(n => n.coordIdx));
+      // Faded references (not nearby)
+      const fadedIndices = result.referencePoints.map((_, i) => i).filter(i => !nearbyIndices.has(i));
+      return {
+        x: fadedIndices.map(i => result.referencePoints[i].coords[0]),
+        y: fadedIndices.map(i => result.referencePoints[i].coords[1]),
+        z: fadedIndices.map(i => result.referencePoints[i].coords[2]),
+        text: fadedIndices.map(i => result.referencePoints[i].concept),
+        mode: "markers",
+        type: "scatter3d",
+        marker: { size: 3, color: isDark ? "rgba(150,150,170,0.2)" : "rgba(120,110,100,0.15)" },
+        hoverinfo: "text",
+        showlegend: false,
+      };
+    })(),
+    // Nearby concepts (highlighted, labelled)
     {
-      x: result.referencePoints.map(p => p.coords[0]),
-      y: result.referencePoints.map(p => p.coords[1]),
-      z: result.referencePoints.map(p => p.coords[2]),
-      text: result.referencePoints.map(p => p.concept),
-      mode: "markers",
+      x: nearby.map(n => result.referencePoints[n.coordIdx].coords[0]),
+      y: nearby.map(n => result.referencePoints[n.coordIdx].coords[1]),
+      z: nearby.map(n => result.referencePoints[n.coordIdx].coords[2]),
+      text: nearby.map(n => n.concept),
+      mode: "markers+text",
       type: "scatter3d",
-      marker: { size: 3, color: isDark ? "rgba(150,150,170,0.3)" : "rgba(120,110,100,0.25)" },
+      textposition: "top center",
+      textfont: { size: 11, color: isDark ? "rgba(200,200,220,0.8)" : "rgba(80,70,60,0.8)", family: "Inter, system-ui, sans-serif" },
+      marker: {
+        size: nearby.map((_, i) => 7 - i * 0.5), // largest = nearest
+        color: isDark ? "rgba(210,160,60,0.7)" : "rgba(160,110,20,0.7)",
+      },
       hoverinfo: "text",
       showlegend: false,
     },
+    // Lines from particle to nearby concepts
+    ...nearby.slice(0, 4).map(n => ({
+      x: [currentStep.coords[0], result.referencePoints[n.coordIdx].coords[0]],
+      y: [currentStep.coords[1], result.referencePoints[n.coordIdx].coords[1]],
+      z: [currentStep.coords[2], result.referencePoints[n.coordIdx].coords[2]],
+      mode: "lines",
+      type: "scatter3d",
+      line: { color: isDark ? "rgba(210,160,60,0.2)" : "rgba(160,110,20,0.15)", width: 1.5 },
+      hoverinfo: "skip",
+      showlegend: false,
+    })),
     // Anchor A (gold diamond)
     {
       x: [result.anchorCoords.a[0]],
@@ -328,7 +403,18 @@ function WalkVisualization({ result, isDark }: { result: WalkResult; isDark: boo
             {walking ? "Pause" : "Walk"}
           </button>
           <button
-            onClick={() => { setWalking(false); setWalkProgress(0); progressRef.current = 0; }}
+            onClick={() => setFirstPerson(!firstPerson)}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-sm text-body-sm font-medium transition-colors ${
+              firstPerson
+                ? "bg-gold text-white"
+                : "btn-editorial-ghost"
+            }`}
+            title={firstPerson ? "Switch to overhead view" : "Ride the vector (first-person camera)"}
+          >
+            {firstPerson ? "Riding" : "Ride"}
+          </button>
+          <button
+            onClick={() => { setWalking(false); setWalkProgress(0); progressRef.current = 0; setFirstPerson(false); }}
             className="btn-editorial-ghost px-2 py-1.5"
             title="Reset walk"
           >
