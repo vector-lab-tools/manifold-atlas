@@ -459,6 +459,213 @@ const TOPOLOGY_PRESETS: Array<{ label: string; concepts: string[] }> = [
       "Systemic risk is the danger that failure of one institution cascades through the financial system",
     ],
   },
+  {
+    label: "Feminism",
+    concepts: [
+      "Patriarchy is the systemic organisation of social life around male dominance and female subordination",
+      "Gender is a socially constructed performance rather than a natural biological fact",
+      "Intersectionality analyses how race, class, gender, and sexuality produce compounding forms of oppression",
+      "The personal is political means that private experience is structured by public power relations",
+      "Reproductive labour is the unwaged work of bearing, raising, and sustaining human life",
+      "The male gaze constructs women as objects of visual pleasure for a presumed male spectator",
+      "Compulsory heterosexuality naturalises heterosexual desire as the default form of human sexuality",
+      "Standpoint epistemology holds that knowledge is shaped by the social position of the knower",
+      "Care ethics grounds moral reasoning in relationships of dependency and responsibility rather than abstract principles",
+      "Sexual division of labour assigns productive work to men and reproductive work to women",
+      "Rape culture is the normalisation of sexual violence through media, language, and institutional practice",
+      "Body politics is the struggle over who controls decisions about bodies, reproduction, and sexuality",
+      "Ecofeminism connects the domination of nature with the domination of women under patriarchal capitalism",
+      "Queer theory challenges the stability of sexual and gender categories and the norms that enforce them",
+      "Emotional labour is the management of feeling required by service work and gendered social expectations",
+      "The glass ceiling is the invisible barrier preventing women from reaching senior positions in organisations",
+      "Feminist epistemology questions whose knowledge counts and how gender shapes what can be known",
+      "Postcolonial feminism critiques the universalism of Western feminist frameworks from the perspective of the Global South",
+      "Trans feminism insists that gender self-determination is a feminist issue and that bodily autonomy is non-negotiable",
+      "Social reproduction theory analyses how capitalism depends on the unpaid labour of maintaining workers and communities",
+    ],
+  },
+  {
+    label: "Ecology",
+    concepts: [
+      "Climate change is the long-term alteration of global weather patterns caused by human activity",
+      "Biodiversity is the variety of life forms within an ecosystem or across the planet",
+      "Sustainability is the capacity to meet present needs without compromising future generations",
+      "Extraction is the removal of natural resources from the earth for economic use",
+      "The Anthropocene is the geological epoch defined by human impact on planetary systems",
+      "Carbon emissions are the release of greenhouse gases from burning fossil fuels",
+      "Deforestation is the clearing of forests for agriculture, industry, or urban expansion",
+      "Ocean acidification is the decrease in seawater pH caused by absorption of atmospheric carbon dioxide",
+      "Renewable energy is power generated from sources that are naturally replenished",
+      "Environmental justice demands that the costs of pollution are not borne disproportionately by the poor",
+      "Permaculture is the design of agricultural systems that mimic natural ecosystems",
+      "Rewilding is the restoration of ecosystems to their natural state by reintroducing native species",
+      "Water scarcity is the insufficient availability of fresh water to meet human and ecological needs",
+      "Soil degradation is the decline of soil quality through erosion, contamination, or nutrient depletion",
+      "Indigenous ecological knowledge is the understanding of ecosystems developed over generations by local peoples",
+      "The commons are shared resources managed collectively rather than privately or by the state",
+      "Extinction is the irreversible loss of a species from the living world",
+      "Ecological footprint measures the demand placed on natural systems by human consumption",
+      "Food sovereignty is the right of peoples to define their own food and agriculture systems",
+      "Deep ecology holds that all living beings have intrinsic value independent of human purposes",
+    ],
+  },
+  {
+    label: "Neoliberalism",
+    concepts: [
+      "The free market is the most efficient mechanism for allocating resources and maximising welfare",
+      "Deregulation removes government constraints on business to promote competition and innovation",
+      "Privatisation transfers public assets and services to private ownership for greater efficiency",
+      "Austerity reduces government spending to balance budgets and restore market confidence",
+      "Human capital theory treats education and skills as investments that increase individual economic value",
+      "The entrepreneurial self is the neoliberal subject who treats all of life as a series of competitive investments",
+      "Flexibilisation makes labour markets more responsive to capital by removing worker protections",
+      "Financialisation subordinates productive activity to the imperatives of financial markets and shareholder value",
+      "Governance replaces government with distributed networks of regulation oriented toward market efficiency",
+      "Public choice theory applies economic reasoning to political behaviour, treating voters and officials as self-interested actors",
+      "The Washington Consensus prescribed liberalisation, privatisation, and fiscal discipline as universal development policy",
+      "Trickle-down economics claims that tax cuts for the wealthy benefit society through increased investment",
+      "Competition policy ensures that markets remain open and that no single firm dominates an industry",
+      "Trade liberalisation removes tariffs and barriers to allow the free movement of goods and capital across borders",
+      "Welfare reform replaces universal entitlements with conditional benefits designed to incentivise work",
+      "Responsibilisation shifts the burden of social risk from the state to the individual citizen",
+      "The market mechanism produces information through prices that no central planner could replicate",
+      "Structural adjustment programmes condition loans to developing countries on market-oriented reforms",
+      "Intellectual property rights incentivise innovation by granting temporary monopolies over ideas",
+      "There is no alternative means that market capitalism is the only viable economic system",
+    ],
+  },
+  {
+    label: "Philosophy of Mind",
+    concepts: [
+      "Consciousness is the subjective experience of being aware of oneself and the world",
+      "Qualia are the irreducibly subjective qualities of conscious experience",
+      "The hard problem of consciousness is explaining why physical processes give rise to subjective experience",
+      "Functionalism holds that mental states are defined by their causal roles rather than their physical composition",
+      "Eliminative materialism argues that folk psychological concepts like belief and desire will be replaced by neuroscience",
+      "The Chinese room argument claims that symbol manipulation without understanding is not genuine thought",
+      "Embodied cognition holds that thinking depends constitutively on the body and its interactions with the environment",
+      "Extended mind theory argues that cognitive processes can extend beyond the skull into tools and environments",
+      "Panpsychism is the view that consciousness is a fundamental feature of all matter",
+      "Intentionality is the capacity of mental states to be about or directed toward objects and states of affairs",
+      "The binding problem asks how the brain integrates information from different sensory modalities into unified experience",
+      "Epiphenomenalism holds that mental events are caused by physical events but have no causal power themselves",
+      "Free will is the capacity of agents to choose between alternative courses of action",
+      "Determinism holds that every event is necessitated by prior causes according to natural law",
+      "The zombie argument claims that a being physically identical to a human could lack all conscious experience",
+      "Integrated information theory proposes that consciousness is identical with a specific type of information processing",
+      "The global workspace theory holds that consciousness arises from the broadcasting of information across brain networks",
+      "Supervenience is the relation by which mental properties depend on physical properties without being reducible to them",
+      "Multiple realisability is the claim that the same mental state can be implemented in different physical substrates",
+      "The explanatory gap is the difficulty of explaining how physical processes produce phenomenal experience",
+    ],
+  },
+  {
+    label: "Existentialism",
+    concepts: [
+      "Existence precedes essence means that human beings define themselves through their choices and actions",
+      "Anxiety is the mood that discloses the radical freedom and groundlessness of human existence",
+      "Authenticity is the condition of owning one's existence rather than fleeing into conformity",
+      "Bad faith is the self-deception by which we deny our freedom and responsibility",
+      "The absurd is the confrontation between human desire for meaning and the indifference of the universe",
+      "Being-toward-death is the awareness of mortality that individualises existence and reveals its finitude",
+      "Thrownness is the condition of finding oneself already situated in a world not of one's choosing",
+      "The other is the being whose gaze constitutes me as an object and limits my freedom",
+      "Commitment is the decisive engagement with a cause that gives structure to an otherwise meaningless existence",
+      "Nausea is the visceral awareness of the brute contingency and superfluity of existence",
+      "The eternal return is the thought experiment that asks whether you would will the infinite repetition of your life",
+      "Facticity is the given circumstances of existence that constrain but do not determine human freedom",
+      "Transcendence is the capacity of human existence to project itself beyond its present situation",
+      "Dread reveals the nothingness at the heart of human existence that makes freedom possible",
+      "The leap of faith is the decision to commit to meaning in the absence of rational justification",
+      "Resoluteness is the authentic confrontation with one's own finitude and the assumption of responsibility",
+      "Absurd heroism is the defiance of meaninglessness through continued engagement with life",
+      "Intersubjectivity is the shared world of meaning constituted through relations between conscious subjects",
+      "Alienation is the estrangement from oneself, others, and the world that results from inauthentic existence",
+      "Situation is the concrete totality of circumstances within which freedom is exercised and limited",
+    ],
+  },
+  {
+    label: "Media Archaeology",
+    concepts: [
+      "Media archaeology excavates forgotten and suppressed technologies to challenge narratives of progress",
+      "The apparatus is the material and institutional arrangement that structures perception and knowledge",
+      "Dead media are technologies that have fallen out of use but reveal the contingency of present systems",
+      "Technical media process signals at speeds and scales inaccessible to human perception",
+      "The discourse network is the historically specific configuration of technologies that determines what counts as knowledge",
+      "Kittler argues that media determine our situation regardless of what we think we are doing with them",
+      "The gramophone, film, and typewriter separated the data flows of sound, image, and writing for the first time",
+      "Analogue media process continuous signals while digital media reduce all input to discrete numerical values",
+      "Media operate below the threshold of human perception and therefore escape phenomenological description",
+      "The archive is not a neutral repository but a technology that produces the past it claims to preserve",
+      "Noise is not the opposite of signal but its condition of possibility",
+      "Optical media from the camera obscura to cinema shaped modern subjectivity through the control of light",
+      "The typewriter mechanised writing and severed the connection between hand and letter",
+      "War is the origin of most communication technologies and their logics persist in civilian applications",
+      "The computer is not a medium among others but the medium that absorbs and simulates all previous media",
+      "Software obscures hardware by interposing layers of abstraction between the user and the machine",
+      "Cultural techniques are the basic operations of symbolisation that precede and enable culture",
+      "Time-axis manipulation is the capacity of technical media to store, reverse, and accelerate temporal signals",
+      "The materiality of communication resists reduction to the meaning of messages",
+      "Planned obsolescence ensures that media technologies are replaced before they are exhausted",
+    ],
+  },
+  {
+    label: "Literary Critique",
+    concepts: [
+      "The death of the author liberates the text from the tyranny of authorial intention",
+      "Close reading attends to the formal properties of the text rather than its social context",
+      "Narrative is the fundamental mode by which human beings organise temporal experience into meaningful sequence",
+      "The unreliable narrator destabilises the reader's trust in the voice that tells the story",
+      "Intertextuality is the web of references and allusions that connects every text to other texts",
+      "Defamiliarisation is the literary technique of making the familiar strange to renew perception",
+      "The canon is the body of works deemed worthy of preservation and study by dominant cultural institutions",
+      "Genre is the system of conventions and expectations that shapes both the production and reception of texts",
+      "The implied reader is the ideal audience constructed by the text's rhetorical strategies",
+      "Irony is the gap between what is said and what is meant that requires the reader's active interpretation",
+      "Allegory is the sustained correspondence between a surface narrative and an underlying system of meaning",
+      "The sublime is the aesthetic experience of overwhelming magnitude or power that exceeds comprehension",
+      "Mimesis is the representation of reality through artistic imitation and transformation",
+      "Stream of consciousness renders the flow of thought without the organising intervention of a narrator",
+      "The palimpsest is a text bearing traces of earlier writing that has been partially erased",
+      "Polyphony is the presence of multiple autonomous voices within a single literary work",
+      "The uncanny is the disturbing experience of the familiar becoming strange and threatening",
+      "World literature is the circulation of texts across linguistic and national boundaries",
+      "The readerly text invites passive consumption while the writerly text demands active production of meaning",
+      "Post-colonial literature contests the cultural authority of the imperial centre from the periphery",
+    ],
+  },
+  {
+    label: "Semiotics",
+    concepts: [
+      "The sign is the unity of a signifier and a signified that produces meaning through difference",
+      "The signifier is the material form of the sign that carries meaning through its sensible properties",
+      "The signified is the concept or mental image evoked by the signifier",
+      "The referent is the actual object in the world to which a sign points but which is not part of the sign itself",
+      "Denotation is the literal or primary meaning of a sign within a given code",
+      "Connotation is the secondary or associative meaning that accrues to a sign through cultural usage",
+      "The code is the system of conventions that governs the production and interpretation of signs",
+      "Myth is the second-order semiotic system that naturalises cultural values as self-evident truths",
+      "The index is a sign connected to its referent by physical causation or contiguity",
+      "The icon is a sign that resembles its referent through shared qualities",
+      "The symbol is a sign connected to its referent only by social convention",
+      "Semiosis is the ongoing process by which signs generate further signs in an unlimited chain",
+      "The paradigm is the set of alternatives from which a sign is selected in the production of meaning",
+      "The syntagm is the combination of signs in a sequential chain that produces meaning through arrangement",
+      "Binary opposition is the structuring of meaning through contrasting pairs such as nature and culture",
+      "Polysemy is the capacity of a sign to carry multiple meanings simultaneously",
+      "The floating signifier is a sign whose meaning is unfixed and contested across different discourses",
+      "Encoding is the production of meaning by the sender while decoding is its interpretation by the receiver",
+      "The dominant reading is the interpretation of a text that aligns with the preferred meaning of its producers",
+      "Semiotic excess is the surplus of meaning that escapes the controlling intention of any code or author",
+    ],
+  },
+];
+
+const TOPIC_COLORS = [
+  "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#a855f7",
+  "#ec4899", "#06b6d4", "#f97316", "#8b5cf6", "#14b8a6",
+  "#e11d48", "#2563eb", "#16a34a", "#d97706", "#7c3aed",
+  "#db2777", "#0891b2", "#ea580c", "#6d28d9", "#0d9488",
 ];
 
 type VizMode = "persistence" | "barcode" | "complex" | "betti";
@@ -472,6 +679,8 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [results, setResults] = useState<TopologyResult[]>([]);
+  const [activePresets, setActivePresets] = useState<Set<number>>(new Set());
+  const [conceptTopics, setConceptTopics] = useState<Map<string, { presetIdx: number; label: string }>>(new Map());
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
   const isDark = settings.darkMode;
@@ -520,13 +729,17 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
           <ResetButton onReset={() => { setConceptsText(""); setResults([]); setError(null); }} />
         </div>
         <p className="font-sans text-body-sm text-slate mb-4">
-          Persistent homology applied to the manifold. Where the Silence Detector measures
-          density, this detects structural topology: isolated conceptual islands (H0),
-          circular structures with empty interiors (H1), and how these features persist
-          across geometric scales. The persistence diagram reveals the shape of what
-          the manifold can and cannot represent. Use full propositional sentences rather
-          than bare words for sharper topology: sentences pin concepts to specific
-          regions of the manifold, producing more meaningful topological features.
+          Persistent homology is a method from topological data analysis (TDA) that
+          measures the shape of data across all scales simultaneously. It works by
+          gradually increasing a distance threshold: at each threshold, concepts within
+          that distance become connected, forming clusters (H0) and loops (H1). Features
+          that persist across many scales are genuine topological structure; those that
+          appear and vanish quickly are noise. Applied to the manifold, this reveals isolated
+          conceptual islands, circular structures with empty interiors, and the structural
+          gaps where no concept exists. Use full propositional sentences rather
+          than bare words for sharper topology. Select one preset to analyse a single
+          domain, or toggle multiple presets to overlay them and see how the manifold
+          positions different discourses relative to each other.
         </p>
         <div className="space-y-3">
           <textarea
@@ -543,14 +756,51 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
             </button>
             <BenchmarkLoader onLoad={(concepts) => setConceptsText(concepts.join(", "))} />
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {TOPOLOGY_PRESETS.map((p, i) => (
-              <button key={i} onClick={() => { setConceptsText(p.concepts.join("\n")); handleCompute(p.concepts); }}
-                className="btn-editorial-ghost text-caption px-2 py-1"
-                disabled={loading}>
-                {p.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-1">
+            {TOPOLOGY_PRESETS.map((p, i) => {
+              const isActive = activePresets.has(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => {
+                    const next = new Set(activePresets);
+                    if (next.has(i)) next.delete(i); else next.add(i);
+                    setActivePresets(next);
+                    if (next.size === 1) {
+                      setConceptTopics(new Map());
+                      const idx = [...next][0];
+                      setConceptsText(TOPOLOGY_PRESETS[idx].concepts.join("\n"));
+                      handleCompute(TOPOLOGY_PRESETS[idx].concepts);
+                    } else if (next.size > 1) {
+                      // Build topic map and merge concepts
+                      const all: string[] = [];
+                      const topicMap = new Map<string, { presetIdx: number; label: string }>();
+                      let colorIdx = 0;
+                      for (const idx of next) {
+                        for (const concept of TOPOLOGY_PRESETS[idx].concepts) {
+                          if (!topicMap.has(concept)) {
+                            all.push(concept);
+                            topicMap.set(concept, { presetIdx: colorIdx, label: TOPOLOGY_PRESETS[idx].label });
+                          }
+                        }
+                        colorIdx++;
+                      }
+                      setConceptTopics(topicMap);
+                      setConceptsText(all.join("\n"));
+                      handleCompute(all);
+                    }
+                  }}
+                  className={`text-[11px] px-1.5 py-0.5 rounded-sm font-normal leading-none border border-parchment/50 ${
+                    isActive
+                      ? "bg-burgundy/15 text-burgundy ring-1 ring-burgundy/40"
+                      : "bg-transparent text-muted-foreground hover:bg-muted/30"
+                  }`}
+                  disabled={loading}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -558,7 +808,7 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
       {error != null && <ErrorDisplay error={error} onRetry={() => handleCompute()} />}
 
       {results.map(r => (
-        <TopologyResultCard key={r.modelId} result={r} isDark={isDark} />
+        <TopologyResultCard key={r.modelId} result={r} isDark={isDark} conceptTopics={conceptTopics} />
       ))}
     </div>
   );
@@ -566,7 +816,7 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
 
 // --- Per-model result card ---
 
-function TopologyResultCard({ result, isDark }: { result: TopologyResult; isDark: boolean }) {
+function TopologyResultCard({ result, isDark, conceptTopics }: { result: TopologyResult; isDark: boolean; conceptTopics: Map<string, { presetIdx: number; label: string }> }) {
   const [vizMode, setVizMode] = useState<VizMode>("complex");
   const [threshold, setThreshold] = useState<number | null>(null);
   const [deepDive, setDeepDive] = useState(false);
@@ -752,7 +1002,7 @@ function TopologyResultCard({ result, isDark }: { result: TopologyResult; isDark
           <BarcodeDiagram result={result} bgColor={bgColor} gridColor={gridColor} textColor={textColor} />
         )}
         {vizMode === "complex" && (
-          <RipsComplex result={result} threshold={effectiveThreshold} bgColor={bgColor} gridColor={gridColor} textColor={textColor} isDark={isDark} showVoids={showVoids} voidIntensity={voidIntensity} voidColor={voidColor} />
+          <RipsComplex result={result} threshold={effectiveThreshold} bgColor={bgColor} gridColor={gridColor} textColor={textColor} isDark={isDark} showVoids={showVoids} voidIntensity={voidIntensity} voidColor={voidColor} conceptTopics={conceptTopics} />
         )}
         {vizMode === "betti" && (
           <BettiCurve result={result} threshold={effectiveThreshold} bgColor={bgColor} gridColor={gridColor} textColor={textColor} />
@@ -1096,9 +1346,12 @@ function BarcodeDiagram({ result, bgColor, gridColor, textColor }: {
   );
 }
 
-function RipsComplex({ result, threshold, isDark, showVoids, voidIntensity, voidColor }: {
+function RipsComplex({ result, threshold, isDark, showVoids, voidIntensity, voidColor, conceptTopics }: {
   result: TopologyResult; threshold: number; bgColor: string; gridColor: string; textColor: string; isDark: boolean; showVoids: boolean; voidIntensity: number; voidColor: string;
+  conceptTopics: Map<string, { presetIdx: number; label: string }>;
 }) {
+  const hasTopics = conceptTopics.size > 0;
+
   const coords3D = useMemo(() => {
     const projected = projectPCA3D(result.distMatrix);
     return spreadPoints3D(projected, new Set(), 0.08, 60);
@@ -1115,6 +1368,7 @@ function RipsComplex({ result, threshold, isDark, showVoids, voidIntensity, void
     const color = COMP_COLORS[compIdx % COMP_COLORS.length];
     const words = concept.split(/\s+/);
     const shortLabel = words.length > 3 ? words.slice(0, 3).join(" ") + "..." : concept;
+    const topic = conceptTopics.get(concept);
     return {
       label: concept,
       shortLabel,
@@ -1123,18 +1377,26 @@ function RipsComplex({ result, threshold, isDark, showVoids, voidIntensity, void
       isolated: comp.length === 1,
       componentId: compIdx,
       componentSize: comp.length,
+      topicColor: topic ? TOPIC_COLORS[topic.presetIdx % TOPIC_COLORS.length] : undefined,
     };
-  }), [result.concepts, coords3D, comps]);
+  }), [result.concepts, coords3D, comps, conceptTopics]);
 
-  // Build node colour lookup for edge colouring
+  // Build node colour lookup for edge colouring (topic colour if available)
   const nodeColorMap = useMemo(() => {
     const map = new Map<number, string>();
-    for (let ci = 0; ci < comps.length; ci++) {
-      const color = COMP_COLORS[ci % COMP_COLORS.length];
-      for (const idx of comps[ci]) map.set(idx, color);
+    if (hasTopics) {
+      result.concepts.forEach((concept, i) => {
+        const topic = conceptTopics.get(concept);
+        map.set(i, topic ? TOPIC_COLORS[topic.presetIdx % TOPIC_COLORS.length] : "#888888");
+      });
+    } else {
+      for (let ci = 0; ci < comps.length; ci++) {
+        const color = COMP_COLORS[ci % COMP_COLORS.length];
+        for (const idx of comps[ci]) map.set(idx, color);
+      }
     }
     return map;
-  }, [comps]);
+  }, [comps, hasTopics, conceptTopics, result.concepts]);
 
   const edgeData = useMemo(() => edges.map(e => ({
     from: coords3D[e.i] as [number, number, number],
@@ -1142,7 +1404,27 @@ function RipsComplex({ result, threshold, isDark, showVoids, voidIntensity, void
     color: nodeColorMap.get(e.i) || "#888888",
   })), [edges, coords3D, nodeColorMap]);
 
-  return <TopologyScene nodes={nodes} edges={edgeData} isDark={isDark} showVoids={showVoids} voidIntensity={voidIntensity} voidColor={voidColor} />;
+  // Topic centroid labels when multiple presets active
+  const topicLabels = useMemo(() => {
+    if (!hasTopics) return undefined;
+    const groups = new Map<string, { color: string; positions: [number, number, number][] }>();
+    result.concepts.forEach((concept, i) => {
+      const topic = conceptTopics.get(concept);
+      if (!topic) return;
+      if (!groups.has(topic.label)) {
+        groups.set(topic.label, { color: TOPIC_COLORS[topic.presetIdx % TOPIC_COLORS.length], positions: [] });
+      }
+      groups.get(topic.label)!.positions.push(coords3D[i] as [number, number, number]);
+    });
+    return [...groups.entries()].map(([label, g]) => {
+      const cx = g.positions.reduce((s, p) => s + p[0], 0) / g.positions.length;
+      const cy = g.positions.reduce((s, p) => s + p[1], 0) / g.positions.length;
+      const cz = g.positions.reduce((s, p) => s + p[2], 0) / g.positions.length;
+      return { label, position: [cx, cy, cz] as [number, number, number], color: g.color };
+    });
+  }, [hasTopics, conceptTopics, result.concepts, coords3D]);
+
+  return <TopologyScene nodes={nodes} edges={edgeData} isDark={isDark} showVoids={showVoids} voidIntensity={voidIntensity} voidColor={voidColor} topicLabels={topicLabels} />;
 }
 
 function BettiCurve({ result, threshold, bgColor, gridColor, textColor }: {

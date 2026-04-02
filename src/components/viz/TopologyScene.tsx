@@ -13,6 +13,7 @@ interface TopologyNode {
   isolated: boolean;
   componentId: number;
   componentSize: number;
+  topicColor?: string;
 }
 
 interface TopologyEdge {
@@ -21,13 +22,20 @@ interface TopologyEdge {
   color: string;
 }
 
+export interface TopicLabel {
+  label: string;
+  position: [number, number, number];
+  color: string;
+}
+
 export interface TopologySceneProps {
   nodes: TopologyNode[];
   edges: TopologyEdge[];
   isDark: boolean;
   showVoids: boolean;
-  voidIntensity: number; // 0 (invisible) to 1 (fully opaque)
-  voidColor: string;     // hex colour for the void cloud
+  voidIntensity: number;
+  voidColor: string;
+  topicLabels?: TopicLabel[];
 }
 
 const SCALE = 6;
@@ -42,6 +50,7 @@ function NodeDot({ node, isDark }: { node: TopologyNode; isDark: boolean }) {
   const labelColor = isDark ? "#c0c0d0" : "#3a3020";
   const fadedColor = isDark ? "#555566" : "#aaa099";
   const [hovered, setHovered] = useState(false);
+  const dotColor = node.topicColor || node.color;
 
   return (
     <group position={pos}>
@@ -51,8 +60,8 @@ function NodeDot({ node, isDark }: { node: TopologyNode; isDark: boolean }) {
       >
         <sphereGeometry args={[hovered ? size * 1.5 : size, 12, 12]} />
         <meshStandardMaterial
-          color={hovered ? "#ffffff" : node.color}
-          emissive={node.color}
+          color={hovered ? "#ffffff" : dotColor}
+          emissive={dotColor}
           emissiveIntensity={hovered ? 0.8 : (node.isolated ? 0.6 : 0.3)}
           transparent
           opacity={0.9}
@@ -63,7 +72,7 @@ function NodeDot({ node, isDark }: { node: TopologyNode; isDark: boolean }) {
         <Billboard position={[0, size + 0.04, 0]}>
           <Text
             fontSize={node.isolated ? 0.08 : 0.055}
-            color={node.isolated ? node.color : (node.componentSize > 3 ? labelColor : fadedColor)}
+            color={node.topicColor ? dotColor : (node.isolated ? node.color : (node.componentSize > 3 ? labelColor : fadedColor))}
             anchorX="center"
             anchorY="bottom"
             fillOpacity={node.isolated ? 1 : 0.7}
@@ -292,7 +301,7 @@ function VoidCloud({ nodes, intensity, voidColor: colorHex }: { nodes: TopologyN
   return <points geometry={geometry} material={shaderMaterial} />;
 }
 
-function Scene({ nodes, edges, isDark, showVoids, voidIntensity, voidColor }: TopologySceneProps) {
+function Scene({ nodes, edges, isDark, showVoids, voidIntensity, voidColor, topicLabels }: TopologySceneProps) {
   return (
     <>
       <ambientLight intensity={0.6} />
@@ -314,6 +323,22 @@ function Scene({ nodes, edges, isDark, showVoids, voidIntensity, voidColor }: To
       {/* Nodes */}
       {nodes.map((n, i) => (
         <NodeDot key={i} node={n} isDark={isDark} />
+      ))}
+
+      {/* Topic centroid labels */}
+      {topicLabels && topicLabels.map((tl, i) => (
+        <Billboard key={`topic-${i}`} position={scaleCoords(tl.position)}>
+          <Text
+            fontSize={0.15}
+            color={tl.color}
+            anchorX="center"
+            anchorY="middle"
+            fillOpacity={0.35}
+            fontWeight="bold"
+          >
+            {tl.label}
+          </Text>
+        </Billboard>
       ))}
 
       <OrbitControls enableDamping dampingFactor={0.05} enableZoom enableRotate enablePan />
