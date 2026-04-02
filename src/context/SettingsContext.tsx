@@ -24,39 +24,85 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage + .env.local fallback on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Deep-merge providers so new providers added in code don't break saved settings
+    const load = async () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
         const mergedProviders = { ...DEFAULT_SETTINGS.providers };
-        if (parsed.providers) {
-          for (const [key, val] of Object.entries(parsed.providers)) {
-            if (key in mergedProviders) {
-              mergedProviders[key as keyof typeof mergedProviders] = {
-                ...mergedProviders[key as keyof typeof mergedProviders],
-                ...(val as object),
-              };
+        let parsed: Record<string, unknown> = {};
+
+        if (stored) {
+          parsed = JSON.parse(stored);
+          if (parsed.providers) {
+            for (const [key, val] of Object.entries(parsed.providers as Record<string, unknown>)) {
+              if (key in mergedProviders) {
+                mergedProviders[key as keyof typeof mergedProviders] = {
+                  ...mergedProviders[key as keyof typeof mergedProviders],
+                  ...(val as object),
+                };
+              }
             }
           }
         }
+
+        // Load saved API keys from .env.local as fallback
+        try {
+          const res = await fetch("/api/keys");
+          if (res.ok) {
+            const savedKeys: Record<string, string> = await res.json();
+            for (const [providerId, apiKey] of Object.entries(savedKeys)) {
+              if (providerId === "openai-compatible-baseurl") {
+                // Base URL for OpenAI-compatible
+                if (mergedProviders["openai-compatible"] && !mergedProviders["openai-compatible"].baseUrl) {
+                  mergedProviders["openai-compatible"].baseUrl = apiKey;
+                }
+              } else if (providerId in mergedProviders) {
+                const p = mergedProviders[providerId as keyof typeof mergedProviders];
+                // Only apply if localStorage didn't already have a key
+                if (p && !p.apiKey) {
+                  p.apiKey = apiKey;
+                }
+              }
+            }
+          }
+        } catch {
+          // API route not available (e.g. static export) — ignore
+        }
+
         setSettings(prev => ({ ...prev, ...parsed, providers: mergedProviders }));
+      } catch (e) {
+        console.warn("Failed to load settings:", e);
       }
-    } catch (e) {
-      console.warn("Failed to load settings:", e);
-    }
-    setLoaded(true);
+      setLoaded(true);
+    };
+    load();
   }, []);
 
-  // Persist to localStorage on change
+  // Persist to localStorage + .env.local on change
   useEffect(() => {
     if (!loaded) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch (e) {
       console.warn("Failed to save settings:", e);
+    }
+    // Also persist API keys to .env.local
+    try {
+      const keys: Record<string, string> = {};
+      for (const [id, provider] of Object.entries(settings.providers)) {
+        if (provider.apiKey) keys[id] = provider.apiKey;
+        if (id === "openai-compatible" && provider.baseUrl) {
+          keys["openai-compatible-baseurl"] = provider.baseUrl;
+        }
+      }
+      fetch("/api/keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(keys),
+      }).catch(() => {}); // fire and forget
+    } catch {
+      // ignore
     }
   }, [settings, loaded]);
 

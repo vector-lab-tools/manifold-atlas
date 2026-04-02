@@ -51,7 +51,7 @@ const GROUPS: TabGroup[] = [
       { id: "agonism", label: "Agonism Test" },
       { id: "abstraction", label: "Real Abstraction" },
       { id: "silence", label: "Silence Detector" },
-      { id: "topology", label: "Topological Voids" },
+      { id: "topology", label: "Persistent Homology" },
     ],
   },
 ];

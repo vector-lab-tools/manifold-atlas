@@ -5,6 +5,7 @@
  */
 
 import type { Metadata } from "next";
+// Dark mode handled via useEffect in SettingsContext instead
 import { Libre_Baskerville, Source_Serif_4, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -47,13 +48,7 @@ export default function RootLayout({
       className={`${libreBaskerville.variable} ${sourceSerif.variable} ${inter.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem('manifold-atlas-settings');if(s&&JSON.parse(s).darkMode)document.documentElement.classList.add('dark')}catch(e){}})()`,
-          }}
-        />
-      </head>
+      {/* Dark mode class applied via SettingsContext useEffect */}
       <body className="font-body antialiased bg-ivory text-ink selection:bg-burgundy/20 selection:text-burgundy-900">
         {children}
       </body>

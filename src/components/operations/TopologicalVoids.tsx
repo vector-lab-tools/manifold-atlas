@@ -1,5 +1,5 @@
 /**
- * Manifold Atlas — Topological Voids
+ * Manifold Atlas — Persistent Homology
  * Concept and Design: David M. Berry, University of Sussex
  *
  * Persistent homology applied to embedding spaces. Detects connected components
@@ -516,7 +516,7 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
     <div className="space-y-6">
       <div className="card-editorial p-6">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="font-display text-display-md font-bold">Topological Voids</h2>
+          <h2 className="font-display text-display-md font-bold">Persistent Homology</h2>
           <ResetButton onReset={() => { setConceptsText(""); setResults([]); setError(null); }} />
         </div>
         <p className="font-sans text-body-sm text-slate mb-4">
@@ -570,7 +570,7 @@ function TopologyResultCard({ result, isDark }: { result: TopologyResult; isDark
   const [vizMode, setVizMode] = useState<VizMode>("complex");
   const [threshold, setThreshold] = useState<number | null>(null);
   const [deepDive, setDeepDive] = useState(false);
-  const [showVoids, setShowVoids] = useState(true);
+  const [showVoids, setShowVoids] = useState(false);
   const [voidIntensity, setVoidIntensity] = useState(0.4);
   const [voidColor, setVoidColor] = useState("#e87a2a");
 
@@ -980,7 +980,7 @@ function TopologyResultCard({ result, isDark }: { result: TopologyResult; isDark
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `topological-voids-${result.modelId}.csv`;
+                a.download = `persistent-homology-${result.modelId}.csv`;
                 a.click();
                 URL.revokeObjectURL(url);
               }}

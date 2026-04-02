@@ -380,7 +380,7 @@ export function TopologyScene(props: TopologySceneProps) {
     const dataUrl = glRef.current.domElement.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = "topological-voids-rips-complex.png";
+    a.download = "persistent-homology-rips-complex.png";
     a.click();
   }, []);
 
