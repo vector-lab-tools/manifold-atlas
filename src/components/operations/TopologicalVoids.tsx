@@ -535,7 +535,7 @@ const TOPOLOGY_PRESETS: Array<{ label: string; concepts: string[] }> = [
     ],
   },
   {
-    label: "Phil. of Technology",
+    label: "Philosophy of Technology",
     concepts: [
       "Technology is not a neutral tool but embodies values and shapes the conditions of human existence",
       "The question concerning technology reveals that modern technology is a mode of ordering that challenges nature",
