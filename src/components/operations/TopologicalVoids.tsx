@@ -930,38 +930,40 @@ function TopologyResultCard({ result, isDark, conceptTopics }: { result: Topolog
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <span className="font-sans text-caption text-muted-foreground whitespace-nowrap">&epsilon; =</span>
-          <input
-            type="range"
-            min={0}
-            max={maxDist}
-            step={maxDist / 200}
-            value={effectiveThreshold}
-            onChange={e => setThreshold(Number(e.target.value))}
-            onDoubleClick={() => {
-              // Snap to just before inter-topic connections appear
-              if (conceptTopics.size === 0) return;
-              for (const edge of result.filtrationEdges) {
-                const topicA = conceptTopics.get(result.concepts[edge.i]);
-                const topicB = conceptTopics.get(result.concepts[edge.j]);
-                if (topicA && topicB && topicA.label !== topicB.label) {
-                  // First inter-topic edge — snap to just below
-                  setThreshold(Math.max(0, edge.distance - maxDist / 200));
-                  return;
+        <div className="flex-1 min-w-[200px]">
+          <div className="flex items-center gap-2">
+            <span className="font-sans text-caption text-muted-foreground whitespace-nowrap">&epsilon; =</span>
+            <input
+              type="range"
+              min={0}
+              max={maxDist}
+              step={maxDist / 200}
+              value={effectiveThreshold}
+              onChange={e => setThreshold(Number(e.target.value))}
+              onDoubleClick={() => {
+                if (conceptTopics.size === 0) return;
+                // Find the max intra-topic edge distance (where each topic is most connected internally)
+                let maxIntra = 0;
+                for (const edge of result.filtrationEdges) {
+                  const topicA = conceptTopics.get(result.concepts[edge.i]);
+                  const topicB = conceptTopics.get(result.concepts[edge.j]);
+                  if (topicA && topicB && topicA.label === topicB.label) {
+                    maxIntra = Math.max(maxIntra, edge.distance);
+                  }
                 }
-              }
-            }}
-            title={conceptTopics.size > 0 ? "Double-click to snap to max intra-topic threshold" : ""}
-            className="flex-1 h-1.5 bg-parchment rounded-full appearance-none cursor-pointer accent-burgundy"
-          />
-          <span className="font-sans text-caption tabular-nums text-muted-foreground w-12 text-right">
-            {effectiveThreshold.toFixed(3)}
-          </span>
+                if (maxIntra > 0) setThreshold(maxIntra);
+              }}
+              title={conceptTopics.size > 0 ? "Double-click to snap to max intra-topic threshold" : ""}
+              className="flex-1 h-1.5 bg-parchment rounded-full appearance-none cursor-pointer accent-burgundy"
+            />
+            <span className="font-sans text-caption tabular-nums text-muted-foreground w-12 text-right">
+              {effectiveThreshold.toFixed(3)}
+            </span>
+          </div>
+          {conceptTopics.size > 0 && (
+            <div className="font-sans text-[9px] text-muted-foreground/50 mt-0.5 text-center">double-click slider for intra-topic threshold</div>
+          )}
         </div>
-        {conceptTopics.size > 0 && (
-          <span className="font-sans text-[9px] text-muted-foreground/50">double-click slider for intra-topic threshold</span>
-        )}
         {vizMode === "complex" && (
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
