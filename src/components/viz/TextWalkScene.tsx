@@ -27,6 +27,7 @@ interface TextWalkSceneProps {
   progress: number;
   onProgressChange: (p: number) => void;
   isDark: boolean;
+  trailColor: string;
 }
 
 function scaleCoords(coords: [number, number, number], scale = 8): [number, number, number] {
@@ -73,22 +74,27 @@ function CameraFollower({ target, lookAt, active }: {
   return null;
 }
 
-// Trail behind the particle — fades from soft pink (old) to bright red (recent)
-function Trail({ points }: { points: [number, number, number][] }) {
+// Trail behind the particle — fades from soft to bright using the selected trail colour
+function Trail({ points, baseColor }: { points: [number, number, number][]; baseColor: string }) {
   if (points.length < 2) return null;
 
-  // Split trail into segments with fading colour
+  // Parse the base colour to RGB components
+  const base = new THREE.Color(baseColor);
+  const br = Math.round(base.r * 255);
+  const bg = Math.round(base.g * 255);
+  const bb = Math.round(base.b * 255);
+
   const totalSegs = points.length - 1;
   const segments = [];
 
   for (let i = 0; i < totalSegs; i++) {
     const age = (totalSegs - i) / totalSegs; // 1 = oldest, 0 = newest
-    const opacity = 0.15 + (1 - age) * 0.7; // 0.15 (old) → 0.85 (new)
-    // Blend from soft pink to bright red
-    const r = Math.round(239 - age * 80);  // 159..239
-    const g = Math.round(68 - age * 40);   // 28..68
-    const b = Math.round(68 - age * 20);   // 48..68
-    const color = `rgb(${r},${g},${b})`;
+    const opacity = 0.15 + (1 - age) * 0.7;
+    // Fade: old segments are desaturated/lighter, new segments are full colour
+    const r = Math.round(br - age * Math.min(br * 0.35, 80));
+    const g = Math.round(bg - age * Math.min(bg * 0.35, 40));
+    const b = Math.round(bb - age * Math.min(bb * 0.35, 20));
+    const color = `rgb(${Math.max(0, r)},${Math.max(0, g)},${Math.max(0, b)})`;
 
     segments.push(
       <Line
@@ -105,8 +111,8 @@ function Trail({ points }: { points: [number, number, number][] }) {
   return <>{segments}</>;
 }
 
-// Word dot in the cloud
-function WordDot({ position, label, isCurrent, isNearby, rank, frequency, maxFreq, isDark }: {
+// Word dot in the cloud — smoothly animated via useFrame lerping
+function WordDot({ position, label, isCurrent, isNearby, rank, frequency, maxFreq, isDark, currentColor }: {
   position: [number, number, number];
   label: string;
   isCurrent: boolean;
@@ -115,40 +121,67 @@ function WordDot({ position, label, isCurrent, isNearby, rank, frequency, maxFre
   frequency: number;
   maxFreq: number;
   isDark: boolean;
+  currentColor: string;
 }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+
   const freqScale = Math.min(frequency / Math.max(maxFreq, 1), 1);
-  const baseSize = isCurrent ? 0.12 : isNearby ? Math.max(0.04, 0.09 - rank * 0.006) : 0.02 + freqScale * 0.03;
+
+  // Target values
+  const targetSize = isCurrent ? 0.12 : isNearby ? Math.max(0.04, 0.09 - rank * 0.006) : 0.02 + freqScale * 0.03;
+  const targetOpacity = isCurrent ? 1 : isNearby ? 0.9 : 0.15 + freqScale * 0.2;
+  const targetEmissive = isCurrent ? 0.8 : isNearby ? 0.4 : 0;
+
+  const targetColor = useMemo(() => {
+    if (isCurrent) return new THREE.Color(currentColor);
+    if (isNearby) return new THREE.Color("#d4a017");
+    return new THREE.Color(isDark ? "#555566" : "#bbb0a5");
+  }, [isCurrent, isNearby, isDark, currentColor]);
+
+  const targetEmissiveColor = useMemo(() => {
+    if (isCurrent) return new THREE.Color(currentColor);
+    if (isNearby) return new THREE.Color("#d4a017");
+    return new THREE.Color("#000000");
+  }, [isCurrent, isNearby, currentColor]);
+
+  // Smoothly lerp material properties every frame
+  useFrame(() => {
+    if (matRef.current) {
+      matRef.current.color.lerp(targetColor, 0.12);
+      matRef.current.emissive.lerp(targetEmissiveColor, 0.12);
+      matRef.current.emissiveIntensity += (targetEmissive - matRef.current.emissiveIntensity) * 0.12;
+      matRef.current.opacity += (targetOpacity - matRef.current.opacity) * 0.12;
+    }
+    if (meshRef.current) {
+      const s = meshRef.current.scale.x;
+      const ratio = targetSize / 0.06; // scale relative to base geometry size
+      const newS = s + (ratio - s) * 0.12;
+      meshRef.current.scale.setScalar(newS);
+    }
+  });
+
   const fontSize = isCurrent ? 0.1 : isNearby ? Math.max(0.06, 0.1 - rank * 0.006) : 0.035 + freqScale * 0.015;
-
-  const color = isCurrent
-    ? "#ef4444"
-    : isNearby
-      ? "#d4a017"
-      : (isDark ? "#555566" : "#bbb0a5");
-
-  const emissive = isCurrent ? "#ef4444" : isNearby ? "#d4a017" : "#000000";
-  const emissiveIntensity = isCurrent ? 0.8 : isNearby ? 0.4 : 0;
-  const opacity = isCurrent ? 1 : isNearby ? 0.9 : 0.15 + freqScale * 0.2;
-
   const textColor = isCurrent
-    ? "#ef4444"
+    ? currentColor
     : isNearby
       ? (isDark ? "#f0e8d0" : "#3a3020")
       : (isDark ? "#666677" : "#aaa099");
 
   return (
     <group position={position}>
-      <mesh>
-        <sphereGeometry args={[baseSize, 12, 12]} />
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[0.06, 12, 12]} />
         <meshStandardMaterial
-          color={color}
-          emissive={emissive}
-          emissiveIntensity={emissiveIntensity}
+          ref={matRef}
+          color={isDark ? "#555566" : "#bbb0a5"}
+          emissive="#000000"
+          emissiveIntensity={0}
           transparent
-          opacity={opacity}
+          opacity={0.15}
         />
       </mesh>
-      <Billboard position={[0, baseSize + 0.03, 0]}>
+      <Billboard position={[0, targetSize + 0.03, 0]}>
         <Text
           fontSize={fontSize}
           color={textColor}
@@ -185,7 +218,7 @@ function NearbyLines({ from, tos, color }: {
   );
 }
 
-function Scene({ steps, wordPoints, walking, firstPerson, progress, isDark, rideDistance }: Omit<TextWalkSceneProps, "onProgressChange"> & { rideDistance: number }) {
+function Scene({ steps, wordPoints, walking, firstPerson, progress, isDark, rideDistance, trailColor }: Omit<TextWalkSceneProps, "onProgressChange"> & { rideDistance: number }) {
   const currentStep = steps[progress] || steps[0];
   const nearby = currentStep?.nearby || [];
   const nearbySet = new Set(nearby.map(n => n.coordIdx));
@@ -232,7 +265,7 @@ function Scene({ steps, wordPoints, walking, firstPerson, progress, isDark, ride
       <gridHelper args={[20, 20, isDark ? "#222233" : "#ccccbb", isDark ? "#1a1a2a" : "#e0ddd5"]} rotation={[Math.PI / 2, 0, 0]} />
 
       {/* Trail */}
-      <Trail points={trailPoints} />
+      <Trail points={trailPoints} baseColor={trailColor} />
 
       {/* Word cloud */}
       {wordPoints.map((wp, i) => {
@@ -248,6 +281,7 @@ function Scene({ steps, wordPoints, walking, firstPerson, progress, isDark, ride
             frequency={wp.frequency}
             maxFreq={maxFreq}
             isDark={isDark}
+            currentColor={trailColor}
           />
         );
       })}
@@ -260,13 +294,13 @@ function Scene({ steps, wordPoints, walking, firstPerson, progress, isDark, ride
       />
 
       {/* Particle */}
-      <Particle position={currentScaled} color="#ef4444" />
+      <Particle position={currentScaled} color={trailColor} />
 
       {/* Current word label above particle */}
       <Billboard position={[currentScaled[0], currentScaled[1] + 0.3, currentScaled[2]]}>
         <Text
           fontSize={0.12}
-          color="#ef4444"
+          color={trailColor}
           anchorX="center"
           anchorY="bottom"
           fontWeight="bold"
@@ -309,7 +343,17 @@ export function TextWalkScene(props: TextWalkSceneProps) {
   const [canvasKey, setCanvasKey] = useState(0);
   const [rideDistance, setRideDistance] = useState(1.5);
   const zoomRef = useRef<((factor: number) => void) | null>(null);
+  const glRef = useRef<THREE.WebGLRenderer | null>(null);
   const mountTime = useRef(Date.now());
+
+  const exportPNG = useCallback(() => {
+    if (!glRef.current) return;
+    const dataUrl = glRef.current.domElement.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = "text-vectorisation.png";
+    a.click();
+  }, []);
 
   // Auto-retry up to 3 times on context loss, then show crash screen
   const showCrashScreen = crashCount >= 3;
@@ -362,18 +406,26 @@ export function TextWalkScene(props: TextWalkSceneProps) {
           className="w-7 h-7 rounded-sm bg-card/80 border border-parchment-dark text-foreground hover:bg-card flex items-center justify-center font-sans text-body-sm font-bold shadow-editorial"
           title="Zoom out"
         >−</button>
+        <button
+          onClick={exportPNG}
+          className="w-7 h-7 rounded-sm bg-card/80 border border-parchment-dark text-foreground hover:bg-card flex items-center justify-center font-sans shadow-editorial"
+          title="Export PNG"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
       </div>
       <Canvas
         key={canvasKey}
         camera={{ position: [4, 4, 3], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
         gl={{
-          antialias: false,
+          antialias: true,
           powerPreference: "low-power",
           failIfMajorPerformanceCaveat: false,
-          preserveDrawingBuffer: false,
+          preserveDrawingBuffer: true,
         }}
         onCreated={({ gl }) => {
+          glRef.current = gl;
           gl.domElement.style.touchAction = "pan-y";
           gl.domElement.addEventListener("webglcontextlost", handleContextLoss);
         }}

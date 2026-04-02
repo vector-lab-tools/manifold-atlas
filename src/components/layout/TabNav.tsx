@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Ruler, Map, Scale } from "lucide-react";
 
-export type TabId = "distance" | "matrix" | "negation" | "battery" | "neighbourhood" | "sectioning" | "drift" | "walk" | "textvec" | "compass" | "abstraction" | "silence" | "agonism" | "analogy";
+export type TabId = "distance" | "matrix" | "negation" | "battery" | "neighbourhood" | "sectioning" | "drift" | "walk" | "textvec" | "compass" | "abstraction" | "silence" | "agonism" | "analogy" | "topology";
 export type GroupId = "measure" | "map" | "critique";
 
 interface TabGroup {
@@ -51,6 +51,7 @@ const GROUPS: TabGroup[] = [
       { id: "agonism", label: "Agonism Test" },
       { id: "abstraction", label: "Real Abstraction" },
       { id: "silence", label: "Silence Detector" },
+      { id: "topology", label: "Topological Voids" },
     ],
   },
 ];

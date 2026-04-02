@@ -7,7 +7,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, Play, Pause, RotateCcw, ChevronRight, ChevronDown, Download } from "lucide-react";
+import { Loader2, Play, Pause, RotateCcw, ChevronRight, ChevronDown, Download, SkipBack, SkipForward } from "lucide-react";
 import { encode, decode } from "gpt-tokenizer";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
@@ -57,9 +57,9 @@ const TEXT_PRESETS: Array<{ label: string; text: string; source: string }> = [
     text: `The computer programmer is a creator of universes for which he alone is the lawgiver. No playwright, no stage director, no emperor, however powerful, has ever exercised such absolute authority to arrange a stage or a field of battle and to command such unswervingly combatant or combative forces. The computer is a playing field on which one may play out any game one can imagine. One may create worlds in which there is no gravity, or in which two plus two equals five.`,
   },
   {
-    label: "Berry, Vector Theory",
-    source: "David M. Berry, Vector Theory, 2026",
-    text: `The embedding API is the telescope. The manifold is the object of study. Cosine similarity is the primary instrument. Every vector observed through the telescope was computed by a corporation that controls the geometry. The political economy of the method is built into its conditions of possibility. Definition is replaced by position, truth by orientation, argument by interpolation, and contradiction by cosine proximity. The vectorial turn introduces a new computational regime.`,
+    label: "Berry, Vector Medium",
+    source: "David M. Berry, The Vector Medium, 2026",
+    text: `In The Philosophy of Software, Berry drawing on Kittler's argument that the digital causes an implosion of previously distinct media forms, I argued that code functions as a super-medium, a medium that contains the fragmented media of the twentieth century but also radically reshapes and transforms them into a new unity. Manovich made a similar argument that software simulates all prior media whilst adding properties native to computation itself constituting what he calls a metamedium. This followed from Negroponte's claim that we were in the middle of a transition from atoms to bits. With the turn to artificial intelligence and the rise of a different form of storage, if we can call it that, we have what we might term a vectorial turn which produces a new substrate and I am calling this a vector medium. If the digital transformation created a medium which was interoperable across media forms, then the vector medium is creating conditions for inseparability across media forms.`,
   },
 ];
 
@@ -108,7 +108,7 @@ export function TextVectorisation({ onQueryTime }: TextVectorisationProps) {
   const handleTextChange = (value: string) => {
     setText(value);
     if (value.trim().length > 0) {
-      const { uniqueWords, textSequence, truncated } = tokeniseText(value, 100, filterStops);
+      const { uniqueWords, textSequence, truncated } = tokeniseText(value, 200, filterStops);
       setWordCount({ unique: uniqueWords.length, total: textSequence.length, truncated });
     } else {
       setWordCount(null);
@@ -124,13 +124,30 @@ export function TextVectorisation({ onQueryTime }: TextVectorisationProps) {
     const start = performance.now();
 
     try {
-      const { uniqueWords, textSequence, wordFrequency, allWords, truncated } = tokeniseText(effectiveText, 100, filterStops);
+      const { uniqueWords, textSequence, wordFrequency, allWords, truncated } = tokeniseText(effectiveText, 200, filterStops);
 
       if (uniqueWords.length < 3) {
         throw new Error("Text too short: need at least 3 unique content words.");
       }
 
-      const modelVectors = await embedAll(uniqueWords);
+      // Batch embedding: split into chunks of 96 to avoid API limits
+      const BATCH_SIZE = 96;
+      const batches: string[][] = [];
+      for (let i = 0; i < uniqueWords.length; i += BATCH_SIZE) {
+        batches.push(uniqueWords.slice(i, i + BATCH_SIZE));
+      }
+
+      // Embed each batch and merge results
+      const mergedVectors = new Map<string, number[][]>();
+      for (const batch of batches) {
+        const batchResult = await embedAll(batch);
+        for (const [modelId, vectors] of batchResult) {
+          if (!mergedVectors.has(modelId)) mergedVectors.set(modelId, []);
+          mergedVectors.get(modelId)!.push(...vectors);
+        }
+      }
+
+      const modelVectors = mergedVectors;
       const enabledModels = getEnabledModels();
 
       const newResults: TextWalkResult[] = enabledModels
@@ -237,7 +254,7 @@ export function TextVectorisation({ onQueryTime }: TextVectorisationProps) {
             {wordCount ? (
               <p className="font-sans text-caption text-muted-foreground">
                 {wordCount.unique} unique words to embed, {wordCount.total} words in sequence
-                {wordCount.truncated && <span className="text-burgundy"> (capped at 100)</span>}
+                {wordCount.truncated && <span className="text-burgundy"> (capped at 200)</span>}
               </p>
             ) : <span />}
             <label className="flex items-center gap-1.5 cursor-pointer">
@@ -284,6 +301,7 @@ function TextWalkPlayer({ result, isDark }: { result: TextWalkResult; isDark: bo
   const [walking, setWalking] = useState(false);
   const [firstPerson, setFirstPerson] = useState(false);
   const [deepDive, setDeepDive] = useState(false);
+  const [trailColor, setTrailColor] = useState("#ef4444");
 
   // BPE subword tokens (cl100k_base, same as OpenAI embeddings)
   const bpeTokens = useMemo(() => {
@@ -295,8 +313,11 @@ function TextWalkPlayer({ result, isDark }: { result: TextWalkResult; isDark: bo
     }
   }, [result.sourceText]);
   const textPanelHeight = 140;
+  const [readSpeed, setReadSpeed] = useState(0.04);
   const rafRef = useRef<number | null>(null);
   const progressRef = useRef(0);
+  const speedRef = useRef(readSpeed);
+  speedRef.current = readSpeed;
   const totalSteps = result.steps.length;
 
   const startWalk = useCallback(() => {
@@ -307,7 +328,7 @@ function TextWalkPlayer({ result, isDark }: { result: TextWalkResult; isDark: bo
     }
 
     const step = () => {
-      progressRef.current += 0.04;
+      progressRef.current += speedRef.current;
       if (progressRef.current >= totalSteps - 1) {
         // Stop at the end
         progressRef.current = totalSteps - 1;
@@ -342,11 +363,27 @@ function TextWalkPlayer({ result, isDark }: { result: TextWalkResult; isDark: bo
         <span className="font-sans text-body-sm font-semibold">{result.modelName}</span>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => { setWalking(false); const p = Math.max(0, progress - 1); setProgress(p); progressRef.current = p; }}
+            disabled={progress <= 0}
+            className="btn-editorial-ghost px-1.5 py-1.5 disabled:opacity-30"
+            title="Step back"
+          >
+            <SkipBack size={14} />
+          </button>
+          <button
             onClick={() => setWalking(!walking)}
             className="flex items-center gap-1 px-3 py-1.5 rounded-sm text-body-sm font-medium bg-burgundy text-primary-foreground hover:bg-burgundy-900 transition-colors"
           >
             {walking ? <Pause size={14} /> : <Play size={14} />}
             {walking ? "Pause" : "Read"}
+          </button>
+          <button
+            onClick={() => { setWalking(false); const p = Math.min(totalSteps - 1, progress + 1); setProgress(p); progressRef.current = p; }}
+            disabled={progress >= totalSteps - 1}
+            className="btn-editorial-ghost px-1.5 py-1.5 disabled:opacity-30"
+            title="Step forward"
+          >
+            <SkipForward size={14} />
           </button>
           <button
             onClick={() => setFirstPerson(!firstPerson)}
@@ -362,6 +399,38 @@ function TextWalkPlayer({ result, isDark }: { result: TextWalkResult; isDark: bo
           >
             <RotateCcw size={14} />
           </button>
+          <div className="flex items-center gap-1.5 ml-2 border-l border-parchment pl-2">
+            <span className="font-sans text-[10px] text-muted-foreground">slow</span>
+            <input
+              type="range"
+              min={0.005}
+              max={0.15}
+              step={0.005}
+              value={readSpeed}
+              onChange={e => setReadSpeed(Number(e.target.value))}
+              className="w-16 h-1 bg-parchment rounded-full appearance-none cursor-pointer accent-burgundy"
+            />
+            <span className="font-sans text-[10px] text-muted-foreground">fast</span>
+          </div>
+          <div className="flex items-center gap-1 ml-2 border-l border-parchment pl-2">
+            {[
+              { color: "#ef4444", label: "Red" },
+              { color: "#e87a2a", label: "Amber" },
+              { color: "#3b82f6", label: "Blue" },
+              { color: "#22c55e", label: "Green" },
+              { color: "#a855f7", label: "Purple" },
+            ].map(swatch => (
+              <button
+                key={swatch.color}
+                onClick={() => setTrailColor(swatch.color)}
+                className={`w-4 h-4 rounded-full border-2 transition-transform ${
+                  trailColor === swatch.color ? "border-foreground scale-110" : "border-transparent hover:scale-105"
+                }`}
+                style={{ backgroundColor: swatch.color }}
+                title={swatch.label}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -439,6 +508,7 @@ function TextWalkPlayer({ result, isDark }: { result: TextWalkResult; isDark: bo
           progress={progress}
           onProgressChange={setProgress}
           isDark={isDark}
+          trailColor={trailColor}
         />
       </div>
 

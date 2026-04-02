@@ -77,7 +77,7 @@ export interface AnnotatedWord {
   sequenceIndex: number;
 }
 
-export function tokeniseText(text: string, maxUnique = 100, filterStopWords = false): {
+export function tokeniseText(text: string, maxUnique = 200, filterStopWords = false): {
   uniqueWords: string[];
   textSequence: string[];
   wordFrequency: Map<string, number>;

@@ -3,8 +3,8 @@
 **Comparative geometry of AI vector spaces.**
 
 **Author:** David M. Berry
-**Version:** 0.7.0
-**Date:** 31 March 2026
+**Version:** 0.8.0
+**Date:** 2 April 2026
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, and projections that reveal the geometry's structure.
 
@@ -54,7 +54,10 @@ The classic word2vec operation (A - B + C = ?) applied to modern embedding model
 Compare how much geometric space the manifold allocates to different domains. When terms within a domain are spread apart (low pairwise similarity), the manifold distinguishes between them, allocating more representational space. When terms are packed together (high pairwise similarity), the manifold compresses them, treating distinct concepts as near-interchangeable. Pre-loaded comparisons: financial derivatives vs subsistence farming, Silicon Valley vs indigenous ecological knowledge, corporate management vs care work. The differential reveals which domains the geometry takes seriously and which it flattens.
 
 ### Text Vectorisation
-Paste a passage of text and watch a particle trace its reading path through the manifold. Every word is embedded and projected to 3D. The particle visits each word in reading order, with the 6 nearest words in the embedding space highlighted by connecting lines at each step. The trail fades from soft pink (old) to bright red (recent), showing the geometric trajectory of reading. When a word repeats, the particle returns to the same position, revealing how the text loops back through semantic space. The source text is displayed above the 3D scene with the current word highlighted in red. Seven preset passages: Hinton (1977) on distributed representations, Deleuze on societies of control, Impett and Offert on vector media, Kittler on the absence of software, Rosenblatt on the perceptron as brain model, Weizenbaum on the programmer as lawgiver, and Berry on vector theory. Deep dive panel with summary metrics, word frequency table with nearest neighbours, BPE subword token preview (approximate, using cl100k_base), reading path, and CSV export.
+Paste a passage of text and watch a particle trace its reading path through the manifold. Every word is embedded and projected to 3D via PCA. The particle visits each word in reading order, with the 6 nearest words in the embedding space highlighted by connecting lines at each step. The trail colour is selectable (red, amber, blue, green, purple) and fades from soft to bright, showing the geometric trajectory of reading. When a word repeats, the particle returns to the same position, revealing how the text loops back through semantic space. The source text is displayed above the 3D scene with the current word highlighted. Step forward/back buttons for manual word-by-word navigation and an adjustable speed slider for the read animation. Smooth transitions between states using per-frame lerping. Batched embedding supports texts up to 200 unique words across multiple API calls. Seven preset passages: Hinton (1977) on distributed representations, Deleuze on societies of control, Impett and Offert on vector media, Kittler on the absence of software, Rosenblatt on the perceptron as brain model, Weizenbaum on the programmer as lawgiver, and Berry on the vector medium. Deep dive panel with summary metrics, word frequency table with nearest neighbours, BPE subword token preview (approximate, using cl100k_base), reading path, and CSV export. PNG screenshot export.
+
+### Topological Voids
+Persistent homology (Topological Data Analysis) applied to embedding spaces. Detects structural topology: isolated conceptual islands (H0), circular structures with empty interiors (H1), and how these features persist across geometric scales. Pure TypeScript Vietoris-Rips implementation. Four visualisation modes: persistence diagram (birth vs death scatter), barcode diagram (horizontal bars sorted by persistence), Rips complex (Three.js 3D scene with component colouring, hover tooltips showing full sentences, auto-rotate, and zoom/export controls), and Betti curve (connected components and loops vs threshold). The Rips complex view includes a void cloud: a nebulous particle fog (custom shader with depth-based size attenuation) that fills empty regions inside the manifold, making the unthinkable of the machine visible as ghostly matter. Void colour (amber, burgundy, blue, smoke) and intensity are adjustable. Interactive threshold slider with void report showing conceptual islands, persistent loops, and isolated concepts at any scale. Seventeen presets spanning political claims, knowledge domains, critical theory, AI and computation, labour and capital, ecology, media and culture, body and phenomenology, tech company claims, accelerationism, effective altruism, finance, philosophy of mind, existentialism, media archaeology, literary critique, and semiotics. Presets auto-compute on click. Deep dive with full persistence feature table, most persistent H0/H1 features, and CSV export.
 
 ## Supported Embedding Providers
 
@@ -162,10 +165,11 @@ src/
                      # Negation Battery, Analogy Arithmetic, Neighbourhood Map,
                      # Semantic Sectioning, Vector Drift, Vector Walk,
                      # Text Vectorisation, Hegemony Compass, Agonism Test,
-                     # Real Abstraction Test, Silence Detector
+                     # Real Abstraction Test, Silence Detector,
+                     # Topological Voids
     viz/             # ScatterPlot, SimilarityBridge, SimilarityMeter,
                      # GaugeArc, AnalysisPanel, PlotlyPlot, WalkScene,
-                     # TextWalkScene, Plot3DControls
+                     # TextWalkScene, TopologyScene, Plot3DControls
     layout/          # Header, TabNav, StatusBar, SettingsPanel
     shared/          # QueryHistory, ResetButton, ErrorDisplay, ConceptPresets
     easter-eggs/     # Clippy, Hackerman, Geoffrey Hinton, Karl Marx
@@ -186,14 +190,16 @@ Manifold Atlas is a research instrument for the [vector theory](https://stunlaw.
 
 The tool operationalises this framework empirically. Key concepts and the features that test them:
 
-- **The embedding API as telescope** -- the embedding API returns processed, averaged representations from a separately-trained model, not a direct window into the frontier model's internal geometry. This makes the telescope metaphor more precise, not less: a telescope does not show you the star itself but light refracted through lenses. You are studying a proprietary geometry through a proprietary aperture. All fourteen operations use this as their basic research instrument.
+- **The embedding API as telescope** -- the embedding API returns processed, averaged representations from a separately-trained model, not a direct window into the frontier model's internal geometry. This makes the telescope metaphor more precise, not less: a telescope does not show you the star itself but light refracted through lenses. You are studying a proprietary geometry through a proprietary aperture. All fifteen operations use this as their basic research instrument.
 - **The negation deficit** -- the manifold's geometric representation of negation is structurally inadequate to the logical and dialectical weight that negation carries. Negation in the geometry is likely a small rotation in a few dimensions, drowned out by overwhelming similarity across all other dimensions. The Negation Gauge and Battery measure this empirically: not that the manifold has zero capacity for negation, but that its capacity is geometrically trivial relative to the conceptual work negation performs.
 - **Geometric ideology** -- hegemony that operates through topology (density, sparsity, trajectory) rather than discourse (propositions, narratives, interpellation). The Neighbourhood Map's cluster analysis, connection mesh, and density mapping test this.
 - **Manifold sectioning** -- cutting the geometry along critically chosen planes to reveal where one domain shades into another. Semantic Sectioning operationalises this directly.
-- **Geometric stress testing** -- embedding the same concept in different contexts to measure how the manifold warps under contextual pressure. Concept Drift operationalises this.
+- **Geometric stress testing** -- embedding the same concept in different contexts to measure how the manifold displaces it under contextual pressure. Vector Drift operationalises this, including Sentence Sensitivity mode that auto-generates fifteen phrasings per concept.
 - **Real abstraction** -- the embedding layer performs Sohn-Rethel's real abstraction at the level of meaning. The Real Abstraction Test measures how far the manifold has completed this abstraction across domains, from clothing to care work.
 - **Hegemonic defaults** -- the Hegemony Compass measures which ideological framing the geometry has naturalised as the default meaning of contested concepts like "freedom" and "democracy."
 - **The taxonomy of silence** -- the Silence Detector compares how much geometric space the manifold allocates to different domains. Where terms are packed together, the geometry compresses; where they are spread apart, it distinguishes. The differential reveals which domains the geometry takes seriously.
+- **Reading as geometric trajectory** -- Text Vectorisation traces the path a text takes through the manifold word by word, revealing that reading is a geometric trajectory through semantic space. The shape of the path (its loops, jumps, and clustering) is evidence about how the manifold organises discourse.
+- **The unthinkable of the machine** -- Topological Voids uses persistent homology to detect structural gaps in the manifold: regions where no concept exists. The void cloud makes these gaps visible as ghostly matter. Isolated conceptual islands and persistent loops reveal what the geometry cannot represent.
 - **The proprietary medium** -- every vector observed through the telescope was computed by a corporation that controls the geometry. The political economy of the method is built into its conditions of possibility. Multi-model comparison reveals whether geometric politics are structural to the medium or contingent on training decisions.
 
 For the full theoretical framework, see:

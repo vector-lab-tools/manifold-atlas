@@ -31,6 +31,7 @@ import { HegemonyCompass } from "@/components/operations/HegemonyCompass";
 import { AgonismTest } from "@/components/operations/AgonismTest";
 import { SohnRethelTest } from "@/components/operations/SohnRethelTest";
 import { SilenceDetector } from "@/components/operations/SilenceDetector";
+import { TopologicalVoids } from "@/components/operations/TopologicalVoids";
 import { AnalogyArithmetic } from "@/components/operations/AnalogyArithmetic";
 import { Clippy } from "@/components/easter-eggs/Clippy";
 
@@ -58,6 +59,7 @@ function AppContent() {
         {activeTab === "agonism" && <AgonismTest onQueryTime={setLastQueryTime} />}
         {activeTab === "abstraction" && <SohnRethelTest onQueryTime={setLastQueryTime} />}
         {activeTab === "silence" && <SilenceDetector onQueryTime={setLastQueryTime} />}
+        {activeTab === "topology" && <TopologicalVoids onQueryTime={setLastQueryTime} />}
       </main>
 
       <StatusBar lastQueryTime={lastQueryTime} />
