@@ -920,10 +920,10 @@ function TopologyResultCard({ result, isDark, conceptTopics }: { result: Topolog
             <button
               key={mode}
               onClick={() => setVizMode(mode)}
-              className={`px-2.5 py-1 rounded-sm text-caption font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-sm text-caption font-normal transition-colors border border-parchment/50 ${
                 vizMode === mode
                   ? "bg-burgundy text-primary-foreground"
-                  : "btn-editorial-ghost"
+                  : "bg-transparent text-muted-foreground hover:bg-muted/30"
               }`}
             >
               {mode === "persistence" ? "Persistence" : mode === "barcode" ? "Barcode" : mode === "complex" ? "Rips Complex" : "Betti Curve"}
@@ -939,12 +939,29 @@ function TopologyResultCard({ result, isDark, conceptTopics }: { result: Topolog
             step={maxDist / 200}
             value={effectiveThreshold}
             onChange={e => setThreshold(Number(e.target.value))}
+            onDoubleClick={() => {
+              // Snap to just before inter-topic connections appear
+              if (conceptTopics.size === 0) return;
+              for (const edge of result.filtrationEdges) {
+                const topicA = conceptTopics.get(result.concepts[edge.i]);
+                const topicB = conceptTopics.get(result.concepts[edge.j]);
+                if (topicA && topicB && topicA.label !== topicB.label) {
+                  // First inter-topic edge — snap to just below
+                  setThreshold(Math.max(0, edge.distance - maxDist / 200));
+                  return;
+                }
+              }
+            }}
+            title={conceptTopics.size > 0 ? "Double-click to snap to max intra-topic threshold" : ""}
             className="flex-1 h-1.5 bg-parchment rounded-full appearance-none cursor-pointer accent-burgundy"
           />
           <span className="font-sans text-caption tabular-nums text-muted-foreground w-12 text-right">
             {effectiveThreshold.toFixed(3)}
           </span>
         </div>
+        {conceptTopics.size > 0 && (
+          <span className="font-sans text-[9px] text-muted-foreground/50">double-click slider for intra-topic threshold</span>
+        )}
         {vizMode === "complex" && (
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
