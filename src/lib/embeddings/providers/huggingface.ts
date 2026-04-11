@@ -2,6 +2,7 @@
  * Hugging Face Inference API provider.
  * Free tier with HF token. Sign up at huggingface.co.
  * https://huggingface.co/docs/api-inference/
+ * Note: uses router.huggingface.co (api-inference.huggingface.co was deprecated April 2026)
  */
 
 export async function embedHuggingFace(
@@ -11,7 +12,7 @@ export async function embedHuggingFace(
 ): Promise<number[][]> {
   // HF Inference API: POST to the feature-extraction pipeline
   const response = await fetch(
-    `https://api-inference.huggingface.co/pipeline/feature-extraction/${model}`,
+    `https://router.huggingface.co/models/${model}/pipeline/feature-extraction`,
     {
       method: "POST",
       headers: {
