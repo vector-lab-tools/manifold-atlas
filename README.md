@@ -3,8 +3,8 @@
 **Comparative geometry of AI vector spaces.**
 
 **Author:** David M. Berry
-**Version:** 0.9.0
-**Date:** 2 April 2026
+**Version:** 0.9.1
+**Date:** 11 April 2026
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, and projections that reveal the geometry's structure.
 
