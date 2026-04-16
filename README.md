@@ -3,8 +3,8 @@
 **Comparative geometry of AI vector spaces.**
 
 **Author:** David M. Berry
-**Version:** 0.9.1
-**Date:** 11 April 2026
+**Version:** 0.9.2
+**Date:** 16 April 2026
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, and projections that reveal the geometry's structure.
 
@@ -47,8 +47,8 @@ Enter a list of concepts and get a full pairwise cosine similarity heatmap acros
 ### Agonism Test
 Does the manifold preserve genuine philosophical opposition, or collapse it into proximity? Eight pre-loaded debates (Marx vs Burke, Hegel vs Kierkegaard, Arendt vs Schmitt, Foucault vs Aristotle, and more). The agonism score measures how much intellectual conflict survives geometrisation. This is the negation deficit extended from logic to philosophical antagonism.
 
-### Vector Arithmetic
-The classic word2vec operation (A - B + C = ?) applied to modern embedding models with critical intent. "King minus man plus woman equals queen" was the original demonstration. Pre-loaded analogies include "capitalism minus exploitation plus cooperation equals ?" and "technology minus efficiency plus care equals ?". Tests whether the manifold's geometry preserves conceptual relationships that critical theory depends on.
+### Vector Logic
+The narrowest test of vector logic: the claim that analogical inference can be performed as arithmetic on embedding vectors. The classic word2vec operation (A - B + C = ?) applied to modern embedding models with critical intent. "King minus man plus woman equals queen" was the original demonstration. Pre-loaded analogies include "capitalism minus exploitation plus cooperation equals ?" and "technology minus efficiency plus care equals ?". Tests whether the manifold's geometry preserves conceptual relationships that critical theory depends on.
 
 ### Silence Detector
 Compare how much geometric space the manifold allocates to different domains. When terms within a domain are spread apart (low pairwise similarity), the manifold distinguishes between them, allocating more representational space. When terms are packed together (high pairwise similarity), the manifold compresses them, treating distinct concepts as near-interchangeable. Pre-loaded comparisons: financial derivatives vs subsistence farming, Silicon Valley vs indigenous ecological knowledge, corporate management vs care work. The differential reveals which domains the geometry takes seriously and which it flattens.
@@ -180,7 +180,7 @@ src/
     api/ollama/      # Ollama model management (list, pull)
   components/
     operations/      # Concept Distance, Distance Matrix, Negation Gauge,
-                     # Negation Battery, Analogy Arithmetic, Neighbourhood Map,
+                     # Negation Battery, Vector Logic, Neighbourhood Map,
                      # Semantic Sectioning, Vector Drift, Vector Walk,
                      # Text Vectorisation, Hegemony Compass, Agonism Test,
                      # Real Abstraction Test, Silence Detector,

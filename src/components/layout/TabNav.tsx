@@ -25,7 +25,7 @@ const GROUPS: TabGroup[] = [
       { id: "matrix", label: "Distance Matrix" },
       { id: "negation", label: "Negation Gauge" },
       { id: "battery", label: "Negation Battery" },
-      { id: "analogy", label: "Vector Arithmetic" },
+      { id: "analogy", label: "Vector Logic" },
     ],
   },
   {

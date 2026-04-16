@@ -32,7 +32,7 @@ import { AgonismTest } from "@/components/operations/AgonismTest";
 import { SohnRethelTest } from "@/components/operations/SohnRethelTest";
 import { SilenceDetector } from "@/components/operations/SilenceDetector";
 import { TopologicalVoids } from "@/components/operations/TopologicalVoids";
-import { AnalogyArithmetic } from "@/components/operations/AnalogyArithmetic";
+import { VectorLogic } from "@/components/operations/VectorLogic";
 import { Clippy } from "@/components/easter-eggs/Clippy";
 
 function AppContent() {
@@ -49,7 +49,7 @@ function AppContent() {
         {activeTab === "neighbourhood" && <NeighbourhoodMap onQueryTime={setLastQueryTime} />}
         {activeTab === "negation" && <NegationGauge onQueryTime={setLastQueryTime} />}
         {activeTab === "battery" && <NegationBattery onQueryTime={setLastQueryTime} />}
-        {activeTab === "analogy" && <AnalogyArithmetic onQueryTime={setLastQueryTime} />}
+        {activeTab === "analogy" && <VectorLogic onQueryTime={setLastQueryTime} />}
         {activeTab === "sectioning" && <SemanticSectioning onQueryTime={setLastQueryTime} />}
         {activeTab === "drift" && <ConceptDrift onQueryTime={setLastQueryTime} />}
         {activeTab === "walk" && <VectorWalk onQueryTime={setLastQueryTime} />}

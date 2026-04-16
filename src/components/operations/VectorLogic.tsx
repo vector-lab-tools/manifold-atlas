@@ -48,11 +48,11 @@ interface AnalogyResult {
   nearest: Array<{ concept: string; similarity: number }>;
 }
 
-interface AnalogyArithmeticProps {
+interface VectorLogicProps {
   onQueryTime: (time: number) => void;
 }
 
-export function AnalogyArithmetic({ onQueryTime }: AnalogyArithmeticProps) {
+export function VectorLogic({ onQueryTime }: VectorLogicProps) {
   const [termA, setTermA] = useState("");
   const [termB, setTermB] = useState("");
   const [termC, setTermC] = useState("");
@@ -131,14 +131,18 @@ export function AnalogyArithmetic({ onQueryTime }: AnalogyArithmeticProps) {
     <div className="space-y-6">
       <div className="card-editorial p-6">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="font-display text-display-md font-bold">Vector Arithmetic</h2>
+          <h2 className="font-display text-display-md font-bold">Vector Logic</h2>
           <ResetButton onReset={() => { setTermA(""); setTermB(""); setTermC(""); setResults([]); setError(null); }} />
         </div>
+        <p className="font-sans text-body-sm text-slate italic mb-2">
+          A &minus; B + C = ?   &mdash; testing analogical inference as vector arithmetic
+        </p>
         <p className="font-sans text-body-sm text-slate mb-4">
-          The classic word2vec operation applied to modern embedding models with critical intent.
-          Compute A &minus; B + C and find what the manifold produces. &ldquo;King minus man plus
-          woman equals queen&rdquo; was the original demonstration. What happens when you apply
-          transformations that encode political arguments as vector arithmetic?
+          The narrowest test of vector logic: the claim that analogical inference can be performed
+          as arithmetic on embedding vectors. Compute A &minus; B + C and find what the manifold
+          produces. &ldquo;King minus man plus woman equals queen&rdquo; was the original
+          demonstration. What happens when you apply transformations that encode political
+          arguments as vector arithmetic?
         </p>
 
         <div className="space-y-3">
@@ -272,7 +276,7 @@ export function AnalogyArithmetic({ onQueryTime }: AnalogyArithmeticProps) {
               The result shows which concept in the reference vocabulary is closest to the
               computed vector A &minus; B + C. If the analogy holds in the geometry, the top
               result should complete the proportion. If it does not, the manifold&apos;s
-              internal logic diverges from the conceptual relationship you are testing.
+              vector logic diverges from the conceptual relationship you are testing.
             </p>
           </div>
 
@@ -320,7 +324,7 @@ export function AnalogyArithmetic({ onQueryTime }: AnalogyArithmeticProps) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url;
-                    a.download = `vector-arithmetic-${r.a}-${r.b}-${r.c}-${r.modelId}.csv`;
+                    a.download = `vector-logic-${r.a}-${r.b}-${r.c}-${r.modelId}.csv`;
                     a.click();
                     URL.revokeObjectURL(url);
                   }}
