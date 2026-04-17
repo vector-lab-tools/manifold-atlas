@@ -5,67 +5,19 @@ import { ArrowRight, Loader2, ChevronRight, ChevronDown } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { cosineSimilarity } from "@/lib/geometry/cosine";
-import { SimilarityBar } from "@/components/viz/SimilarityBar";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { QueryHistory } from "@/components/shared/QueryHistory";
 import { addHistoryEntry, type HistoryEntry } from "@/lib/history";
 import { conceptSimilarityLevel } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
-import { EMBEDDING_MODELS } from "@/types/embeddings";
+import {
+  computeConceptDistance,
+  type ConceptDistanceResult,
+} from "@/lib/operations/concept-distance";
 
 const DEFAULT_A = "solidarity";
 const DEFAULT_B = "compliance";
-
-interface ModelResult {
-  modelId: string;
-  modelName: string;
-  providerId: string;
-  cosineSimilarity: number;
-  cosineDistance: number;
-  angularDistance: number; // in degrees
-  euclideanDistance: number;
-  normA: number;
-  normB: number;
-  dimensions: number;
-  // Top contributing dimensions
-  topDimensions: Array<{ dim: number; contribution: number }>;
-}
-
-interface DistanceResult {
-  termA: string;
-  termB: string;
-  models: ModelResult[];
-}
-
-function vectorNorm(v: number[]): number {
-  return Math.sqrt(v.reduce((sum, x) => sum + x * x, 0));
-}
-
-function euclideanDist(a: number[], b: number[]): number {
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) {
-    const d = a[i] - b[i];
-    sum += d * d;
-  }
-  return Math.sqrt(sum);
-}
-
-function topContributingDimensions(
-  a: number[],
-  b: number[],
-  topN = 5
-): Array<{ dim: number; contribution: number }> {
-  // Contribution of each dimension to the dot product (which drives cosine similarity)
-  const contributions = a.map((ai, i) => ({
-    dim: i,
-    contribution: ai * b[i],
-  }));
-  // Sort by absolute contribution descending
-  contributions.sort((x, y) => Math.abs(y.contribution) - Math.abs(x.contribution));
-  return contributions.slice(0, topN);
-}
 
 function interpretSimilarity(sim: number): { text: string; detail: string } {
   if (sim >= 0.95) return {
@@ -103,7 +55,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
   const [termB, setTermB] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [result, setResult] = useState<DistanceResult | null>(null);
+  const [result, setResult] = useState<ConceptDistanceResult | null>(null);
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
@@ -121,37 +73,14 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
       const modelVectors = await embedAll([effectiveA, effectiveB]);
       const enabledModels = getEnabledModels();
 
-      const models = enabledModels
-        .filter(m => modelVectors.has(m.id))
-        .map(m => {
-          const vectors = modelVectors.get(m.id)!;
-          const vecA = vectors[0];
-          const vecB = vectors[1];
-          const sim = cosineSimilarity(vecA, vecB);
-          const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
+      const computed = computeConceptDistance(
+        { termA: effectiveA, termB: effectiveB },
+        modelVectors,
+        enabledModels
+      );
 
-          // Clamp for acos (floating point can exceed [-1,1])
-          const clampedSim = Math.max(-1, Math.min(1, sim));
-          const angularDist = (Math.acos(clampedSim) * 180) / Math.PI;
-
-          return {
-            modelId: m.id,
-            modelName: spec?.name || m.id,
-            providerId: m.providerId,
-            cosineSimilarity: sim,
-            cosineDistance: 1 - sim,
-            angularDistance: angularDist,
-            euclideanDistance: euclideanDist(vecA, vecB),
-            normA: vectorNorm(vecA),
-            normB: vectorNorm(vecB),
-            dimensions: vecA.length,
-            topDimensions: topContributingDimensions(vecA, vecB),
-          };
-        })
-        .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
-
-      setResult({ termA: effectiveA, termB: effectiveB, models });
-      setExpandedModel(models[0]?.modelId || null);
+      setResult(computed);
+      setExpandedModel(computed.models[0]?.modelId || null);
       onQueryTime((performance.now() - start) / 1000);
 
       // Save to history
@@ -159,7 +88,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
         type: "distance",
         termA: effectiveA,
         termB: effectiveB,
-        results: models.map(m => ({
+        results: computed.models.map(m => ({
           modelName: m.modelName,
           similarity: m.cosineSimilarity,
         })),

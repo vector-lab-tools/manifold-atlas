@@ -1,10 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Ruler, Map, Scale } from "lucide-react";
+import { Ruler, Map, Scale, Workflow } from "lucide-react";
 
-export type TabId = "distance" | "matrix" | "negation" | "battery" | "neighbourhood" | "sectioning" | "drift" | "walk" | "textvec" | "compass" | "abstraction" | "silence" | "agonism" | "analogy" | "topology";
-export type GroupId = "measure" | "map" | "critique";
+export type TabId = "distance" | "matrix" | "negation" | "battery" | "neighbourhood" | "sectioning" | "drift" | "walk" | "textvec" | "compass" | "abstraction" | "silence" | "agonism" | "analogy" | "topology" | "library" | "run";
+export type GroupId = "measure" | "map" | "critique" | "protocol";
 
 interface TabGroup {
   id: GroupId;
@@ -52,6 +52,16 @@ const GROUPS: TabGroup[] = [
       { id: "abstraction", label: "Real Abstraction" },
       { id: "silence", label: "Silence Detector" },
       { id: "topology", label: "Persistent Homology" },
+    ],
+  },
+  {
+    id: "protocol",
+    label: "Protocol",
+    description: "Curated sequences of operations, one-click runnable",
+    icon: Workflow,
+    tabs: [
+      { id: "library", label: "Library" },
+      { id: "run", label: "Run" },
     ],
   },
 ];
