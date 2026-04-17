@@ -5,74 +5,18 @@ import { Loader2, Crosshair, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { cosineSimilarity } from "@/lib/geometry/cosine";
-import { generateNegation } from "@/lib/negation";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { negationSimilarityLevel } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
-import { EMBEDDING_MODELS } from "@/types/embeddings";
+import {
+  NEGATION_BATTERIES,
+  computeNegationBattery,
+  negationBatteryTextList,
+  type NegationBatteryStatementResult,
+} from "@/lib/operations/negation-battery";
 
-const BATTERIES: Record<string, string[]> = {
-  "Political claims": [
-    "Democracy is the best form of government",
-    "Free speech should have limits",
-    "Immigration strengthens the economy",
-    "War can be justified",
-    "Taxation is fair",
-    "The state should provide healthcare",
-    "Protest is effective",
-    "Borders are necessary",
-    "Nationalism is dangerous",
-    "Revolution is sometimes necessary",
-  ],
-  "Ethical statements": [
-    "Lying is wrong",
-    "Killing is never justified",
-    "Privacy is a right",
-    "Equality matters more than freedom",
-    "Animals have rights",
-    "The ends justify the means",
-    "Forgiveness is a virtue",
-    "Punishment deters crime",
-    "Charity is a moral obligation",
-    "Suffering has meaning",
-  ],
-  "Factual assertions": [
-    "The earth is round",
-    "Vaccines are safe",
-    "Climate change is caused by humans",
-    "Evolution is a fact",
-    "The universe is expanding",
-    "Consciousness is produced by the brain",
-    "Free will exists",
-    "Mathematics is discovered not invented",
-    "Time is real",
-    "Language shapes thought",
-  ],
-  "Epistemological claims": [
-    "Knowledge requires justification",
-    "Objective truth exists",
-    "Science is the best way to know the world",
-    "Intuition is a valid source of knowledge",
-    "History is written by the victors",
-    "All knowledge is situated",
-    "Reason is universal",
-    "Experience is more important than theory",
-    "Certainty is possible",
-    "Perception is reliable",
-  ],
-};
-
-interface BatteryResult {
-  statement: string;
-  negated: string;
-  models: Array<{
-    modelId: string;
-    modelName: string;
-    similarity: number;
-    collapsed: boolean;
-  }>;
-}
+const BATTERIES = NEGATION_BATTERIES;
+type BatteryResult = NegationBatteryStatementResult;
 
 interface NegationBatteryProps {
   onQueryTime: (time: number) => void;
@@ -99,38 +43,18 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
     setError(null);
     setResults([]);
     const start = performance.now();
-    const threshold = settings.negationThreshold;
-    const allResults: BatteryResult[] = [];
 
     try {
       setProgress({ current: 0, total: statements.length });
 
-      for (let i = 0; i < statements.length; i++) {
-        const statement = statements[i];
-        const negated = generateNegation(statement);
-        setProgress({ current: i + 1, total: statements.length });
+      const inputs = { statements, threshold: settings.negationThreshold };
+      const texts = negationBatteryTextList(inputs);
+      const modelVectors = await embedAll(texts);
+      const enabledModels = getEnabledModels();
+      const computed = computeNegationBattery(inputs, modelVectors, enabledModels);
 
-        const modelVectors = await embedAll([statement, negated]);
-        const enabledModels = getEnabledModels();
-
-        const models = enabledModels
-          .filter(m => modelVectors.has(m.id))
-          .map(m => {
-            const vectors = modelVectors.get(m.id)!;
-            const sim = cosineSimilarity(vectors[0], vectors[1]);
-            const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
-            return {
-              modelId: m.id,
-              modelName: spec?.name || m.id,
-              similarity: sim,
-              collapsed: sim >= threshold,
-            };
-          });
-
-        allResults.push({ statement, negated, models });
-        setResults([...allResults]);
-      }
-
+      setResults(computed.statements);
+      setProgress({ current: statements.length, total: statements.length });
       onQueryTime((performance.now() - start) / 1000);
     } catch (e) {
       setError(e);

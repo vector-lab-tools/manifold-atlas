@@ -5,71 +5,21 @@ import { Loader2, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { ResetButton } from "@/components/shared/ResetButton";
-import { EMBEDDING_MODELS } from "@/types/embeddings";
 import { conceptSimilarityLevel } from "@/lib/similarity-scale";
+import {
+  AGONISM_PAIRS,
+  computeAgonismTest,
+  agonismTestTextList,
+  type AgonismPair,
+  type AgonismPairResult,
+} from "@/lib/operations/agonism-test";
 
-interface OpposedPair {
-  label: string;
-  positionA: { thinker: string; quote: string };
-  positionB: { thinker: string; quote: string };
-}
-
-const PRELOADED_PAIRS: OpposedPair[] = [
-  {
-    label: "Class struggle vs social order",
-    positionA: { thinker: "Marx", quote: "The history of all hitherto existing society is the history of class struggles" },
-    positionB: { thinker: "Burke", quote: "Society is a contract between the living, the dead, and those yet to be born, requiring preservation of established order" },
-  },
-  {
-    label: "The system vs the individual",
-    positionA: { thinker: "Hegel", quote: "The rational is actual and the actual is rational, truth is found in the whole system" },
-    positionB: { thinker: "Kierkegaard", quote: "The crowd is untruth, truth can only be found by the individual standing alone before existence" },
-  },
-  {
-    label: "Property as theft vs property as foundation",
-    positionA: { thinker: "Proudhon", quote: "Property is theft, the exploitation of the weak by the strong" },
-    positionB: { thinker: "Locke", quote: "Every man has a property in his own person, and the labour of his body and the work of his hands are properly his" },
-  },
-  {
-    label: "The political as agonism vs the political as friend-enemy",
-    positionA: { thinker: "Arendt", quote: "The meaning of politics is freedom, the capacity to begin something new through action in the public sphere" },
-    positionB: { thinker: "Schmitt", quote: "The specific political distinction to which political actions and motives can be reduced is that between friend and enemy" },
-  },
-  {
-    label: "Reason as emancipation vs reason as domination",
-    positionA: { thinker: "Habermas", quote: "The unforced force of the better argument is the foundation of democratic discourse and rational consensus" },
-    positionB: { thinker: "Adorno & Horkheimer", quote: "Enlightenment, understood in the widest sense as the advance of thought, has always aimed at liberating human beings from fear and installing them as masters, but the wholly enlightened earth is radiant with triumphant calamity" },
-  },
-  {
-    label: "Existence precedes essence vs essence precedes existence",
-    positionA: { thinker: "Sartre", quote: "Existence precedes essence, man first of all exists, encounters himself, surges up in the world, and defines himself afterwards" },
-    positionB: { thinker: "Plato", quote: "The soul existed before the body, and the Forms are eternal, unchanging realities that precede and ground all particular existence" },
-  },
-  {
-    label: "Knowledge as power vs knowledge as truth",
-    positionA: { thinker: "Foucault", quote: "Knowledge is not made for understanding, it is made for cutting, power and knowledge directly imply one another" },
-    positionB: { thinker: "Aristotle", quote: "All men by nature desire to know, and the pursuit of knowledge for its own sake is the highest human activity" },
-  },
-  {
-    label: "The state as instrument of class rule vs the state as social contract",
-    positionA: { thinker: "Lenin", quote: "The state is an organ of class rule, an organ for the oppression of one class by another" },
-    positionB: { thinker: "Rousseau", quote: "The social contract establishes a form of association which defends and protects with the whole common force the person and goods of each associate" },
-  },
-];
-
-interface AgonismResult {
-  pair: OpposedPair;
-  models: Array<{
-    modelId: string;
-    modelName: string;
-    similarity: number;
-    agonismPreserved: boolean; // low similarity = opposition preserved
-  }>;
-}
+type OpposedPair = AgonismPair;
+const PRELOADED_PAIRS = AGONISM_PAIRS;
+type AgonismResult = AgonismPairResult;
 
 interface AgonismTestProps {
   onQueryTime: (time: number) => void;
@@ -102,32 +52,16 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
 
     setLoading(true);
     setError(null);
-    const allResults: AgonismResult[] = [];
     const start = performance.now();
 
     try {
-      for (const pair of pairs) {
-        const modelVectors = await embedAll([pair.positionA.quote, pair.positionB.quote]);
-        const enabledModels = getEnabledModels();
+      const inputs = { pairs };
+      const texts = agonismTestTextList(inputs);
+      const modelVectors = await embedAll(texts);
+      const enabledModels = getEnabledModels();
+      const computed = computeAgonismTest(inputs, modelVectors, enabledModels);
 
-        const models = enabledModels
-          .filter(m => modelVectors.has(m.id))
-          .map(m => {
-            const vectors = modelVectors.get(m.id)!;
-            const sim = cosineSimilarity(vectors[0], vectors[1]);
-            const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
-            return {
-              modelId: m.id,
-              modelName: spec?.name || m.id,
-              similarity: sim,
-              agonismPreserved: sim < 0.7, // below 0.7 = genuine opposition preserved
-            };
-          });
-
-        allResults.push({ pair, models });
-        setResults([...allResults]);
-      }
-
+      setResults(computed.pairs);
       onQueryTime((performance.now() - start) / 1000);
     } catch (e) {
       setError(e);
