@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { HelpCircle, X, ChevronRight, ChevronDown, BookOpen } from "lucide-react";
 import { ReadingListModal } from "./ReadingListModal";
 
@@ -63,6 +63,17 @@ export function HelpDropdown() {
   const [open, setOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
   const [readingListOpen, setReadingListOpen] = useState(false);
+  const sectionRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // When a section expands, scroll it into view within the dropdown so
+  // the newly revealed prose isn't hidden above or below the viewport.
+  useEffect(() => {
+    if (expandedSection === null) return;
+    const el = sectionRefs.current[expandedSection];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [expandedSection]);
 
   return (
     <div className="relative">
@@ -77,7 +88,7 @@ export function HelpDropdown() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-50 w-[480px] max-w-[90vw] max-h-[70vh] overflow-y-auto card-editorial shadow-editorial-lg">
+          <div className="fixed top-[4.5rem] right-4 z-50 w-[640px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5.5rem)] overflow-y-auto card-editorial shadow-editorial-lg">
             <div className="p-4 border-b border-parchment flex items-center justify-between">
               <div className="flex items-start gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -114,7 +125,12 @@ export function HelpDropdown() {
 
             <div className="divide-y divide-parchment">
               {HELP_SECTIONS.map((section, i) => (
-                <div key={i}>
+                <div
+                  key={i}
+                  ref={el => {
+                    sectionRefs.current[i] = el;
+                  }}
+                >
                   <button
                     onClick={() => setExpandedSection(expandedSection === i ? null : i)}
                     className="w-full text-left px-4 py-3 flex items-center gap-2 hover:bg-cream/50 transition-colors"
