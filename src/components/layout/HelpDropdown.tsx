@@ -88,8 +88,11 @@ export function HelpDropdown() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed top-[4.5rem] right-4 z-50 w-[640px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5.5rem)] overflow-y-auto card-editorial shadow-editorial-lg">
-            <div className="p-4 border-b border-parchment flex items-center justify-between">
+          <div
+            className="fixed top-4 right-4 z-50 w-[640px] max-w-[calc(100vw-2rem)] card-editorial shadow-editorial-lg flex flex-col"
+            style={{ maxHeight: "calc(100vh - 2rem)" }}
+          >
+            <div className="p-4 border-b border-parchment flex items-center justify-between flex-shrink-0">
               <div className="flex items-start gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -123,7 +126,7 @@ export function HelpDropdown() {
               </button>
             </div>
 
-            <div className="divide-y divide-parchment">
+            <div className="divide-y divide-parchment flex-1 overflow-y-auto">
               {HELP_SECTIONS.map((section, i) => (
                 <div
                   key={i}
@@ -161,7 +164,7 @@ export function HelpDropdown() {
               ))}
             </div>
 
-            <div className="p-4 border-t border-parchment flex items-center justify-between">
+            <div className="p-4 border-t border-parchment flex items-center justify-between flex-shrink-0">
               <p className="font-sans text-caption text-muted-foreground">
                 Based on <a href="https://stunlaw.blogspot.com/2026/02/vector-theory.html" target="_blank" rel="noopener noreferrer" className="text-burgundy underline">Vector Theory</a> by David M. Berry.
               </p>

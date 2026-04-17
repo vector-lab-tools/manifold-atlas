@@ -22,9 +22,12 @@ export function AboutModal() {
       {open && (
         <>
           <div className="fixed inset-0 bg-black/30 z-50" onClick={() => setOpen(false)} />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[520px] max-w-[90vw] card-editorial shadow-editorial-lg overflow-hidden animate-fade-in">
+          <div
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[560px] max-w-[calc(100vw-2rem)] card-editorial shadow-editorial-lg animate-fade-in flex flex-col"
+            style={{ maxHeight: "calc(100vh - 2rem)" }}
+          >
             {/* Header */}
-            <div className="px-6 pt-6 pb-4 flex items-start justify-between">
+            <div className="px-6 pt-6 pb-4 flex items-start justify-between flex-shrink-0">
               <div className="flex items-start gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -48,6 +51,9 @@ export function AboutModal() {
             </div>
 
             <div className="thin-rule mx-6" />
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto">
 
             {/* Details */}
             <div className="px-6 py-4 space-y-3">
@@ -130,7 +136,7 @@ export function AboutModal() {
                 />
                 <div className="font-body text-body-sm text-slate leading-relaxed">
                   <p>
-                    Manifold Atlas is the comparative model tool in the{" "}
+                    Manifold Atlas is one of five research instruments in the{" "}
                     <a
                       href="https://vector-lab-tools.github.io"
                       target="_blank"
@@ -138,20 +144,18 @@ export function AboutModal() {
                       className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
                     >
                       Vector Lab
-                    </a>{" "}
-                    family of research instruments. Where sibling instruments look <em>inside</em>{" "}
-                    a single model, manifold, or corpus, Manifold Atlas looks <em>between</em>{" "}
-                    models, at their output embeddings.
+                    </a>. <strong>Manifold Atlas maps the terrain between models.</strong>{" "}
+                    It is cartographic where its sibling{" "}
+                    <a href="https://github.com/vector-lab-tools/manifoldscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Manifoldscope</a>{" "}
+                    is anatomical: the two instruments treat the same object at different scales.
                   </p>
-                  <p className="mt-2 text-caption text-muted-foreground">
-                    Sibling instruments:{" "}
-                    <a href="https://github.com/vector-lab-tools/vectorscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Vectorscope</a>
-                    {" · "}
-                    <a href="https://github.com/vector-lab-tools/manifoldscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Manifoldscope</a>
-                    {" · "}
-                    <a href="https://github.com/vector-lab-tools/theoryscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Theoryscope</a>
-                    {" · "}
-                    <a href="https://github.com/vector-lab-tools/LLMbench" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">LLMbench</a>
+                  <p className="mt-2">
+                    <a href="https://github.com/vector-lab-tools/vectorscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Vectorscope</a>{" "}
+                    explains the internal geometry of a single model.{" "}
+                    <a href="https://github.com/vector-lab-tools/theoryscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Theoryscope</a>{" "}
+                    stands apart in its object, addressing the geometry of meso structures in vector space rather than the geometry of a model.{" "}
+                    <a href="https://github.com/vector-lab-tools/LLMbench" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">LLMbench</a>{" "}
+                    is oriented to the hermeneutic reading of generated prose, the level at which models are usually encountered; it sits above the geometric instruments and is often the presentation layer for findings that begin lower down.
                   </p>
                 </div>
               </div>
@@ -213,6 +217,9 @@ export function AboutModal() {
               <p className="font-sans text-[10px] text-muted-foreground italic">
                 Try typing clippy, hacker, hinton, or marx anywhere outside a text field.
               </p>
+            </div>
+
+            {/* /Scrollable body */}
             </div>
           </div>
         </>
