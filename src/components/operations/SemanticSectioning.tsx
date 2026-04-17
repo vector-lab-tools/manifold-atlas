@@ -5,38 +5,17 @@ import { Loader2, GitBranch, Download, ChevronRight, ChevronDown } from "lucide-
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
-import { EMBEDDING_MODELS } from "@/types/embeddings";
 import { similarityColor } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
-
-interface InterpolationPoint {
-  position: number; // 0 to 1
-  vector: number[];
-  nearestConcept: string;
-  nearestSimilarity: number;
-}
-
-interface SectionResult {
-  anchorA: string;
-  anchorB: string;
-  anchorSimilarity: number;
-  modelId: string;
-  modelName: string;
-  path: InterpolationPoint[];
-}
+import {
+  computeSemanticSectioning,
+  semanticSectioningTextList,
+  type SemanticSectioningModelResult,
+} from "@/lib/operations/semantic-sectioning";
 
 const DEFAULT_A = "solidarity";
 const DEFAULT_B = "compliance";
-const REFERENCE_CONCEPTS = [
-  "cooperation", "agreement", "conformity", "obedience", "submission",
-  "resistance", "loyalty", "duty", "consent", "coercion",
-  "unity", "harmony", "discipline", "deference", "acquiescence",
-  "alliance", "fellowship", "community", "order", "control",
-  "authority", "obligation", "commitment", "allegiance", "devotion",
-  "servitude", "subordination", "dependence", "trust", "hierarchy",
-];
 
 interface SemanticSectioningProps {
   onQueryTime: (time: number) => void;
@@ -47,7 +26,7 @@ export function SemanticSectioning({ onQueryTime }: SemanticSectioningProps) {
   const [anchorB, setAnchorB] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [results, setResults] = useState<SectionResult[]>([]);
+  const [results, setResults] = useState<SemanticSectioningModelResult[]>([]);
   const [detailOpen, setDetailOpen] = useState(false);
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
@@ -63,58 +42,13 @@ export function SemanticSectioning({ onQueryTime }: SemanticSectioningProps) {
     const start = performance.now();
 
     try {
-      // Embed anchors + reference concepts
-      const allTexts = [effectiveA, effectiveB, ...REFERENCE_CONCEPTS];
+      const inputs = { anchorA: effectiveA, anchorB: effectiveB };
+      const allTexts = semanticSectioningTextList(inputs);
       const modelVectors = await embedAll(allTexts);
       const enabledModels = getEnabledModels();
 
-      const newResults: SectionResult[] = enabledModels
-        .filter(m => modelVectors.has(m.id))
-        .map(m => {
-          const vectors = modelVectors.get(m.id)!;
-          const vecA = vectors[0];
-          const vecB = vectors[1];
-          const refVectors = vectors.slice(2);
-
-          const anchorSim = cosineSimilarity(vecA, vecB);
-
-          // Interpolate between A and B in 20 steps
-          const steps = 20;
-          const path: InterpolationPoint[] = [];
-
-          for (let i = 0; i <= steps; i++) {
-            const t = i / steps;
-            // Linear interpolation in embedding space
-            const interpolated = vecA.map((a, d) => a * (1 - t) + vecB[d] * t);
-
-            // Find nearest reference concept
-            let bestIdx = 0;
-            let bestSim = -Infinity;
-            for (let r = 0; r < refVectors.length; r++) {
-              const sim = cosineSimilarity(interpolated, refVectors[r]);
-              if (sim > bestSim) { bestSim = sim; bestIdx = r; }
-            }
-
-            path.push({
-              position: t,
-              vector: interpolated,
-              nearestConcept: REFERENCE_CONCEPTS[bestIdx],
-              nearestSimilarity: bestSim,
-            });
-          }
-
-          const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
-          return {
-            anchorA: effectiveA,
-            anchorB: effectiveB,
-            anchorSimilarity: anchorSim,
-            modelId: m.id,
-            modelName: spec?.name || m.id,
-            path,
-          };
-        });
-
-      setResults(newResults);
+      const computed = computeSemanticSectioning(inputs, modelVectors, enabledModels);
+      setResults(computed.models);
       onQueryTime((performance.now() - start) / 1000);
     } catch (e) {
       setError(e);

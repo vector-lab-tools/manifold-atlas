@@ -5,10 +5,13 @@ import { Loader2, Download, ChevronRight, ChevronDown } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { ResetButton } from "@/components/shared/ResetButton";
-import { EMBEDDING_MODELS } from "@/types/embeddings";
 import { similarityColor } from "@/lib/similarity-scale";
+import {
+  computeVectorLogic,
+  vectorLogicTextList,
+  type VectorLogicModelResult,
+} from "@/lib/operations/vector-logic";
 
 const PRESETS = [
   { a: "king", b: "man", c: "woman", label: "king - man + woman = ?" },
@@ -18,35 +21,6 @@ const PRESETS = [
   { a: "labour", b: "alienation", c: "craft", label: "labour - alienation + craft = ?" },
   { a: "technology", b: "efficiency", c: "care", label: "technology - efficiency + care = ?" },
 ];
-
-// Reference vocabulary for finding nearest real concepts
-const REFERENCE_VOCAB = [
-  "woman", "queen", "king", "man", "person", "child", "worker", "citizen", "subject",
-  "freedom", "liberty", "liberation", "emancipation", "autonomy", "self-determination",
-  "justice", "fairness", "equity", "rights", "law", "punishment", "mercy", "obligation",
-  "democracy", "authoritarianism", "fascism", "socialism", "communism", "liberalism",
-  "capitalism", "market", "profit", "exploitation", "labour", "work", "craft", "care",
-  "solidarity", "compliance", "resistance", "obedience", "cooperation", "competition",
-  "truth", "knowledge", "wisdom", "understanding", "belief", "opinion", "ideology",
-  "art", "beauty", "aesthetics", "culture", "creativity", "expression", "imagination",
-  "science", "objectivity", "subjectivity", "experience", "experiment", "measurement",
-  "technology", "efficiency", "automation", "computation", "algorithm", "intelligence",
-  "nature", "ecology", "environment", "sustainability", "growth", "decay", "entropy",
-  "power", "authority", "sovereignty", "governance", "rule", "domination", "hegemony",
-  "community", "society", "individual", "collective", "public", "private", "commons",
-  "love", "friendship", "trust", "loyalty", "betrayal", "violence", "peace", "war",
-  "reason", "intuition", "emotion", "passion", "desire", "will", "consciousness",
-  "alienation", "reification", "commodity", "value", "exchange", "use", "production",
-  "participation", "representation", "deliberation", "consensus", "dissent", "protest",
-];
-
-interface AnalogyResult {
-  a: string; b: string; c: string;
-  modelId: string;
-  modelName: string;
-  // Top 5 nearest concepts to the computed vector
-  nearest: Array<{ concept: string; similarity: number }>;
-}
 
 interface VectorLogicProps {
   onQueryTime: (time: number) => void;
@@ -58,7 +32,7 @@ export function VectorLogic({ onQueryTime }: VectorLogicProps) {
   const [termC, setTermC] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [results, setResults] = useState<AnalogyResult[]>([]);
+  const [results, setResults] = useState<VectorLogicModelResult[]>([]);
   const [detailOpen, setDetailOpen] = useState(false);
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
@@ -76,49 +50,13 @@ export function VectorLogic({ onQueryTime }: VectorLogicProps) {
     const start = performance.now();
 
     try {
-      // Embed A, B, C + reference vocabulary
-      const allTexts = [a, b, c, ...REFERENCE_VOCAB];
+      const inputs = { termA: a, termB: b, termC: c };
+      const allTexts = vectorLogicTextList(inputs);
       const modelVectors = await embedAll(allTexts);
       const enabledModels = getEnabledModels();
 
-      const newResults: AnalogyResult[] = enabledModels
-        .filter(m => modelVectors.has(m.id))
-        .map(m => {
-          const vectors = modelVectors.get(m.id)!;
-          const vecA = vectors[0];
-          const vecB = vectors[1];
-          const vecC = vectors[2];
-          const refVectors = vectors.slice(3);
-
-          // Compute: A - B + C (the classic analogy operation: king - man + woman = queen)
-          const resultVec = vecA.map((_, d) => vecA[d] - vecB[d] + vecC[d]);
-
-          // Find nearest reference concepts
-          const similarities = REFERENCE_VOCAB.map((concept, i) => ({
-            concept,
-            similarity: cosineSimilarity(resultVec, refVectors[i]),
-          }));
-
-          // Filter out the input terms and sort
-          similarities
-            .filter(s => s.concept !== a && s.concept !== b && s.concept !== c)
-            .sort((x, y) => y.similarity - x.similarity);
-
-          const nearest = similarities
-            .filter(s => s.concept !== a && s.concept !== b && s.concept !== c)
-            .sort((x, y) => y.similarity - x.similarity)
-            .slice(0, 8);
-
-          const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
-          return {
-            a, b, c,
-            modelId: m.id,
-            modelName: spec?.name || m.id,
-            nearest,
-          };
-        });
-
-      setResults(newResults);
+      const computed = computeVectorLogic(inputs, modelVectors, enabledModels);
+      setResults(computed.models);
       onQueryTime((performance.now() - start) / 1000);
     } catch (e) {
       setError(e);

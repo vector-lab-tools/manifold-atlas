@@ -5,8 +5,6 @@ import { Loader2 } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { cosineSimilarity } from "@/lib/geometry/cosine";
-import { generateNegation } from "@/lib/negation";
 import { GaugeArc } from "@/components/viz/GaugeArc";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
@@ -14,31 +12,13 @@ import { QueryHistory } from "@/components/shared/QueryHistory";
 import { addHistoryEntry, type HistoryEntry } from "@/lib/history";
 import { negationSimilarityLevel } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
-import { EMBEDDING_MODELS } from "@/types/embeddings";
+import {
+  computeNegationGauge,
+  negationGaugeTextList,
+  type NegationGaugeResult,
+} from "@/lib/operations/negation-gauge";
 
 const DEFAULT_STATEMENT = "This policy is fair";
-
-interface NegationModelResult {
-  modelId: string;
-  modelName: string;
-  providerId: string;
-  cosineSimilarity: number;
-  cosineDistance: number;
-  angularDistance: number;
-  collapsed: boolean;
-  dimensions: number;
-}
-
-interface NegationFullResult {
-  original: string;
-  negated: string;
-  threshold: number;
-  models: NegationModelResult[];
-}
-
-function vectorNorm(v: number[]): number {
-  return Math.sqrt(v.reduce((sum, x) => sum + x * x, 0));
-}
 
 function negationVerdict(sim: number, threshold: number): { severity: string; explanation: string } {
   if (sim >= 0.98) return {
@@ -71,7 +51,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
   const [statement, setStatement] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [result, setResult] = useState<NegationFullResult | null>(null);
+  const [result, setResult] = useState<NegationGaugeResult | null>(null);
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
 
@@ -83,34 +63,19 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
     const start = performance.now();
 
     try {
-      const original = effectiveStatement;
-      const negated = generateNegation(original);
-      const threshold = settings.negationThreshold;
+      const inputs = {
+        statement: effectiveStatement,
+        threshold: settings.negationThreshold,
+      };
+      const texts = negationGaugeTextList(inputs);
+      const original = texts[0];
+      const negated = texts[1];
 
-      const modelVectors = await embedAll([original, negated]);
+      const modelVectors = await embedAll(texts);
       const enabledModels = getEnabledModels();
 
-      const models = enabledModels
-        .filter(m => modelVectors.has(m.id))
-        .map(m => {
-          const vectors = modelVectors.get(m.id)!;
-          const sim = cosineSimilarity(vectors[0], vectors[1]);
-          const clampedSim = Math.max(-1, Math.min(1, sim));
-          const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
-          return {
-            modelId: m.id,
-            modelName: spec?.name || m.id,
-            providerId: m.providerId,
-            cosineSimilarity: sim,
-            cosineDistance: 1 - sim,
-            angularDistance: (Math.acos(clampedSim) * 180) / Math.PI,
-            collapsed: sim >= threshold,
-            dimensions: vectors[0].length,
-          };
-        })
-        .sort((a, b) => b.cosineSimilarity - a.cosineSimilarity);
-
-      setResult({ original, negated, threshold, models });
+      const computed = computeNegationGauge(inputs, modelVectors, enabledModels);
+      setResult(computed);
       onQueryTime((performance.now() - start) / 1000);
 
       // Save to history
@@ -118,7 +83,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
         type: "negation",
         original,
         negated,
-        results: models.map(m => ({
+        results: computed.models.map(m => ({
           modelName: m.modelName,
           similarity: m.cosineSimilarity,
           collapsed: m.collapsed,

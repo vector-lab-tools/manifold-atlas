@@ -16,6 +16,18 @@ import {
   computeConceptDistance,
   conceptDistanceHeadline,
 } from "@/lib/operations/concept-distance";
+import {
+  computeVectorLogic,
+  vectorLogicHeadline,
+} from "@/lib/operations/vector-logic";
+import {
+  computeNegationGauge,
+  negationGaugeHeadline,
+} from "@/lib/operations/negation-gauge";
+import {
+  computeSemanticSectioning,
+  semanticSectioningHeadline,
+} from "@/lib/operations/semantic-sectioning";
 
 export interface ExecuteStepContext {
   stepIndex: number;
@@ -56,6 +68,84 @@ export function executeStep(
           elapsedMs,
           models: result.models.map(m => m.modelId),
           headline: conceptDistanceHeadline(result) as StepHeadlineMetrics,
+          details: result,
+        };
+      }
+
+      case "analogy": {
+        const termA = typeof step.inputs.termA === "string" ? step.inputs.termA : "";
+        const termB = typeof step.inputs.termB === "string" ? step.inputs.termB : "";
+        const termC = typeof step.inputs.termC === "string" ? step.inputs.termC : "";
+        if (!termA || !termB || !termC) {
+          throw new Error(`analogy (Vector Logic) step requires "termA", "termB", "termC"`);
+        }
+        const result = computeVectorLogic(
+          { termA, termB, termC },
+          ctx.stepVectors,
+          ctx.enabledModels
+        );
+        const elapsedMs = performance.now() - started;
+        return {
+          stepIndex: ctx.stepIndex,
+          step,
+          status: "done",
+          startedAt,
+          completedAt: new Date().toISOString(),
+          elapsedMs,
+          models: result.models.map(m => m.modelId),
+          headline: vectorLogicHeadline(result) as StepHeadlineMetrics,
+          details: result,
+        };
+      }
+
+      case "negation": {
+        const statement = typeof step.inputs.statement === "string" ? step.inputs.statement : "";
+        if (!statement) {
+          throw new Error(`negation step requires a "statement" input`);
+        }
+        const negated = typeof step.inputs.negated === "string" ? step.inputs.negated : undefined;
+        const threshold =
+          typeof step.inputs.threshold === "number" ? step.inputs.threshold : undefined;
+        const result = computeNegationGauge(
+          { statement, negated, threshold },
+          ctx.stepVectors,
+          ctx.enabledModels
+        );
+        const elapsedMs = performance.now() - started;
+        return {
+          stepIndex: ctx.stepIndex,
+          step,
+          status: "done",
+          startedAt,
+          completedAt: new Date().toISOString(),
+          elapsedMs,
+          models: result.models.map(m => m.modelId),
+          headline: negationGaugeHeadline(result) as StepHeadlineMetrics,
+          details: result,
+        };
+      }
+
+      case "sectioning": {
+        const anchorA = typeof step.inputs.anchorA === "string" ? step.inputs.anchorA : "";
+        const anchorB = typeof step.inputs.anchorB === "string" ? step.inputs.anchorB : "";
+        if (!anchorA || !anchorB) {
+          throw new Error(`sectioning step requires "anchorA" and "anchorB"`);
+        }
+        const result = computeSemanticSectioning(
+          { anchorA, anchorB },
+          ctx.stepVectors,
+          ctx.enabledModels
+        );
+        const elapsedMs = performance.now() - started;
+        return {
+          stepIndex: ctx.stepIndex,
+          step,
+          status: "done",
+          startedAt,
+          completedAt: new Date().toISOString(),
+          elapsedMs,
+          models: result.models.map(m => m.modelId),
+          headline: semanticSectioningHeadline(result) as StepHeadlineMetrics,
           details: result,
         };
       }

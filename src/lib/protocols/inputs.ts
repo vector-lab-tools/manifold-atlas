@@ -7,6 +7,9 @@
  */
 
 import type { Protocol, ProtocolStep } from "@/types/protocols";
+import { vectorLogicTextList } from "@/lib/operations/vector-logic";
+import { negationGaugeTextList } from "@/lib/operations/negation-gauge";
+import { semanticSectioningTextList } from "@/lib/operations/semantic-sectioning";
 
 /**
  * Given a single step, return every text that will need embedding
@@ -23,6 +26,27 @@ function textsForStep(step: ProtocolStep): string[] {
       return [typeof a === "string" ? a : "", typeof b === "string" ? b : ""].filter(
         (s): s is string => s.length > 0
       );
+    }
+    case "analogy": {
+      const termA = typeof step.inputs.termA === "string" ? step.inputs.termA : "";
+      const termB = typeof step.inputs.termB === "string" ? step.inputs.termB : "";
+      const termC = typeof step.inputs.termC === "string" ? step.inputs.termC : "";
+      if (!termA || !termB || !termC) return [];
+      return vectorLogicTextList({ termA, termB, termC });
+    }
+    case "negation": {
+      const statement = typeof step.inputs.statement === "string" ? step.inputs.statement : "";
+      const negated = typeof step.inputs.negated === "string" ? step.inputs.negated : undefined;
+      const threshold =
+        typeof step.inputs.threshold === "number" ? step.inputs.threshold : undefined;
+      if (!statement) return [];
+      return negationGaugeTextList({ statement, negated, threshold });
+    }
+    case "sectioning": {
+      const anchorA = typeof step.inputs.anchorA === "string" ? step.inputs.anchorA : "";
+      const anchorB = typeof step.inputs.anchorB === "string" ? step.inputs.anchorB : "";
+      if (!anchorA || !anchorB) return [];
+      return semanticSectioningTextList({ anchorA, anchorB });
     }
     default:
       return [];
