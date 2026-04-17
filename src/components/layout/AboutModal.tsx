@@ -25,11 +25,22 @@ export function AboutModal() {
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[520px] max-w-[90vw] card-editorial shadow-editorial-lg overflow-hidden animate-fade-in">
             {/* Header */}
             <div className="px-6 pt-6 pb-4 flex items-start justify-between">
-              <div>
-                <h2 className="font-display text-display-lg font-bold text-burgundy">Manifold Atlas</h2>
-                <p className="font-sans text-caption text-muted-foreground mt-0.5">
-                  Comparative Geometry of AI Vector Spaces
-                </p>
+              <div className="flex items-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icons/vector-lab-manifold-atlas.svg"
+                  alt=""
+                  width={40}
+                  height={40}
+                  aria-hidden="true"
+                  className="block flex-shrink-0 mt-1"
+                />
+                <div>
+                  <h2 className="font-display text-display-lg font-bold text-burgundy">Manifold Atlas</h2>
+                  <p className="font-sans text-caption text-muted-foreground mt-0.5">
+                    Comparative Geometry of AI Vector Spaces
+                  </p>
+                </div>
               </div>
               <button onClick={() => setOpen(false)} className="btn-editorial-ghost px-2 py-1">
                 <X size={16} />
@@ -102,10 +113,56 @@ export function AboutModal() {
 
             <div className="thin-rule mx-6" />
 
+            {/* Vector Lab family */}
+            <div className="px-6 py-4">
+              <h3 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+                Part of the Vector Lab
+              </h3>
+              <div className="flex items-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icons/vector-lab-logo-mark.svg"
+                  alt=""
+                  width={32}
+                  height={32}
+                  aria-hidden="true"
+                  className="block flex-shrink-0 mt-0.5 opacity-90"
+                />
+                <div className="font-body text-body-sm text-slate leading-relaxed">
+                  <p>
+                    Manifold Atlas is the comparative model tool in the{" "}
+                    <a
+                      href="https://vector-lab-tools.github.io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
+                    >
+                      Vector Lab
+                    </a>{" "}
+                    family of research instruments. Where sibling instruments look <em>inside</em>{" "}
+                    a single model, manifold, or corpus, Manifold Atlas looks <em>between</em>{" "}
+                    models, at their output embeddings.
+                  </p>
+                  <p className="mt-2 text-caption text-muted-foreground">
+                    Sibling instruments:{" "}
+                    <a href="https://github.com/vector-lab-tools/vectorscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Vectorscope</a>
+                    {" · "}
+                    <a href="https://github.com/vector-lab-tools/manifoldscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Manifoldscope</a>
+                    {" · "}
+                    <a href="https://github.com/vector-lab-tools/theoryscope" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">Theoryscope</a>
+                    {" · "}
+                    <a href="https://github.com/vector-lab-tools/LLMbench" target="_blank" rel="noopener noreferrer" className="text-burgundy underline underline-offset-2">LLMbench</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="thin-rule mx-6" />
+
             {/* Links */}
             <div className="px-6 py-4 flex items-center gap-4 font-sans text-body-sm">
               <a
-                href="https://github.com/dmberry/manifold-atlas"
+                href="https://github.com/vector-lab-tools/manifold-atlas"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"

@@ -79,11 +79,33 @@ export function HelpDropdown() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-1 z-50 w-[480px] max-w-[90vw] max-h-[70vh] overflow-y-auto card-editorial shadow-editorial-lg">
             <div className="p-4 border-b border-parchment flex items-center justify-between">
-              <div>
-                <h2 className="font-display text-display-md font-bold">Vector Theory Guide</h2>
-                <p className="font-sans text-caption text-muted-foreground mt-0.5">
-                  Key concepts for understanding Manifold Atlas
-                </p>
+              <div className="flex items-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icons/vector-lab-manifold-atlas.svg"
+                  alt=""
+                  width={32}
+                  height={32}
+                  aria-hidden="true"
+                  className="block flex-shrink-0 mt-0.5"
+                />
+                <div>
+                  <h2 className="font-display text-display-md font-bold">Vector Theory Guide</h2>
+                  <p className="font-sans text-caption text-muted-foreground mt-0.5">
+                    Key concepts for understanding Manifold Atlas
+                  </p>
+                  <p className="font-sans text-caption text-muted-foreground mt-1">
+                    Part of the{" "}
+                    <a
+                      href="https://vector-lab-tools.github.io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
+                    >
+                      Vector Lab
+                    </a>
+                  </p>
+                </div>
               </div>
               <button onClick={() => setOpen(false)} className="btn-editorial-ghost px-2 py-1">
                 <X size={16} />
