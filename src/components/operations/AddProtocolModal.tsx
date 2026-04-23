@@ -1,17 +1,24 @@
 "use client";
 
 /**
- * Modal for adding a user-defined protocol to the Library.
+ * Modal for adding or editing a user-defined protocol.
  *
- * Takes markdown (pasted directly or uploaded as a file), parses and
- * validates it, persists via saveCustomProtocol. Shows any parse /
- * validation error inline; on success closes and notifies the caller.
+ * - Add mode: empty textarea; "Start from..." dropdown populated with
+ *   every built-in and custom protocol so the user can begin from a
+ *   working example and tweak it; saveCustomProtocol on submit.
+ * - Edit mode: textarea pre-filled with the target custom protocol's
+ *   source; updateCustomProtocol on submit; handles id rename cleanly.
+ *
+ * Shows any parse / validation error inline; on success closes and
+ * notifies the caller.
  */
 
-import { useRef, useState } from "react";
-import { X, Upload, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Upload, Plus, Save } from "lucide-react";
+import type { Protocol } from "@/types/protocols";
 import {
   saveCustomProtocol,
+  updateCustomProtocol,
   CustomProtocolError,
   CUSTOM_PROTOCOL_EXAMPLE,
   type CustomProtocol,
@@ -22,23 +29,65 @@ interface AddProtocolModalProps {
   onClose: () => void;
   /** Ids that already exist (built-in + other custom) for collision detection. */
   existingIds: string[];
-  onAdded: (protocol: CustomProtocol) => void;
+  /** All loaded protocols, used to populate the Start-from dropdown. */
+  allProtocols: Protocol[];
+  /**
+   * If set, the modal opens in edit mode and updates the existing
+   * protocol on save.
+   */
+  editing?: CustomProtocol | null;
+  onSaved: (protocol: CustomProtocol) => void;
 }
 
-export function AddProtocolModal({ open, onClose, existingIds, onAdded }: AddProtocolModalProps) {
+// Built-in protocol ids live at /protocols/{id}.md. Custom ones carry
+// their source on the object itself.
+async function fetchProtocolSource(p: Protocol): Promise<string> {
+  const c = p as CustomProtocol;
+  if (c.isCustom && c.source) return c.source;
+  const response = await fetch(`/protocols/${p.id}.md`);
+  if (!response.ok) throw new Error(`Failed to load template "${p.id}"`);
+  return response.text();
+}
+
+export function AddProtocolModal({
+  open,
+  onClose,
+  existingIds,
+  allProtocols,
+  editing,
+  onSaved,
+}: AddProtocolModalProps) {
   const [markdown, setMarkdown] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [templateChoice, setTemplateChoice] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const isEdit = !!editing;
+
+  // When (re)opened, seed the textarea: edit mode uses the source;
+  // add mode starts blank.
+  useEffect(() => {
+    if (!open) return;
+    setMarkdown(editing?.source ?? "");
+    setError(null);
+    setTemplateChoice("");
+  }, [open, editing]);
 
   if (!open) return null;
 
   const handleSave = () => {
     try {
-      const protocol = saveCustomProtocol(markdown, existingIds);
-      setMarkdown("");
-      setError(null);
-      onAdded(protocol);
-      onClose();
+      if (isEdit && editing) {
+        const protocol = updateCustomProtocol(editing.id, markdown, existingIds);
+        setError(null);
+        onSaved(protocol);
+        onClose();
+      } else {
+        const protocol = saveCustomProtocol(markdown, existingIds);
+        setMarkdown("");
+        setError(null);
+        onSaved(protocol);
+        onClose();
+      }
     } catch (err) {
       if (err instanceof CustomProtocolError) setError(err.message);
       else setError(err instanceof Error ? err.message : String(err));
@@ -52,6 +101,36 @@ export function AddProtocolModal({ open, onClose, existingIds, onAdded }: AddPro
     setError(null);
   };
 
+  const handleTemplateChoice = async (choice: string) => {
+    setTemplateChoice(choice);
+    setError(null);
+    if (choice === "") return;
+    if (choice === "__blank__") {
+      setMarkdown("");
+      return;
+    }
+    if (choice === "__example__") {
+      setMarkdown(CUSTOM_PROTOCOL_EXAMPLE);
+      return;
+    }
+    const p = allProtocols.find(q => q.id === choice);
+    if (!p) return;
+    try {
+      const source = await fetchProtocolSource(p);
+      // In add mode, change the id so it doesn't collide with the
+      // source. In edit mode, leave the id so the user can see they
+      // are editing in place.
+      if (!isEdit) {
+        const renamed = renameProtocolId(source, `${p.id}-copy`);
+        setMarkdown(renamed);
+      } else {
+        setMarkdown(source);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-50" onClick={onClose} />
@@ -61,10 +140,13 @@ export function AddProtocolModal({ open, onClose, existingIds, onAdded }: AddPro
       >
         <div className="px-6 pt-6 pb-4 flex items-start justify-between flex-shrink-0">
           <div>
-            <h2 className="font-display text-display-md font-bold">Add a protocol</h2>
+            <h2 className="font-display text-display-md font-bold">
+              {isEdit ? `Edit: ${editing?.title ?? "custom protocol"}` : "Add a protocol"}
+            </h2>
             <p className="font-sans text-caption text-muted-foreground mt-0.5">
-              Paste your own protocol markdown, or upload a .md file. Added
-              protocols are saved to this browser and appear in the Library.
+              {isEdit
+                ? "Edit the markdown and save to update this protocol in place. You can also change the id to save it under a new name."
+                : "Paste your own protocol markdown, upload a .md file, or start from an existing protocol as a template. Added protocols are saved to this browser and appear in the Library."}
             </p>
           </div>
           <button onClick={onClose} className="btn-editorial-ghost px-2 py-1">
@@ -75,7 +157,39 @@ export function AddProtocolModal({ open, onClose, existingIds, onAdded }: AddPro
         <div className="thin-rule mx-6" />
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold">
+              Start from:
+            </label>
+            <select
+              value={templateChoice}
+              onChange={e => handleTemplateChoice(e.target.value)}
+              className="input-editorial text-caption py-1 px-2 w-auto"
+            >
+              <option value="">— Choose a template —</option>
+              <option value="__blank__">Blank</option>
+              <option value="__example__">Minimal example (3 steps)</option>
+              <optgroup label="Built-in protocols">
+                {allProtocols
+                  .filter(p => !(p as CustomProtocol).isCustom)
+                  .map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.title}
+                    </option>
+                  ))}
+              </optgroup>
+              {allProtocols.some(p => (p as CustomProtocol).isCustom) && (
+                <optgroup label="Your custom protocols">
+                  {allProtocols
+                    .filter(p => (p as CustomProtocol).isCustom)
+                    .map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
+                </optgroup>
+              )}
+            </select>
             <input
               ref={fileInputRef}
               type="file"
@@ -90,13 +204,12 @@ export function AddProtocolModal({ open, onClose, existingIds, onAdded }: AddPro
               <Upload size={14} />
               Upload .md file
             </button>
-            <button
-              onClick={() => setMarkdown(CUSTOM_PROTOCOL_EXAMPLE)}
-              className="btn-editorial-ghost text-caption"
-            >
-              Load example
-            </button>
           </div>
+          {!isEdit && templateChoice && templateChoice !== "__blank__" && templateChoice !== "__example__" && (
+            <p className="font-sans text-caption text-muted-foreground italic">
+              Loaded as <span className="text-foreground font-mono">{templateChoice}-copy</span> — rename the id in the front matter to anything you like.
+            </p>
+          )}
 
           <label className="block font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold">
             Protocol markdown
@@ -149,8 +262,8 @@ export function AddProtocolModal({ open, onClose, existingIds, onAdded }: AddPro
             disabled={markdown.trim().length === 0}
             className="btn-editorial-primary flex items-center gap-1 disabled:opacity-50"
           >
-            <Plus size={14} />
-            Add to Library
+            {isEdit ? <Save size={14} /> : <Plus size={14} />}
+            {isEdit ? "Save changes" : "Add to Library"}
           </button>
           <button onClick={onClose} className="btn-editorial-ghost">
             Cancel
@@ -159,4 +272,18 @@ export function AddProtocolModal({ open, onClose, existingIds, onAdded }: AddPro
       </div>
     </>
   );
+}
+
+/**
+ * Replace the `id:` field in a protocol's front matter with a new id.
+ * Falls back to the original markdown if the front matter can't be
+ * located. Used when a built-in protocol is loaded as a template in
+ * add mode so the copy doesn't collide with the source.
+ */
+function renameProtocolId(source: string, newId: string): string {
+  const fmMatch = /^(---\n)([\s\S]*?)(\n---\n)([\s\S]*)$/.exec(source);
+  if (!fmMatch) return source;
+  const [, openFence, fmBody, closeFence, rest] = fmMatch;
+  const replacedFm = fmBody.replace(/^(\s*id:\s*).*$/m, `$1${newId}`);
+  return `${openFence}${replacedFm}${closeFence}${rest}`;
 }

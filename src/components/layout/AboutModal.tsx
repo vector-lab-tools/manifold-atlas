@@ -102,6 +102,13 @@ export function AboutModal() {
                 are evidence for geometric ideology, the negation deficit, and the proprietary
                 encoding of human language.
               </p>
+              <p className="font-body text-body-sm text-slate leading-relaxed mt-3">
+                The <strong>Library</strong> (fourth tab group) runs curated sequences of
+                operations in one click. Every step is editable before running, so you can
+                substitute your own claims, anchors, or terms. Add your own protocols via
+                markdown (paste or file upload); they persist in your browser and can be
+                edited or removed alongside the built-ins.
+              </p>
             </div>
 
             <div className="thin-rule mx-6" />

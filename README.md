@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.0.1
+**Version:** 1.0.2
 **Date:** 23 April 2026
 **Licence:** MIT
 
@@ -113,6 +113,14 @@ Paste a passage of text and watch a particle trace its reading path through the 
 Persistent homology (Topological Data Analysis) applied to embedding spaces. Measures the shape of the manifold across all scales simultaneously by gradually increasing a distance threshold and tracking when topological features (clusters, loops) appear and disappear. Pure TypeScript Vietoris-Rips implementation. Four visualisation modes: persistence diagram (birth vs death scatter), barcode diagram (horizontal bars sorted by persistence), Rips complex (Three.js 3D scene with component colouring, hover tooltips, auto-rotate, and PNG export), and Betti curve (connected components and loops vs threshold). The Rips complex view includes an optional void cloud: a nebulous particle fog (custom shader with depth-based size attenuation) that fills empty regions inside the manifold, making the unthinkable of the machine visible as ghostly matter. Void colour (amber, burgundy, blue, smoke) and intensity are adjustable. Twenty toggle-chip presets spanning political claims, knowledge domains, critical theory, AI and computation, labour and capital, ecology, media and culture, body and phenomenology, tech company claims, accelerationism, effective altruism, finance, feminism, ecology, neoliberalism, philosophy of mind, existentialism, media archaeology, literary critique, and semiotics. Select multiple presets to overlay them with topic colouring and centroid labels. Double-click the threshold slider to snap to the intra-topic connectivity threshold.
 
 ![Manifold Atlas - Rips Complex](docs/rips-complex-example.png)
+
+## Library
+
+The Library (fourth tab group) runs curated sequences of operations in one click. Each protocol is a named set of steps with pre-filled inputs that produces a structured, exportable report (Markdown, JSON, CSV). The Library ships with six built-in protocols spanning Demo, Critique, and Research categories — including the 'Fake' News Test (four pre-built batteries plus the full Agonism Test), Political Contestation Test, Vector Logic Test, Negation Audit, Vector Logic Demo, and Concept Distance Demo.
+
+Every step of every protocol is editable before running. The per-step editor lets you substitute your own claims into a Negation Battery, swap anchors in a Semantic Sectioning walk, change the A − B + C terms, or rewrite the opposed positions in an Agonism Test. Edits apply to the next run and are reflected in the exported bundle, so you can re-run an existing protocol against your own inputs without leaving the app.
+
+You can also add your own protocols. The Add Protocol modal accepts either pasted markdown or an uploaded .md file. A Start-from dropdown lets you load any built-in protocol as a template to edit, or start from a minimal three-step example. Added protocols are persisted in browser storage, appear in the Library alongside the built-ins with a Custom badge, and can be edited or removed at any time. This makes the tool extensible without any code changes: researchers can distribute their own protocol markdown alongside a paper, and anyone with the link can load it into Manifold Atlas.
 
 ## Supported Embedding Providers
 

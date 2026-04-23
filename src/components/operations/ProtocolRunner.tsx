@@ -103,6 +103,7 @@ export function ProtocolRunner({ onQueryTime, subTab, onSubTabChange }: Protocol
   const [loadingLibrary, setLoadingLibrary] = useState(true);
   const [libraryError, setLibraryError] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editingCustom, setEditingCustom] = useState<CustomProtocol | null>(null);
 
   const [activeProtocol, setActiveProtocol] = useState<Protocol | null>(null);
   const [running, setRunning] = useState(false);
@@ -141,8 +142,32 @@ export function ProtocolRunner({ onQueryTime, subTab, onSubTabChange }: Protocol
     };
   }, []);
 
-  const handleCustomAdded = (protocol: CustomProtocol) => {
-    setProtocols(prev => [...prev, protocol]);
+  const handleCustomSaved = (protocol: CustomProtocol) => {
+    setProtocols(prev => {
+      // If we were editing, replace by id; otherwise append.
+      const existing = prev.findIndex(p => p.id === protocol.id);
+      if (existing >= 0) {
+        const next = prev.slice();
+        next[existing] = protocol;
+        return next;
+      }
+      // If the id changed during edit, drop the old entry.
+      if (editingCustom && editingCustom.id !== protocol.id) {
+        return [...prev.filter(p => p.id !== editingCustom.id), protocol];
+      }
+      return [...prev, protocol];
+    });
+    if (activeProtocol && editingCustom && activeProtocol.id === editingCustom.id) {
+      // Keep the active protocol in sync if the user edited the one
+      // currently open in the Run view.
+      setActiveProtocol(protocol);
+    }
+    setEditingCustom(null);
+  };
+
+  const openEditCustom = (protocol: CustomProtocol) => {
+    setEditingCustom(protocol);
+    setAddModalOpen(true);
   };
 
   const handleRemoveCustom = (id: string) => {
@@ -408,9 +433,14 @@ export function ProtocolRunner({ onQueryTime, subTab, onSubTabChange }: Protocol
 
         <AddProtocolModal
           open={addModalOpen}
-          onClose={() => setAddModalOpen(false)}
+          onClose={() => {
+            setAddModalOpen(false);
+            setEditingCustom(null);
+          }}
           existingIds={protocols.map(p => p.id)}
-          onAdded={handleCustomAdded}
+          allProtocols={protocols}
+          editing={editingCustom}
+          onSaved={handleCustomSaved}
         />
 
         {loadingLibrary && (
@@ -480,13 +510,22 @@ export function ProtocolRunner({ onQueryTime, subTab, onSubTabChange }: Protocol
                         </div>
                         <div className="flex-shrink-0 flex items-center gap-2">
                           {isCustom && (
-                            <button
-                              onClick={() => handleRemoveCustom(p.id)}
-                              className="btn-editorial-ghost text-caption"
-                              title="Remove this custom protocol from the Library"
-                            >
-                              Remove
-                            </button>
+                            <>
+                              <button
+                                onClick={() => openEditCustom(p as CustomProtocol)}
+                                className="btn-editorial-ghost text-caption"
+                                title="Edit this custom protocol's markdown"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleRemoveCustom(p.id)}
+                                className="btn-editorial-ghost text-caption"
+                                title="Remove this custom protocol from the Library"
+                              >
+                                Remove
+                              </button>
+                            </>
                           )}
                           <button
                             onClick={() => handleSelectProtocol(p)}

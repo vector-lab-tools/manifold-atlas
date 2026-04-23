@@ -102,6 +102,62 @@ export function saveCustomProtocol(markdown: string, existingIds: string[]): Cus
 }
 
 /**
+ * Update a custom protocol.
+ *
+ * Parses the new markdown. If the id is unchanged, replaces in place.
+ * If the id changed, removes the old entry and adds the new one — but
+ * only if the new id does not collide with another existing protocol.
+ *
+ * Throws CustomProtocolError on parse failure or id collision.
+ */
+export function updateCustomProtocol(
+  oldId: string,
+  newMarkdown: string,
+  existingIds: string[]
+): CustomProtocol {
+  let parsed: Protocol;
+  try {
+    parsed = parseProtocolMarkdown(newMarkdown);
+  } catch (err) {
+    throw new CustomProtocolError(
+      err instanceof Error ? err.message : String(err)
+    );
+  }
+
+  const idChanged = parsed.id !== oldId;
+  if (idChanged) {
+    const collidesWithOther = existingIds
+      .filter(id => id !== oldId)
+      .includes(parsed.id);
+    if (collidesWithOther) {
+      throw new CustomProtocolError(
+        `A protocol with id "${parsed.id}" already exists. Change the id in the front matter or keep the original.`
+      );
+    }
+  }
+
+  const sources = safeReadStore();
+  const out: string[] = [];
+  let replaced = false;
+  for (const source of sources) {
+    try {
+      const p = parseProtocolMarkdown(source);
+      if (p.id === oldId) {
+        out.push(newMarkdown);
+        replaced = true;
+      } else {
+        out.push(source);
+      }
+    } catch {
+      out.push(source);
+    }
+  }
+  if (!replaced) out.push(newMarkdown); // Fallback: append if not found.
+  writeStore(out);
+  return { ...parsed, isCustom: true, source: newMarkdown };
+}
+
+/**
  * Remove a custom protocol by id. No-op for unknown ids.
  */
 export function removeCustomProtocol(id: string): void {
