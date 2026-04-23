@@ -38,6 +38,15 @@ import {
   agonismTestHeadline,
   type AgonismPair,
 } from "@/lib/operations/agonism-test";
+import {
+  computeHegemonyCompass,
+  hegemonyCompassHeadline,
+  type HegemonyCompassInputs,
+} from "@/lib/operations/hegemony-compass";
+import {
+  computeDistanceMatrix,
+  distanceMatrixHeadline,
+} from "@/lib/operations/distance-matrix";
 
 export interface ExecuteStepContext {
   stepIndex: number;
@@ -58,6 +67,42 @@ function resolveBatteryStatementsForExec(inputs: Record<string, unknown>): strin
   const preset = typeof inputs.preset === "string" ? inputs.preset : undefined;
   const resolved = resolveNegationBatteryPreset(preset);
   return resolved ?? [];
+}
+
+/**
+ * Resolve Hegemony Compass inputs for execution, mirroring the input
+ * collector in inputs.ts. The compute function will validate that the
+ * inputs resolve to a known preset or explicit axes.
+ */
+function resolveCompassInputsForExec(
+  inputs: Record<string, unknown>
+): HegemonyCompassInputs {
+  const preset = typeof inputs.preset === "string" ? inputs.preset : undefined;
+  const concepts = resolveConceptsForExec(inputs);
+  const out: HegemonyCompassInputs = { preset, concepts: concepts.length > 0 ? concepts : undefined };
+  if (typeof inputs.xAxis === "object" && inputs.xAxis !== null) {
+    out.xAxis = inputs.xAxis as HegemonyCompassInputs["xAxis"];
+  }
+  if (typeof inputs.yAxis === "object" && inputs.yAxis !== null) {
+    out.yAxis = inputs.yAxis as HegemonyCompassInputs["yAxis"];
+  }
+  return out;
+}
+
+/** Concepts list collector: array or comma-separated string. */
+function resolveConceptsForExec(inputs: Record<string, unknown>): string[] {
+  if (Array.isArray(inputs.concepts)) {
+    return (inputs.concepts as unknown[]).filter(
+      (s): s is string => typeof s === "string" && s.length > 0
+    );
+  }
+  if (typeof inputs.concepts === "string") {
+    return (inputs.concepts as string)
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+  }
+  return [];
 }
 
 /**
@@ -231,6 +276,43 @@ export function executeStep(
           elapsedMs,
           models: Array.from(uniqueModelIds),
           headline: negationBatteryHeadline(result) as StepHeadlineMetrics,
+          details: result,
+        };
+      }
+
+      case "compass": {
+        const inputs = resolveCompassInputsForExec(step.inputs);
+        const result = computeHegemonyCompass(inputs, ctx.stepVectors, ctx.enabledModels);
+        const elapsedMs = performance.now() - started;
+        return {
+          stepIndex: ctx.stepIndex,
+          step,
+          status: "done",
+          startedAt,
+          completedAt: new Date().toISOString(),
+          elapsedMs,
+          models: result.models.map(m => m.modelId),
+          headline: hegemonyCompassHeadline(result) as StepHeadlineMetrics,
+          details: result,
+        };
+      }
+
+      case "matrix": {
+        const concepts = resolveConceptsForExec(step.inputs);
+        if (concepts.length < 2) {
+          throw new Error(`matrix step requires at least two concepts (under "concepts").`);
+        }
+        const result = computeDistanceMatrix({ concepts }, ctx.stepVectors, ctx.enabledModels);
+        const elapsedMs = performance.now() - started;
+        return {
+          stepIndex: ctx.stepIndex,
+          step,
+          status: "done",
+          startedAt,
+          completedAt: new Date().toISOString(),
+          elapsedMs,
+          models: result.models.map(m => m.modelId),
+          headline: distanceMatrixHeadline(result) as StepHeadlineMetrics,
           details: result,
         };
       }

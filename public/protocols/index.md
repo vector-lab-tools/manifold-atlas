@@ -4,6 +4,7 @@
 # The Protocol Library sub-tab loads this file on mount and fetches
 # each listed protocol from /protocols/{id}.md.
 
+hegemonic-defaults
 fake-news-test
 political-contestation-test
 vector-logic-test

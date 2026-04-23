@@ -17,7 +17,7 @@ authors:
 repository-code: "https://github.com/vector-lab-tools/manifold-atlas"
 url: "https://vector-lab-tools.github.io"
 license: MIT
-version: "1.0.3"
+version: "1.1.0-beta.1"
 date-released: "2026-04-23"
 keywords:
   - vector theory

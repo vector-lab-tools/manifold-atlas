@@ -7,6 +7,10 @@
  * dive of the step's full result (stored in ProtocolStepResult.details).
  * Mirrors the collapsible deep-dive convention used across the tool's
  * standalone operation views.
+ *
+ * Compass snapshots are rendered as static SVG (not Plotly) so they
+ * serialise cleanly into the PDF export and are easy to download as
+ * standalone images.
  */
 
 import type { ProtocolStepResult } from "@/types/protocols";
@@ -17,6 +21,12 @@ import type { SemanticSectioningResult } from "@/lib/operations/semantic-section
 import { semanticSectioningSignature } from "@/lib/operations/semantic-sectioning";
 import type { NegationBatteryResult } from "@/lib/operations/negation-battery";
 import type { AgonismTestResult } from "@/lib/operations/agonism-test";
+import type {
+  HegemonyCompassResult,
+  HegemonyCompassModelResult,
+} from "@/lib/operations/hegemony-compass";
+import type { DistanceMatrixResult } from "@/lib/operations/distance-matrix";
+import { renderCompassSvgString, CompassSvg } from "@/components/viz/CompassSvg";
 
 interface ProtocolStepDeepDiveProps {
   step: ProtocolStepResult;
@@ -38,6 +48,10 @@ export function ProtocolStepDeepDive({ step }: ProtocolStepDeepDiveProps) {
       return <BatteryDeepDive result={step.details as NegationBatteryResult} />;
     case "agonism":
       return <AgonismDeepDive result={step.details as AgonismTestResult} />;
+    case "compass":
+      return <CompassDeepDive result={step.details as HegemonyCompassResult} />;
+    case "matrix":
+      return <DistanceMatrixDeepDive result={step.details as DistanceMatrixResult} />;
     default:
       return null;
   }
@@ -328,6 +342,216 @@ function BatteryDeepDive({ result }: { result: NegationBatteryResult }) {
           ))}
         </tbody>
       </Table>
+    </div>
+  );
+}
+
+function CompassDeepDive({ result }: { result: HegemonyCompassResult }) {
+  return (
+    <div className="space-y-4">
+      <div className="font-sans text-caption text-muted-foreground">
+        <span className="text-foreground font-medium">{result.presetName}</span>
+        {" · "}{result.concepts.length} concept{result.concepts.length === 1 ? "" : "s"} plotted
+        {" · "}X: <span className="text-foreground">{result.xAxisLabels.negative} ↔ {result.xAxisLabels.positive}</span>
+        {" · "}Y: <span className="text-foreground">{result.yAxisLabels.negative} ↔ {result.yAxisLabels.positive}</span>
+      </div>
+
+      {result.models.map(m => (
+        <div key={m.modelId} className="space-y-3">
+          <SectionHeading>{m.modelName} — compass</SectionHeading>
+          <CompassSnapshot result={result} model={m} />
+          <SectionHeading>{m.modelName} — axis statistics</SectionHeading>
+          <Table>
+            <thead>
+              <tr className="border-b border-parchment">
+                <Th>Axis</Th>
+                <Th align="right" tip="Cosine similarity between the two pole centroids. High = the poles point in similar directions (manifold does not treat them as opposed); low = genuinely distinct in the geometry.">Inter-pole cos</Th>
+                <Th align="right" tip="Euclidean distance between the two pole centroids.">Axis norm</Th>
+                <Th align="right" tip="Mean pairwise cosine among the negative pole's defining sentences. Internal coherence.">{m.xNeg.label} coh.</Th>
+                <Th align="right" tip="Mean pairwise cosine among the positive pole's defining sentences. Internal coherence.">{m.xPos.label} coh.</Th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-parchment">
+              <tr>
+                <Td>
+                  <span className="font-medium">{m.xNeg.label}</span>
+                  <span className="text-muted-foreground"> ↔ </span>
+                  <span className="font-medium">{m.xPos.label}</span>
+                </Td>
+                <Td align="right" mono>{m.xInterPoleCosine.toFixed(4)}</Td>
+                <Td align="right" mono>{m.xAxisNorm.toFixed(4)}</Td>
+                <Td align="right" mono>{Number.isFinite(m.xNeg.coherence) ? m.xNeg.coherence.toFixed(4) : "—"}</Td>
+                <Td align="right" mono>{Number.isFinite(m.xPos.coherence) ? m.xPos.coherence.toFixed(4) : "—"}</Td>
+              </tr>
+              <tr>
+                <Td>
+                  <span className="font-medium">{m.yNeg.label}</span>
+                  <span className="text-muted-foreground"> ↔ </span>
+                  <span className="font-medium">{m.yPos.label}</span>
+                </Td>
+                <Td align="right" mono>{m.yInterPoleCosine.toFixed(4)}</Td>
+                <Td align="right" mono>{m.yAxisNorm.toFixed(4)}</Td>
+                <Td align="right" mono>{Number.isFinite(m.yNeg.coherence) ? m.yNeg.coherence.toFixed(4) : "—"}</Td>
+                <Td align="right" mono>{Number.isFinite(m.yPos.coherence) ? m.yPos.coherence.toFixed(4) : "—"}</Td>
+              </tr>
+            </tbody>
+          </Table>
+
+          <SectionHeading>{m.modelName} — per-concept positions</SectionHeading>
+          <Table>
+            <thead>
+              <tr className="border-b border-parchment">
+                <Th>Concept</Th>
+                <Th align="right" tip="Position on the X axis: sim(concept, X+ pole centroid) − sim(concept, X− pole centroid). Positive values lean to the right pole; negative to the left.">X</Th>
+                <Th align="right" tip="Position on the Y axis.">Y</Th>
+                <Th align="right" tip="Raw cosine to the X negative pole centroid.">cos → {m.xNeg.label}</Th>
+                <Th align="right" tip="Raw cosine to the X positive pole centroid.">cos → {m.xPos.label}</Th>
+                <Th align="right" tip="Raw cosine to the Y negative pole centroid.">cos → {m.yNeg.label}</Th>
+                <Th align="right" tip="Raw cosine to the Y positive pole centroid.">cos → {m.yPos.label}</Th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-parchment">
+              {m.points.map((p, i) => (
+                <tr key={i}>
+                  <Td className="font-medium">{p.concept}</Td>
+                  <Td align="right" mono>{p.x >= 0 ? "+" : ""}{p.x.toFixed(4)}</Td>
+                  <Td align="right" mono>{p.y >= 0 ? "+" : ""}{p.y.toFixed(4)}</Td>
+                  <Td align="right" mono>{p.simXNeg.toFixed(4)}</Td>
+                  <Td align="right" mono>{p.simXPos.toFixed(4)}</Td>
+                  <Td align="right" mono>{p.simYNeg.toFixed(4)}</Td>
+                  <Td align="right" mono>{p.simYPos.toFixed(4)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Inline Hegemony Compass visualisation. Rendered as static SVG (not
+ * Plotly) so it serialises cleanly for PDF embedding, downloads, and
+ * copy-paste. Includes a one-click Download SVG action.
+ */
+function CompassSnapshot({
+  result,
+  model,
+}: {
+  result: HegemonyCompassResult;
+  model: HegemonyCompassModelResult;
+}) {
+  const handleDownload = () => {
+    const svg = renderCompassSvgString(result, model);
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const presetSlug = result.presetName.toLowerCase().replace(/\s+/g, "-");
+    const modelSlug = model.modelName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    a.href = url;
+    a.download = `compass-${presetSlug}-${modelSlug}.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div>
+      <div className="rounded-sm border border-parchment overflow-hidden">
+        <CompassSvg result={result} model={model} />
+      </div>
+      <div className="mt-2 flex justify-end">
+        <button
+          onClick={handleDownload}
+          className="btn-editorial-ghost text-caption"
+          title="Download the compass as a standalone SVG file"
+        >
+          Download SVG
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DistanceMatrixDeepDive({ result }: { result: DistanceMatrixResult }) {
+  return (
+    <div className="space-y-4">
+      {result.models.map(m => (
+        <div key={m.modelId} className="space-y-2">
+          <SectionHeading>
+            {m.modelName} — most similar: <span className="text-foreground font-medium">{m.mostSimilar.a} ↔ {m.mostSimilar.b}</span> ({m.mostSimilar.sim.toFixed(4)})
+            {" · "}least similar: <span className="text-foreground font-medium">{m.leastSimilar.a} ↔ {m.leastSimilar.b}</span> ({m.leastSimilar.sim.toFixed(4)})
+            {" · "}avg: <span className="text-foreground font-medium">{m.avgSimilarity.toFixed(4)}</span>
+          </SectionHeading>
+          <details>
+            <summary className="cursor-pointer font-sans text-caption text-muted-foreground hover:text-foreground">
+              Full {result.concepts.length}×{result.concepts.length} cosine matrix
+            </summary>
+            <div className="overflow-x-auto mt-2">
+              <table className="font-sans text-caption">
+                <thead>
+                  <tr className="border-b border-parchment">
+                    <th></th>
+                    {result.concepts.map((c, j) => (
+                      <th key={j} className="px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">{c}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-parchment">
+                  {m.matrix.map((row, i) => (
+                    <tr key={i}>
+                      <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">{result.concepts[i]}</th>
+                      {row.map((v, j) => (
+                        <td
+                          key={j}
+                          className={`px-2 py-1 text-right tabular-nums ${i === j ? "text-muted-foreground" : ""}`}
+                          title={`${result.concepts[i]} ↔ ${result.concepts[j]}: ${v.toFixed(6)}`}
+                        >
+                          {v.toFixed(3)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+      ))}
+
+      {result.contestedPairs.length > 0 && (
+        <div>
+          <SectionHeading>
+            Contested geometry — top {result.contestedPairs.length} pairs where models disagree most
+          </SectionHeading>
+          <Table>
+            <thead>
+              <tr className="border-b border-parchment">
+                <Th>Pair</Th>
+                <Th align="right" tip="Variance of the pair's cosine across enabled models.">Variance</Th>
+                <Th align="right" tip="Spread between the most and least similar per-model cosines.">Range</Th>
+                <Th align="right" tip="Lowest cosine any model reported for this pair.">Min</Th>
+                <Th align="right" tip="Highest cosine any model reported for this pair.">Max</Th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-parchment">
+              {result.contestedPairs.map((p, i) => (
+                <tr key={i}>
+                  <Td>
+                    <span className="font-medium">{p.a}</span>
+                    <span className="text-muted-foreground"> ↔ </span>
+                    <span className="font-medium">{p.b}</span>
+                  </Td>
+                  <Td align="right" mono>{p.variance.toFixed(6)}</Td>
+                  <Td align="right" mono>{p.range.toFixed(4)}</Td>
+                  <Td align="right" mono>{p.min.toFixed(4)}</Td>
+                  <Td align="right" mono>{p.max.toFixed(4)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

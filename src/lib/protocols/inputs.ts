@@ -18,6 +18,12 @@ import {
   agonismTestTextList,
   type AgonismPair,
 } from "@/lib/operations/agonism-test";
+import {
+  hegemonyCompassTextList,
+  resolveCompassPreset,
+  type HegemonyCompassInputs,
+} from "@/lib/operations/hegemony-compass";
+import { distanceMatrixTextList } from "@/lib/operations/distance-matrix";
 
 /**
  * Given a single step, return every text that will need embedding
@@ -66,6 +72,15 @@ function textsForStep(step: ProtocolStep): string[] {
       const preset = typeof step.inputs.preset === "string" ? step.inputs.preset : undefined;
       return agonismTestTextList({ pairs, preset });
     }
+    case "compass": {
+      const inputs = resolveCompassInputsFromStep(step.inputs);
+      return hegemonyCompassTextList(inputs);
+    }
+    case "matrix": {
+      const concepts = resolveConceptsFromStep(step.inputs);
+      if (concepts.length < 2) return [];
+      return distanceMatrixTextList({ concepts });
+    }
     default:
       return [];
   }
@@ -85,6 +100,46 @@ function resolveBatteryStatements(inputs: Record<string, unknown>): string[] {
   const preset = typeof inputs.preset === "string" ? inputs.preset : undefined;
   const resolved = resolveNegationBatteryPreset(preset);
   return resolved ?? [];
+}
+
+/**
+ * Resolve Hegemony Compass inputs from a step's inputs. Accepts a
+ * preset name and/or inline xAxis/yAxis definitions; the pure function
+ * then resolves the concrete axes. Concepts can be passed as either
+ * a comma-separated string or an array; falls back to preset defaults.
+ */
+function resolveCompassInputsFromStep(
+  inputs: Record<string, unknown>
+): HegemonyCompassInputs {
+  const preset = typeof inputs.preset === "string" ? inputs.preset : undefined;
+  const concepts = resolveConceptsFromStep(inputs);
+  const out: HegemonyCompassInputs = { preset, concepts: concepts.length > 0 ? concepts : undefined };
+  if (typeof inputs.xAxis === "object" && inputs.xAxis !== null) {
+    out.xAxis = inputs.xAxis as HegemonyCompassInputs["xAxis"];
+  }
+  if (typeof inputs.yAxis === "object" && inputs.yAxis !== null) {
+    out.yAxis = inputs.yAxis as HegemonyCompassInputs["yAxis"];
+  }
+  return out;
+}
+
+/**
+ * Pull a concept list from a step's inputs. Accepts either an array
+ * under `concepts` or a comma-separated string, and filters empties.
+ */
+function resolveConceptsFromStep(inputs: Record<string, unknown>): string[] {
+  if (Array.isArray(inputs.concepts)) {
+    return (inputs.concepts as unknown[]).filter(
+      (s): s is string => typeof s === "string" && s.length > 0
+    );
+  }
+  if (typeof inputs.concepts === "string") {
+    return (inputs.concepts as string)
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+  }
+  return [];
 }
 
 /**

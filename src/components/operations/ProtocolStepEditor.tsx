@@ -23,6 +23,7 @@ import {
 } from "@/lib/operations/negation-battery";
 import { loadUserBatteries } from "@/lib/operations/user-batteries";
 import { AGONISM_PAIRS, type AgonismPair } from "@/lib/operations/agonism-test";
+import { COMPASS_PRESETS } from "@/lib/operations/hegemony-compass";
 
 /** Tab labels for the section headers. */
 const OPERATION_LABEL: Partial<Record<TabId, string>> = {
@@ -82,6 +83,10 @@ export function ProtocolStepEditor({ step, stepIndex, edits, onChange }: StepEdi
         return <BatteryEditor step={step} edits={edits} onChange={onChange} />;
       case "agonism":
         return <AgonismEditor step={step} edits={edits} onChange={onChange} />;
+      case "compass":
+        return <CompassEditor step={step} edits={edits} onChange={onChange} />;
+      case "matrix":
+        return <MatrixEditor step={step} edits={edits} onChange={onChange} />;
       default:
         return (
           <p className="font-sans text-caption text-muted-foreground italic">
@@ -339,6 +344,105 @@ function BatteryEditor({ step, edits, onChange }: Omit<StepEditorProps, "stepInd
         Each line is a claim; its negation is auto-generated at run time. To
         save the current list as a reusable battery, open the Negation Battery
         tab and use "Save as named battery".
+      </p>
+    </div>
+  );
+}
+
+function CompassEditor({ step, edits, onChange }: Omit<StepEditorProps, "stepIndex">) {
+  const preset = eff<string>(step, edits, "preset", "");
+  const presetNames = Object.keys(COMPASS_PRESETS);
+  const resolved = preset && preset in COMPASS_PRESETS ? COMPASS_PRESETS[preset] : null;
+
+  // Concepts: if edited, use edits; otherwise resolve from step.inputs
+  // or fall back to the preset's defaults.
+  const conceptsFromEdits = typeof edits?.concepts === "string"
+    ? (edits.concepts as string)
+    : Array.isArray(edits?.concepts)
+      ? (edits.concepts as string[]).join(", ")
+      : null;
+  const conceptsFromStep = typeof step.inputs.concepts === "string"
+    ? (step.inputs.concepts as string)
+    : Array.isArray(step.inputs.concepts)
+      ? (step.inputs.concepts as string[]).join(", ")
+      : null;
+  const conceptsText =
+    conceptsFromEdits ?? conceptsFromStep ?? (resolved?.defaults ?? []).join(", ");
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 font-sans text-caption text-muted-foreground flex-wrap">
+        <span>Preset:</span>
+        <select
+          value={preset}
+          onChange={e => onChange({ ...(edits ?? {}), preset: e.target.value })}
+          className="input-editorial text-caption py-1 px-2 w-auto"
+        >
+          {!preset && <option value="">— choose —</option>}
+          {presetNames.map(name => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+        </select>
+      </div>
+      {resolved && (
+        <div className="grid grid-cols-2 gap-2 font-sans text-caption text-muted-foreground">
+          <div className="bg-muted rounded-sm p-2">
+            <div className="text-[9px] uppercase tracking-wider font-semibold">X axis</div>
+            <div>{resolved.xAxis.negative.label} ↔ {resolved.xAxis.positive.label}</div>
+          </div>
+          <div className="bg-muted rounded-sm p-2">
+            <div className="text-[9px] uppercase tracking-wider font-semibold">Y axis</div>
+            <div>{resolved.yAxis.negative.label} ↔ {resolved.yAxis.positive.label}</div>
+          </div>
+        </div>
+      )}
+      <div>
+        <FieldLabel>Concepts (comma-separated)</FieldLabel>
+        <TextArea
+          value={conceptsText}
+          onChange={v => {
+            // Store as a comma-separated string; the collector handles both.
+            onChange({ ...(edits ?? {}), concepts: v });
+          }}
+          rows={3}
+          placeholder="justice, fairness, equity, freedom, authority"
+        />
+        <p className="mt-1 font-sans text-caption text-muted-foreground italic">
+          Each concept is plotted relative to the compass axes. Empty to use the preset's defaults.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MatrixEditor({ step, edits, onChange }: Omit<StepEditorProps, "stepIndex">) {
+  const conceptsFromEdits = typeof edits?.concepts === "string"
+    ? (edits.concepts as string)
+    : Array.isArray(edits?.concepts)
+      ? (edits.concepts as string[]).join(", ")
+      : null;
+  const conceptsFromStep = typeof step.inputs.concepts === "string"
+    ? (step.inputs.concepts as string)
+    : Array.isArray(step.inputs.concepts)
+      ? (step.inputs.concepts as string[]).join(", ")
+      : "";
+  const conceptsText = conceptsFromEdits ?? conceptsFromStep;
+  const count = conceptsText
+    .split(",")
+    .map(s => s.trim())
+    .filter(s => s.length > 0).length;
+
+  return (
+    <div className="space-y-2">
+      <FieldLabel>Concepts (comma-separated, minimum 2)</FieldLabel>
+      <TextArea
+        value={conceptsText}
+        onChange={v => onChange({ ...(edits ?? {}), concepts: v })}
+        rows={3}
+        placeholder="justice, fairness, equity, law, punishment, mercy"
+      />
+      <p className="font-sans text-caption text-muted-foreground italic">
+        {count} concept{count === 1 ? "" : "s"} — {count >= 2 ? `${(count * (count - 1)) / 2} pairs will be computed per model` : "need at least two concepts"}.
       </p>
     </div>
   );
