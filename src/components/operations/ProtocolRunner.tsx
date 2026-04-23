@@ -85,6 +85,7 @@ const OPERATION_LABELS: Partial<Record<TabId, string>> = {
   agonism: "Agonism Test",
   analogy: "Vector Logic",
   topology: "Persistent Homology",
+  grammar: "Grammar of Vectors",
 };
 
 const CATEGORY_LABEL: Record<ProtocolCategory, string> = {

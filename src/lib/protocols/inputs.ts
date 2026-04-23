@@ -24,6 +24,14 @@ import {
   type HegemonyCompassInputs,
 } from "@/lib/operations/hegemony-compass";
 import { distanceMatrixTextList } from "@/lib/operations/distance-matrix";
+import {
+  grammarOfVectorsTextList,
+  parseInstances,
+  GRAMMARS,
+  DEFAULT_GRAMMAR_ID,
+  type GrammarInstance,
+  type GrammarOfVectorsInputs,
+} from "@/lib/operations/grammar-of-vectors";
 
 /**
  * Given a single step, return every text that will need embedding
@@ -81,10 +89,58 @@ function textsForStep(step: ProtocolStep): string[] {
       if (concepts.length < 2) return [];
       return distanceMatrixTextList({ concepts });
     }
+    case "grammar": {
+      const inputs = resolveGrammarInputsFromStep(step.inputs);
+      return grammarOfVectorsTextList(inputs);
+    }
     default:
       return [];
   }
 }
+
+/**
+ * Resolve Grammar of Vectors inputs from a protocol step. Accepts
+ * either a register preset or an inline constructions list (strings
+ * parsed via the grammar's own parser, or structured X|Y pairs).
+ */
+function resolveGrammarInputsFromStep(
+  inputs: Record<string, unknown>
+): GrammarOfVectorsInputs {
+  const grammarId = typeof inputs.grammarId === "string" ? inputs.grammarId : DEFAULT_GRAMMAR_ID;
+  const register = typeof inputs.register === "string" ? inputs.register : undefined;
+  const thresholdRaw = inputs.threshold;
+  const threshold = typeof thresholdRaw === "number" ? thresholdRaw : undefined;
+
+  // Explicit instances list (structured objects from YAML-ish).
+  if (Array.isArray(inputs.instances)) {
+    const explicit: GrammarInstance[] = [];
+    for (const raw of inputs.instances as unknown[]) {
+      if (typeof raw !== "object" || raw === null) continue;
+      const o = raw as Record<string, unknown>;
+      const rawText = typeof o.raw === "string" ? o.raw : "";
+      const parts = Array.isArray(o.parts) ? o.parts : null;
+      if (parts && parts.length === 2 && typeof parts[0] === "string" && typeof parts[1] === "string") {
+        explicit.push({ raw: rawText || `${parts[0]} | ${parts[1]}`, parts: [parts[0], parts[1]] });
+      }
+    }
+    if (explicit.length > 0) return { grammarId, register, instances: explicit, threshold };
+  }
+
+  // Free-form "constructions" array of strings, one per line.
+  if (Array.isArray(inputs.constructions)) {
+    const lines = (inputs.constructions as unknown[])
+      .filter((s): s is string => typeof s === "string")
+      .join("\n");
+    const parsed = parseInstances(grammarId, lines);
+    if (parsed.length > 0) return { grammarId, register, instances: parsed, threshold };
+  }
+
+  // Fallback: register preset only.
+  return { grammarId, register, threshold };
+}
+
+/** Suppress unused-import warning if GRAMMARS isn't referenced directly. */
+void GRAMMARS;
 
 /**
  * Resolve battery statements from a step's inputs. Accepts either a

@@ -24,6 +24,7 @@ import {
 import { loadUserBatteries } from "@/lib/operations/user-batteries";
 import { AGONISM_PAIRS, type AgonismPair } from "@/lib/operations/agonism-test";
 import { COMPASS_PRESETS } from "@/lib/operations/hegemony-compass";
+import { GRAMMARS, DEFAULT_GRAMMAR_ID } from "@/lib/operations/grammar-of-vectors";
 
 /** Tab labels for the section headers. */
 const OPERATION_LABEL: Partial<Record<TabId, string>> = {
@@ -87,6 +88,8 @@ export function ProtocolStepEditor({ step, stepIndex, edits, onChange }: StepEdi
         return <CompassEditor step={step} edits={edits} onChange={onChange} />;
       case "matrix":
         return <MatrixEditor step={step} edits={edits} onChange={onChange} />;
+      case "grammar":
+        return <GrammarEditor step={step} edits={edits} onChange={onChange} />;
       default:
         return (
           <p className="font-sans text-caption text-muted-foreground italic">
@@ -443,6 +446,82 @@ function MatrixEditor({ step, edits, onChange }: Omit<StepEditorProps, "stepInde
       />
       <p className="font-sans text-caption text-muted-foreground italic">
         {count} concept{count === 1 ? "" : "s"} — {count >= 2 ? `${(count * (count - 1)) / 2} pairs will be computed per model` : "need at least two concepts"}.
+      </p>
+    </div>
+  );
+}
+
+function GrammarEditor({ step, edits, onChange }: Omit<StepEditorProps, "stepIndex">) {
+  const grammarId = eff<string>(step, edits, "grammarId", DEFAULT_GRAMMAR_ID);
+  const grammar = GRAMMARS[grammarId] ?? GRAMMARS[DEFAULT_GRAMMAR_ID];
+  const registerNames = Object.keys(grammar.registers);
+  const register = eff<string>(step, edits, "register", registerNames[0] ?? "");
+  const isCustom = Array.isArray(eff<unknown>(step, edits, "constructions", null)) || Array.isArray(eff<unknown>(step, edits, "instances", null));
+
+  // Derive the constructions textarea content from edits or step inputs.
+  const constructionsText = (() => {
+    const fromEdits = edits?.constructions;
+    const fromStep = step.inputs.constructions;
+    const src = Array.isArray(fromEdits) ? fromEdits : Array.isArray(fromStep) ? fromStep : null;
+    if (!src) return "";
+    return (src as unknown[])
+      .filter((s): s is string => typeof s === "string")
+      .join("\n");
+  })();
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 font-sans text-caption text-muted-foreground flex-wrap">
+        <span>Grammar:</span>
+        <select
+          value={grammarId}
+          onChange={e => onChange({ ...(edits ?? {}), grammarId: e.target.value })}
+          className="input-editorial text-caption py-1 px-2 w-auto"
+        >
+          {Object.values(GRAMMARS).map(g => (
+            <option key={g.id} value={g.id}>{g.name}</option>
+          ))}
+        </select>
+        <span>Source:</span>
+        <select
+          value={isCustom ? "__custom__" : register}
+          onChange={e => {
+            const v = e.target.value;
+            if (v === "__custom__") {
+              onChange({ ...(edits ?? {}), register: undefined, constructions: constructionsText.split("\n").filter(Boolean) });
+            } else {
+              const nextEdits: Record<string, unknown> = { ...(edits ?? {}), register: v };
+              delete nextEdits.constructions;
+              delete nextEdits.instances;
+              onChange(nextEdits);
+            }
+          }}
+          className="input-editorial text-caption py-1 px-2 w-auto"
+        >
+          {registerNames.map(name => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+          <option value="__custom__">Custom constructions</option>
+        </select>
+      </div>
+      {isCustom && (
+        <div>
+          <FieldLabel>Constructions (one per line, matching the grammar or X | Y pipe form)</FieldLabel>
+          <TextArea
+            value={constructionsText}
+            onChange={v => {
+              const lines = v.split("\n").map(s => s.trim()).filter(s => s.length > 0);
+              const next: Record<string, unknown> = { ...(edits ?? {}), constructions: lines };
+              delete next.instances;
+              onChange(next);
+            }}
+            rows={Math.min(10, Math.max(4, constructionsText.split("\n").length + 1))}
+            placeholder={`${grammar.example}\nnot a threat, but a tool\nX | Y`}
+          />
+        </div>
+      )}
+      <p className="font-sans text-caption text-muted-foreground italic">
+        {grammar.description}
       </p>
     </div>
   );

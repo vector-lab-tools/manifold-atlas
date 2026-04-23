@@ -47,6 +47,14 @@ import {
   computeDistanceMatrix,
   distanceMatrixHeadline,
 } from "@/lib/operations/distance-matrix";
+import {
+  computeGrammarOfVectors,
+  grammarOfVectorsHeadline,
+  parseInstances,
+  DEFAULT_GRAMMAR_ID,
+  type GrammarInstance,
+  type GrammarOfVectorsInputs,
+} from "@/lib/operations/grammar-of-vectors";
 
 export interface ExecuteStepContext {
   stepIndex: number;
@@ -87,6 +95,43 @@ function resolveCompassInputsForExec(
     out.yAxis = inputs.yAxis as HegemonyCompassInputs["yAxis"];
   }
   return out;
+}
+
+/**
+ * Resolve Grammar of Vectors inputs for execution. Mirror of the
+ * collector in inputs.ts — accepts register preset or an inline list.
+ */
+function resolveGrammarInputsForExec(
+  inputs: Record<string, unknown>
+): GrammarOfVectorsInputs {
+  const grammarId = typeof inputs.grammarId === "string" ? inputs.grammarId : DEFAULT_GRAMMAR_ID;
+  const register = typeof inputs.register === "string" ? inputs.register : undefined;
+  const thresholdRaw = inputs.threshold;
+  const threshold = typeof thresholdRaw === "number" ? thresholdRaw : undefined;
+
+  if (Array.isArray(inputs.instances)) {
+    const explicit: GrammarInstance[] = [];
+    for (const raw of inputs.instances as unknown[]) {
+      if (typeof raw !== "object" || raw === null) continue;
+      const o = raw as Record<string, unknown>;
+      const rawText = typeof o.raw === "string" ? o.raw : "";
+      const parts = Array.isArray(o.parts) ? o.parts : null;
+      if (parts && parts.length === 2 && typeof parts[0] === "string" && typeof parts[1] === "string") {
+        explicit.push({ raw: rawText || `${parts[0]} | ${parts[1]}`, parts: [parts[0], parts[1]] });
+      }
+    }
+    if (explicit.length > 0) return { grammarId, register, instances: explicit, threshold };
+  }
+
+  if (Array.isArray(inputs.constructions)) {
+    const lines = (inputs.constructions as unknown[])
+      .filter((s): s is string => typeof s === "string")
+      .join("\n");
+    const parsed = parseInstances(grammarId, lines);
+    if (parsed.length > 0) return { grammarId, register, instances: parsed, threshold };
+  }
+
+  return { grammarId, register, threshold };
 }
 
 /** Concepts list collector: array or comma-separated string. */
@@ -313,6 +358,27 @@ export function executeStep(
           elapsedMs,
           models: result.models.map(m => m.modelId),
           headline: distanceMatrixHeadline(result) as StepHeadlineMetrics,
+          details: result,
+        };
+      }
+
+      case "grammar": {
+        const inputs = resolveGrammarInputsForExec(step.inputs);
+        const result = computeGrammarOfVectors(inputs, ctx.stepVectors, ctx.enabledModels);
+        const elapsedMs = performance.now() - started;
+        const uniqueModelIds = new Set<string>();
+        for (const row of result.pairs) {
+          for (const m of row.models) uniqueModelIds.add(m.modelId);
+        }
+        return {
+          stepIndex: ctx.stepIndex,
+          step,
+          status: "done",
+          startedAt,
+          completedAt: new Date().toISOString(),
+          elapsedMs,
+          models: Array.from(uniqueModelIds),
+          headline: grammarOfVectorsHeadline(result) as StepHeadlineMetrics,
           details: result,
         };
       }

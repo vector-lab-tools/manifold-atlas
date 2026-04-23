@@ -33,6 +33,7 @@ import { SohnRethelTest } from "@/components/operations/SohnRethelTest";
 import { SilenceDetector } from "@/components/operations/SilenceDetector";
 import { TopologicalVoids } from "@/components/operations/TopologicalVoids";
 import { VectorLogic } from "@/components/operations/VectorLogic";
+import { GrammarOfVectors } from "@/components/operations/GrammarOfVectors";
 import { ProtocolRunner } from "@/components/operations/ProtocolRunner";
 import { Clippy } from "@/components/easter-eggs/Clippy";
 
@@ -60,6 +61,7 @@ function AppContent() {
         {activeTab === "abstraction" && <SohnRethelTest onQueryTime={setLastQueryTime} />}
         {activeTab === "silence" && <SilenceDetector onQueryTime={setLastQueryTime} />}
         {activeTab === "topology" && <TopologicalVoids onQueryTime={setLastQueryTime} />}
+        {activeTab === "grammar" && <GrammarOfVectors onQueryTime={setLastQueryTime} />}
         {(activeTab === "library" || activeTab === "run") && (
           <ProtocolRunner
             onQueryTime={setLastQueryTime}

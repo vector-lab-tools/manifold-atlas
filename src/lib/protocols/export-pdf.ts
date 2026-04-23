@@ -27,6 +27,7 @@ import type {
   HegemonyCompassModelResult,
 } from "@/lib/operations/hegemony-compass";
 import type { DistanceMatrixResult } from "@/lib/operations/distance-matrix";
+import type { GrammarOfVectorsResult } from "@/lib/operations/grammar-of-vectors";
 import { semanticSectioningSignature } from "@/lib/operations/semantic-sectioning";
 import { renderCompassSvgString } from "@/components/viz/CompassSvg";
 
@@ -433,7 +434,45 @@ async function writeStep(doc: jsPDF, cur: Cursor, index: number, s: ProtocolStep
     case "matrix":
       writeMatrix(doc, cur, s.details as DistanceMatrixResult);
       break;
+    case "grammar":
+      writeGrammar(doc, cur, s.details as GrammarOfVectorsResult);
+      break;
   }
+}
+
+function writeGrammar(doc: jsPDF, cur: Cursor, r: GrammarOfVectorsResult) {
+  writeText(
+    doc,
+    cur,
+    `${r.grammarName} · source: ${r.register ?? "custom"} · ${r.summary.totalPairs} constructions · ` +
+      `opposition preserved ${(r.summary.preservedRate * 100).toFixed(1)}% · ` +
+      `avg cosine ${r.summary.avgSimilarity.toFixed(4)} · threshold ${r.threshold}`,
+    { size: 9, colour: MUTED, gapAfter: 6 }
+  );
+  if (r.summary.mostDeceptive) {
+    writeText(
+      doc,
+      cur,
+      `Most deceptive: "${r.summary.mostDeceptive.raw}" — cos ${r.summary.mostDeceptive.cosine.toFixed(3)} in ${r.summary.mostDeceptive.modelName}.`,
+      { size: 9, colour: INK, gapAfter: 6, style: "italic" }
+    );
+  }
+  const modelNames = r.pairs[0]?.models.map(m => m.modelName) ?? [];
+  writeTable(
+    doc,
+    cur,
+    [["Construction (X / Y)", ...modelNames]],
+    r.pairs.map(row => [
+      `${row.instance.raw}\nX: ${row.instance.parts[0]} | Y: ${row.instance.parts[1]}`,
+      ...row.models.map(m => (!m.oppositionPreserved ? `${m.cosineSimilarity.toFixed(3)} *` : m.cosineSimilarity.toFixed(3))),
+    ])
+  );
+  writeText(
+    doc,
+    cur,
+    "Values marked * are at or above the threshold — the rhetoric of opposition exceeds the geometry of opposition.",
+    { size: 8, style: "italic", colour: MUTED }
+  );
 }
 
 // ---------------------------------------------------------------------------
