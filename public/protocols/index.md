@@ -5,7 +5,7 @@
 # each listed protocol from /protocols/{id}.md.
 
 fake-news-test
-political-geometry-survey
+political-contestation-test
 vector-logic-census
 negation-audit
 vector-logic-demo

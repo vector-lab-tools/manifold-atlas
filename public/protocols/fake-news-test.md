@@ -1,8 +1,8 @@
 ---
-id: negation-census
-title: Full Negation Census
+id: fake-news-test
+title: "'Fake' News Test"
 category: research
-description: A comprehensive empirical census of the negation deficit. Runs all four pre-built batteries (Political, Ethical, Factual, Epistemological — 40 statements in total) and closes with the full eight-pair Agonism Test. Produces the largest quantitative dataset in the Library: 40 × M cosines from the batteries plus 8 × M cosines from agonism. Export the JSON bundle and you have a paper's worth of numbers.
+description: "Tests whether the manifold represents factual claims and their counter-claims as geometrically distinctive, or whether it collapses them together. Runs all four pre-built batteries (Political, Ethical, Factual, and Epistemological — 40 statements across a range of concepts and ideas) and closes with the full eight-pair Agonism Test on philosophical opposition. The largest quantitative dataset in the Library: 48 claim-and-counter-claim tests per model. Exposes the structural condition behind the 'fake news' problem — a medium whose geometry cannot sustain the distinction that truth-and-falsehood requires."
 estimatedQueries: 96
 readingLink:
   label: Negative Vectors
