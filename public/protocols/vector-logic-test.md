@@ -4,9 +4,6 @@ title: Vector Logic Test
 category: research
 description: Six A − B + C analogical inferences run in one batch, each producing a per-model top-eight nearest-concept table. The deep-dive lets you scan every model's nearest-neighbour ranking side by side for the classic king-queen case, three political variants (capitalism, democracy, technology), and two philosophical ones (labour-craft, science-art). A quantitatively dense test of whether the manifold's "logic" performs the inferences it implies.
 estimatedQueries: 30
-readingLink:
-  label: Vector Theory
-  url: https://stunlaw.blogspot.com/2026/02/vector-theory.html
 ---
 
 1. analogy

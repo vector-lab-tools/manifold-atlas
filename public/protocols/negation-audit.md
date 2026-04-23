@@ -4,9 +4,6 @@ title: Negation Audit
 category: critique
 description: A systematic test of the negation deficit across registers. Runs a ten-statement ethical battery, probes three politically contested claims at full detail, and measures whether philosophical opposition survives geometrisation. Together the three steps establish the negation deficit empirically and at scale.
 estimatedQueries: 52
-readingLink:
-  label: Negative Vectors
-  url: https://stunlaw.blogspot.com/
 ---
 
 1. battery

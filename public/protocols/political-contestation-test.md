@@ -4,9 +4,6 @@ title: Political Contestation Test
 category: research
 description: Tests whether the manifold preserves the contestations that structure political language, or whether it smooths them into geometric proximity. Ten steps mix Concept Distance, Semantic Sectioning, and Negation Gauge across a range of politically charged pairs: pairwise distances across five contested axes (liberty/authority, equality/hierarchy, private/public, labour/capital, solidarity/competition), three sectioning walks with full twenty-one-point interpolation paths, and two negation gauges on politically loaded claims. Each step contributes a different shape to the deep-dive dataset.
 estimatedQueries: 72
-readingLink:
-  label: Geometric Ideology
-  url: https://stunlaw.blogspot.com/
 ---
 
 1. distance
