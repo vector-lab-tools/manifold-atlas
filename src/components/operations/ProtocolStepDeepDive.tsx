@@ -26,6 +26,7 @@ import type {
   HegemonyCompassModelResult,
 } from "@/lib/operations/hegemony-compass";
 import type { DistanceMatrixResult } from "@/lib/operations/distance-matrix";
+import type { GrammarOfVectorsResult } from "@/lib/operations/grammar-of-vectors";
 import { renderCompassSvgString, CompassSvg } from "@/components/viz/CompassSvg";
 
 interface ProtocolStepDeepDiveProps {
@@ -52,6 +53,8 @@ export function ProtocolStepDeepDive({ step }: ProtocolStepDeepDiveProps) {
       return <CompassDeepDive result={step.details as HegemonyCompassResult} />;
     case "matrix":
       return <DistanceMatrixDeepDive result={step.details as DistanceMatrixResult} />;
+    case "grammar":
+      return <GrammarDeepDive result={step.details as GrammarOfVectorsResult} />;
     default:
       return null;
   }
@@ -469,6 +472,89 @@ function CompassSnapshot({
           Download SVG
         </button>
       </div>
+    </div>
+  );
+}
+
+function GrammarDeepDive({ result }: { result: GrammarOfVectorsResult }) {
+  const modelNames = result.pairs[0]?.models.map(m => m.modelName) ?? [];
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-caption">
+        <div className="bg-muted rounded-sm p-2">
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Grammar</div>
+          <div className="font-sans text-body-sm font-bold">{result.grammarName}</div>
+        </div>
+        <div className="bg-muted rounded-sm p-2">
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Source</div>
+          <div className="font-sans text-body-sm font-bold">{result.register ?? "custom"}</div>
+        </div>
+        <div className="bg-muted rounded-sm p-2">
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Opposition preserved</div>
+          <div className="font-sans text-body-sm font-bold tabular-nums">
+            {(result.summary.preservedRate * 100).toFixed(1)}%
+          </div>
+        </div>
+        <div className="bg-muted rounded-sm p-2">
+          <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Avg cosine</div>
+          <div className="font-sans text-body-sm font-bold tabular-nums">
+            {result.summary.avgSimilarity.toFixed(4)}
+          </div>
+        </div>
+      </div>
+
+      {result.summary.mostDeceptive && (
+        <div className="font-sans text-caption text-muted-foreground italic">
+          Most deceptive construction:{" "}
+          <span className="text-foreground font-medium">
+            &ldquo;{result.summary.mostDeceptive.raw}&rdquo;
+          </span>{" "}
+          &mdash; cos {result.summary.mostDeceptive.cosine.toFixed(3)} in {result.summary.mostDeceptive.modelName}.
+        </div>
+      )}
+
+      <SectionHeading>Per-construction cosines</SectionHeading>
+      <Table>
+        <thead>
+          <tr className="border-b border-parchment">
+            <Th tip="The construction tested. X and Y were extracted from the prose surface; cosine is measured between their embeddings.">Construction</Th>
+            {modelNames.map(n => (
+              <Th
+                key={n}
+                align="right"
+                tip={`Cosine similarity between the X and Y fragments of each construction, as reported by ${n}. Red means the value is at or above the threshold — the rhetoric of opposition exceeds the geometry of opposition. Green means the geometry preserves the antithesis.`}
+              >
+                {n}
+              </Th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-parchment">
+          {result.pairs.map((p, i) => (
+            <tr key={i}>
+              <Td>
+                <div className="font-medium">{p.instance.raw}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  X: &ldquo;{p.instance.parts[0]}&rdquo; &middot; Y: &ldquo;{p.instance.parts[1]}&rdquo;
+                </div>
+              </Td>
+              {p.models.map(m => (
+                <Td key={m.modelId} align="right" mono>
+                  <span className={!m.oppositionPreserved ? "text-error-600 font-semibold" : "text-success-600"}>
+                    {m.cosineSimilarity.toFixed(3)}
+                  </span>
+                </Td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+
+      <p className="font-sans text-caption text-muted-foreground italic">
+        Values above the threshold ({result.threshold}) count as pseudo-dialectic:
+        the rhetoric of opposition exceeds the geometry of opposition. Below the
+        threshold, the manifold preserves the antithesis.
+      </p>
     </div>
   );
 }
