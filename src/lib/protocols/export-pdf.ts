@@ -66,7 +66,7 @@ async function svgToPng(svg: string, width: number, height: number): Promise<str
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL("image/png"));
     };
-    img.onerror = () => reject(new Error("SVG → PNG rasterisation failed"));
+    img.onerror = () => reject(new Error("SVG -> PNG rasterisation failed"));
     img.src = `data:image/svg+xml;base64,${b64}`;
   });
 }
@@ -170,11 +170,11 @@ function writeHeadline(doc: jsPDF, cur: Cursor, headline: Record<string, number 
 }
 
 function writeDistance(doc: jsPDF, cur: Cursor, r: ConceptDistanceResult) {
-  writeText(doc, cur, `${r.termA}  ↔  ${r.termB}`, { size: 10, style: "italic", colour: MUTED, gapAfter: 6 });
+  writeText(doc, cur, `${r.termA}  vs  ${r.termB}`, { size: 10, style: "italic", colour: MUTED, gapAfter: 6 });
   writeTable(
     doc,
     cur,
-    [["Model", "Cosine", "Distance", "Angular (°)", "Euclidean", "‖A‖", "‖B‖", "Dims"]],
+    [["Model", "Cosine", "Distance", "Angular (deg)", "Euclidean", "|A|", "|B|", "Dims"]],
     r.models.map(m => [
       m.modelName,
       m.cosineSimilarity.toFixed(4),
@@ -189,7 +189,7 @@ function writeDistance(doc: jsPDF, cur: Cursor, r: ConceptDistanceResult) {
 }
 
 function writeVectorLogic(doc: jsPDF, cur: Cursor, r: VectorLogicResult) {
-  writeText(doc, cur, `${r.a}  −  ${r.b}  +  ${r.c}`, { size: 10, style: "italic", colour: MUTED, gapAfter: 6 });
+  writeText(doc, cur, `${r.a}  -  ${r.b}  +  ${r.c}`, { size: 10, style: "italic", colour: MUTED, gapAfter: 6 });
   for (const m of r.models) {
     writeText(doc, cur, m.modelName, { size: 9, style: "bold", gapAfter: 2 });
     writeTable(
@@ -208,7 +208,7 @@ function writeNegation(doc: jsPDF, cur: Cursor, r: NegationGaugeResult) {
   writeTable(
     doc,
     cur,
-    [["Model", "Cosine", "Distance", "Angular (°)", "Collapsed?"]],
+    [["Model", "Cosine", "Distance", "Angular (deg)", "Collapsed?"]],
     r.models.map(m => [
       m.modelName,
       m.cosineSimilarity.toFixed(4),
@@ -220,12 +220,12 @@ function writeNegation(doc: jsPDF, cur: Cursor, r: NegationGaugeResult) {
 }
 
 function writeSectioning(doc: jsPDF, cur: Cursor, r: SemanticSectioningResult) {
-  writeText(doc, cur, `${r.anchorA}  →  ${r.anchorB}`, { size: 10, style: "italic", colour: MUTED, gapAfter: 2 });
+  writeText(doc, cur, `${r.anchorA}  ->  ${r.anchorB}`, { size: 10, style: "italic", colour: MUTED, gapAfter: 2 });
   writeText(doc, cur, `${r.steps + 1} interpolation points across ${r.vocabulary.length} reference concepts`, { size: 9, colour: MUTED, gapAfter: 6 });
   for (const m of r.models) {
     const signature = semanticSectioningSignature(m);
     writeText(doc, cur, `${m.modelName}  ·  anchor cosine ${m.anchorSimilarity.toFixed(4)}`, { size: 9, style: "bold", gapAfter: 2 });
-    writeText(doc, cur, signature.join("  →  "), { size: 9, gapAfter: 4 });
+    writeText(doc, cur, signature.join("  ->  "), { size: 9, gapAfter: 4 });
     writeTable(
       doc,
       cur,
@@ -246,9 +246,9 @@ function writeBattery(doc: jsPDF, cur: Cursor, r: NegationBatteryResult) {
   writeTable(
     doc,
     cur,
-    [["Statement → Negation", ...modelNames]],
+    [["Statement / Negation", ...modelNames]],
     r.statements.map(row => [
-      `${row.statement}\n→ ${row.negated}`,
+      `${row.statement}\n-> ${row.negated}`,
       ...row.models.map(m => (m.collapsed ? `${m.similarity.toFixed(3)} *` : m.similarity.toFixed(3))),
     ])
   );
@@ -281,7 +281,7 @@ async function writeCompass(doc: jsPDF, cur: Cursor, r: HegemonyCompassResult) {
   writeText(
     doc,
     cur,
-    `${r.presetName} · ${r.concepts.length} concepts · X: ${r.xAxisLabels.negative} ↔ ${r.xAxisLabels.positive} · Y: ${r.yAxisLabels.negative} ↔ ${r.yAxisLabels.positive}`,
+    `${r.presetName} · ${r.concepts.length} concepts · X: ${r.xAxisLabels.negative} vs ${r.xAxisLabels.positive} · Y: ${r.yAxisLabels.negative} vs ${r.yAxisLabels.positive}`,
     { size: 9, colour: MUTED, gapAfter: 6 }
   );
   for (const m of r.models) {
@@ -312,18 +312,18 @@ async function writeCompassAxisStats(doc: jsPDF, cur: Cursor, m: HegemonyCompass
     [["Axis", "Inter-pole cos", "Axis norm", `${m.xNeg.label} coh.`, `${m.xPos.label} coh.`]],
     [
       [
-        `${m.xNeg.label} ↔ ${m.xPos.label}`,
+        `${m.xNeg.label} vs ${m.xPos.label}`,
         m.xInterPoleCosine.toFixed(4),
         m.xAxisNorm.toFixed(4),
-        Number.isFinite(m.xNeg.coherence) ? m.xNeg.coherence.toFixed(4) : "—",
-        Number.isFinite(m.xPos.coherence) ? m.xPos.coherence.toFixed(4) : "—",
+        Number.isFinite(m.xNeg.coherence) ? m.xNeg.coherence.toFixed(4) : "-",
+        Number.isFinite(m.xPos.coherence) ? m.xPos.coherence.toFixed(4) : "-",
       ],
       [
-        `${m.yNeg.label} ↔ ${m.yPos.label}`,
+        `${m.yNeg.label} vs ${m.yPos.label}`,
         m.yInterPoleCosine.toFixed(4),
         m.yAxisNorm.toFixed(4),
-        Number.isFinite(m.yNeg.coherence) ? m.yNeg.coherence.toFixed(4) : "—",
-        Number.isFinite(m.yPos.coherence) ? m.yPos.coherence.toFixed(4) : "—",
+        Number.isFinite(m.yNeg.coherence) ? m.yNeg.coherence.toFixed(4) : "-",
+        Number.isFinite(m.yPos.coherence) ? m.yPos.coherence.toFixed(4) : "-",
       ],
     ]
   );
@@ -359,7 +359,7 @@ function writeMatrix(doc: jsPDF, cur: Cursor, r: DistanceMatrixResult) {
     writeText(
       doc,
       cur,
-      `Most similar: ${m.mostSimilar.a} ↔ ${m.mostSimilar.b} (${m.mostSimilar.sim.toFixed(4)}) · Least similar: ${m.leastSimilar.a} ↔ ${m.leastSimilar.b} (${m.leastSimilar.sim.toFixed(4)}) · Avg cosine: ${m.avgSimilarity.toFixed(4)}`,
+      `Most similar: ${m.mostSimilar.a} vs ${m.mostSimilar.b} (${m.mostSimilar.sim.toFixed(4)}) · Least similar: ${m.leastSimilar.a} vs ${m.leastSimilar.b} (${m.leastSimilar.sim.toFixed(4)}) · Avg cosine: ${m.avgSimilarity.toFixed(4)}`,
       { size: 9, gapAfter: 4 }
     );
     writeTable(
@@ -370,13 +370,13 @@ function writeMatrix(doc: jsPDF, cur: Cursor, r: DistanceMatrixResult) {
     );
   }
   if (r.contestedPairs.length > 0) {
-    writeText(doc, cur, "Contested geometry — pairs where models disagree most", { size: 9, style: "bold", colour: MUTED, gapAfter: 2 });
+    writeText(doc, cur, "Contested geometry - pairs where models disagree most", { size: 9, style: "bold", colour: MUTED, gapAfter: 2 });
     writeTable(
       doc,
       cur,
       [["Pair", "Variance", "Range", "Min", "Max"]],
       r.contestedPairs.map(p => [
-        `${p.a} ↔ ${p.b}`,
+        `${p.a} vs ${p.b}`,
         p.variance.toFixed(6),
         p.range.toFixed(4),
         p.min.toFixed(4),
@@ -466,9 +466,9 @@ export async function exportRunAsPDF(run: ProtocolRun, protocol: Protocol): Prom
     ["Steps", String(protocol.steps.length)],
     ["Atlas version", run.atlasVersion],
     ["Started", run.startedAt],
-    ["Completed", run.completedAt ?? "—"],
-    ["Elapsed", run.totalElapsedMs !== undefined ? `${(run.totalElapsedMs / 1000).toFixed(2)} s` : "—"],
-    ["Models", run.models.map(m => `${m.name} (${m.providerId})`).join(", ") || "—"],
+    ["Completed", run.completedAt ?? "-"],
+    ["Elapsed", run.totalElapsedMs !== undefined ? `${(run.totalElapsedMs / 1000).toFixed(2)} s` : "-"],
+    ["Models", run.models.map(m => `${m.name} (${m.providerId})`).join(", ") || "-"],
     ["Unique texts embedded", String(run.stats.embeddedTexts)],
     ["Total queries", String(run.stats.totalQueries)],
   ], {
