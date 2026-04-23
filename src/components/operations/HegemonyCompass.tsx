@@ -430,12 +430,21 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                     return points.map(p => {
                       const normX = p.x / maxAbsX;
                       const normY = p.y / maxAbsY;
-                      return `<b>${p.concept}</b><br>` +
-                        `<br>${preset.xAxis.negative.label} ↔ ${preset.xAxis.positive.label}` +
-                        `<br>Normalised: ${normX >= 0 ? "+" : ""}${normX.toFixed(2)}  Raw: ${p.x >= 0 ? "+" : ""}${p.x.toFixed(4)}` +
+                      const xLean = p.x >= 0 ? preset.xAxis.positive.label : preset.xAxis.negative.label;
+                      const yLean = p.y >= 0 ? preset.yAxis.positive.label : preset.yAxis.negative.label;
+                      return `<b>${p.concept}</b>  —  <i>${p.modelName}</i>` +
                         `<br>` +
-                        `<br>${preset.yAxis.negative.label} ↔ ${preset.yAxis.positive.label}` +
-                        `<br>Normalised: ${normY >= 0 ? "+" : ""}${normY.toFixed(2)}  Raw: ${p.y >= 0 ? "+" : ""}${p.y.toFixed(4)}`;
+                        `<br><b>${preset.xAxis.negative.label} ↔ ${preset.xAxis.positive.label}</b>` +
+                        `<br>&nbsp;&nbsp;position: ${normX >= 0 ? "+" : ""}${normX.toFixed(2)} norm &nbsp;|&nbsp; ${p.x >= 0 ? "+" : ""}${p.x.toFixed(4)} raw` +
+                        `<br>&nbsp;&nbsp;cos → ${preset.xAxis.negative.label}: ${p.simXNeg.toFixed(4)}` +
+                        `<br>&nbsp;&nbsp;cos → ${preset.xAxis.positive.label}: ${p.simXPos.toFixed(4)}` +
+                        `<br>&nbsp;&nbsp;pull: ${Math.abs(p.x).toFixed(4)} toward ${xLean}` +
+                        `<br>` +
+                        `<br><b>${preset.yAxis.negative.label} ↔ ${preset.yAxis.positive.label}</b>` +
+                        `<br>&nbsp;&nbsp;position: ${normY >= 0 ? "+" : ""}${normY.toFixed(2)} norm &nbsp;|&nbsp; ${p.y >= 0 ? "+" : ""}${p.y.toFixed(4)} raw` +
+                        `<br>&nbsp;&nbsp;cos → ${preset.yAxis.negative.label}: ${p.simYNeg.toFixed(4)}` +
+                        `<br>&nbsp;&nbsp;cos → ${preset.yAxis.positive.label}: ${p.simYPos.toFixed(4)}` +
+                        `<br>&nbsp;&nbsp;pull: ${Math.abs(p.y).toFixed(4)} toward ${yLean}`;
                     });
                   })(),
                   hoverinfo: "text",
