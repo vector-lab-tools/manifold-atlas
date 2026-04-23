@@ -199,7 +199,7 @@ function NegationDeepDive({ result }: { result: NegationGaugeResult }) {
             <Th align="right" tip="Cosine similarity between the claim and its negation. Closer to 1.0 means the manifold treats the claim and its negation as near-identical.">Cosine</Th>
             <Th align="right" tip="Cosine distance = 1 − cosine similarity. Tiny distance means the negation has barely moved the position.">Distance</Th>
             <Th align="right" tip="Angular distance in degrees between the claim and its negation. Geometric negation should be close to 180°; in practice it is usually only a few degrees.">Angular (°)</Th>
-            <Th align="right" tip="Yes when cosine similarity is at or above the threshold — the manifold has given negation geometrically trivial space relative to what logic demands.">Collapsed?</Th>
+            <Th align="right" tip="Yes when cosine similarity is at or above the threshold, i.e. the manifold does not represent negation of these concepts as distinctive.">Collapsed?</Th>
           </tr>
         </thead>
         <tbody className="divide-y divide-parchment">
