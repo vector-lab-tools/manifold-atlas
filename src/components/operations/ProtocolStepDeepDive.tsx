@@ -591,7 +591,7 @@ function GrammarDeepDive({ result }: { result: GrammarOfVectorsResult }) {
                 <Th
                   key={n}
                   align="right"
-                  tip={`Cosine similarity between the X and Y fragments of each construction, as reported by ${n}. Red = at or above threshold (pseudo-dialectic). Green = below threshold (opposition preserved).`}
+                  tip={`Cosine similarity between the X and Y fragments of each construction, as reported by ${n}. Red = at or above threshold (synthetic dialectic). Green = below threshold (opposition preserved).`}
                 >
                   {n}
                 </Th>
@@ -711,7 +711,7 @@ function GrammarDeepDive({ result }: { result: GrammarOfVectorsResult }) {
       )}
 
       <p className="font-sans text-caption text-muted-foreground italic">
-        Values above the threshold ({result.threshold}) count as pseudo-dialectic:
+        Values above the threshold ({result.threshold}) count as synthetic dialectic:
         the rhetoric of opposition exceeds the geometry of opposition. Below the
         threshold, the manifold preserves the antithesis.
       </p>

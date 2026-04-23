@@ -56,6 +56,13 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
   const [expandedPairs, setExpandedPairs] = useState<Set<number>>(new Set());
   const [deepDiveOpen, setDeepDiveOpen] = useState(false);
 
+  // Sort state for the per-construction cosines table. "index" is the
+  // natural order. "construction" sorts alphabetically by raw text.
+  // "range" sorts by cross-model spread. Any other string is treated
+  // as a model id, sorting by that model's cosine.
+  const [sortKey, setSortKey] = useState<string>("index");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
   const togglePair = (i: number) => {
     setExpandedPairs(prev => {
       const next = new Set(prev);
@@ -63,6 +70,25 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
       else next.add(i);
       return next;
     });
+  };
+
+  const toggleAllPairs = (expand: boolean) => {
+    if (!result) return;
+    if (expand) {
+      setExpandedPairs(new Set(result.pairs.map((_, i) => i)));
+    } else {
+      setExpandedPairs(new Set());
+    }
+  };
+
+  const handleSort = (key: string) => {
+    if (key === sortKey) {
+      setSortDir(d => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      // Sensible default directions per column
+      setSortDir(key === "construction" || key === "index" ? "asc" : "desc");
+    }
   };
 
   const { getEnabledModels } = useSettings();
@@ -129,12 +155,46 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
         enabledModels
       );
       setResult(computed);
+      // Default: open every row so the user can scan the full per-model
+      // geometry without having to click each chevron.
+      setExpandedPairs(new Set(computed.pairs.map((_, i) => i)));
+      setSortKey("index");
+      setSortDir("asc");
       onQueryTime((performance.now() - started) / 1000);
     } catch (e) {
       setError(e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadTemplate = () => {
+    // Minimal skeleton — the grammar's own example as a reference plus
+    // three X | Y slots for the user to fill in.
+    const template =
+      `# Replace the placeholders below with your own X and Y fragments.\n` +
+      `# Lines starting with # are ignored. One construction per line.\n` +
+      `# Either the full prose (matching the grammar's shape) or X | Y pairs.\n` +
+      `#\n` +
+      `# Example for "${grammar.name}":\n` +
+      `#   ${grammar.example}\n` +
+      `\n` +
+      `<your X> | <your Y>\n` +
+      `<your X> | <your Y>\n` +
+      `<your X> | <your Y>\n`;
+    setCustomText(template);
+    setPreviewOpen(false);
+  };
+
+  const handleLoadExample = () => {
+    const firstRegister = Object.keys(grammar.registers)[0];
+    const examples = grammar.registers[firstRegister] ?? [];
+    if (examples.length === 0) return;
+    const lines = examples
+      .slice(0, Math.min(6, examples.length))
+      .map(e => e.raw);
+    setCustomText(lines.join("\n"));
+    setPreviewOpen(true);
   };
 
   const handleReset = () => {
@@ -253,6 +313,25 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
           {/* Custom input */}
           {mode === "custom" && (
             <div>
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <button
+                  onClick={handleLoadTemplate}
+                  className="btn-editorial-ghost text-caption"
+                  title="Start with a scaffold: placeholders for X and Y plus a reference to the grammar's canonical form."
+                >
+                  Load template
+                </button>
+                <button
+                  onClick={handleLoadExample}
+                  className="btn-editorial-ghost text-caption"
+                  title={`Load six real constructions from the first register (${Object.keys(grammar.registers)[0] ?? "Marketing"}) as a starting point you can edit.`}
+                >
+                  Load example
+                </button>
+                <span className="font-sans text-caption text-muted-foreground italic">
+                  Or paste your own below.
+                </span>
+              </div>
               <textarea
                 value={customText}
                 onChange={e => setCustomText(e.target.value)}
@@ -345,7 +424,7 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
                 label="Opposition preserved"
                 value={`${(result.summary.preservedRate * 100).toFixed(1)}%`}
                 tone={result.summary.preservedRate < 0.25 ? "error" : result.summary.preservedRate < 0.5 ? "warning" : "success"}
-                tip="Proportion of tests where cosine(X, Y) falls below the threshold — the geometry preserves the antithesis the rhetoric claims. Low rates indicate the rhetoric of opposition exceeds what the geometry delivers; this is pseudo-dialectic at scale."
+                tip="Proportion of tests where cosine(X, Y) falls below the threshold — the geometry preserves the antithesis the rhetoric claims. Low rates indicate the rhetoric of opposition exceeds what the geometry delivers; this is synthetic dialectic at scale."
               />
               <SummaryBox
                 label="Avg cosine"
@@ -355,8 +434,8 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
               <SummaryBox
                 label="Threshold"
                 value={String(result.threshold)}
-                hint="above = pseudo-dialectic · below = opposition preserved"
-                tip="Cosine threshold separating preserved opposition (below) from pseudo-dialectic (above). Use the Deep Dive's threshold sweep to see how sensitive the finding is to this choice — typically stable across the 0.5–0.7 range."
+                hint="above = synthetic dialectic · below = opposition preserved"
+                tip="Cosine threshold separating preserved opposition (below) from synthetic dialectic (above). Use the Deep Dive's threshold sweep to see how sensitive the finding is to this choice — typically stable across the 0.5–0.7 range."
               />
               {result.summary.mostDeceptive && (
                 <SummaryBox
@@ -371,50 +450,93 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
             <p className="font-body text-body-sm text-slate italic">
               The grammar of vectors expresses what the geometry permits. When a
               construction claims opposition that the cosine cannot deliver, the
-              rhetoric is performing more than the medium can support. Pseudo-dialectic
-              is the name for that gap.
+              rhetoric is performing more than the medium can support. <em>Synthetic dialectic</em>
+              is the name for that gap: a rhetorical performance of thesis and antithesis
+              whose underlying geometric move is a slight rotation between near-neighbours.
+              Dialectic as style, not as operation.
             </p>
           </div>
 
           {/* Per-construction × per-model matrix with expandable rows */}
           <div className="card-editorial overflow-hidden">
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between gap-3 flex-wrap">
               <h3 className="font-display text-body-lg font-bold">Per-construction cosines</h3>
-              <button onClick={exportCsv} className="btn-editorial-ghost text-caption px-3 py-1.5">
-                <Download size={14} className="mr-1" />
-                Export CSV
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleAllPairs(true)}
+                  className="btn-editorial-ghost text-caption"
+                  title="Expand every row to show the full per-model geometry."
+                >
+                  Expand all
+                </button>
+                <button
+                  onClick={() => toggleAllPairs(false)}
+                  className="btn-editorial-ghost text-caption"
+                  title="Collapse every row back to the cosine summary."
+                >
+                  Collapse all
+                </button>
+                <button onClick={exportCsv} className="btn-editorial-ghost text-caption px-3 py-1.5">
+                  <Download size={14} className="mr-1" />
+                  Export CSV
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full font-sans text-body-sm">
                 <thead>
                   <tr className="border-b border-parchment">
                     <th className="w-6"></th>
-                    <th className="text-left px-3 py-2 text-caption text-muted-foreground uppercase tracking-wider font-semibold">
-                      Construction
-                    </th>
+                    <SortableTh
+                      label="#"
+                      sortKey="index"
+                      currentKey={sortKey}
+                      currentDir={sortDir}
+                      onSort={handleSort}
+                      align="right"
+                      tip="Row number in the original run order. Click to sort; click again to flip direction."
+                    />
+                    <SortableTh
+                      label="Construction"
+                      sortKey="construction"
+                      currentKey={sortKey}
+                      currentDir={sortDir}
+                      onSort={handleSort}
+                      tip="The construction tested. X and Y are extracted from the prose. Click to sort alphabetically."
+                    />
                     {result.pairs[0]?.models.map(m => (
-                      <th key={m.modelId} className="text-right px-3 py-2 text-caption text-muted-foreground uppercase tracking-wider font-semibold">
-                        {m.modelName}
-                      </th>
+                      <SortableTh
+                        key={m.modelId}
+                        label={m.modelName}
+                        sortKey={m.modelId}
+                        currentKey={sortKey}
+                        currentDir={sortDir}
+                        onSort={handleSort}
+                        align="right"
+                        tip={`Cosine similarity between X and Y, as reported by ${m.modelName}. Click to sort by this model's cosine — largest (most deceptive) first.`}
+                      />
                     ))}
-                    <th
-                      className="text-right px-3 py-2 text-caption text-muted-foreground uppercase tracking-wider font-semibold cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40"
-                      title="Cross-model range — max cosine minus min cosine. High values mean models disagree about whether the antithesis survives."
-                    >
-                      Range
-                    </th>
+                    <SortableTh
+                      label="Range"
+                      sortKey="range"
+                      currentKey={sortKey}
+                      currentDir={sortDir}
+                      onSort={handleSort}
+                      align="right"
+                      tip="Cross-model range — max cosine minus min cosine. High values mean models disagree about whether the antithesis survives. Click to sort most-contested first."
+                    />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-parchment">
-                  {result.pairs.map((p, i) => {
-                    const expanded = expandedPairs.has(i);
+                  {getSortedPairs(result.pairs, sortKey, sortDir).map(({ pair, originalIndex }) => {
+                    const expanded = expandedPairs.has(originalIndex);
                     return (
                       <ExpandableRow
-                        key={i}
-                        pair={p}
+                        key={originalIndex}
+                        rowNumber={originalIndex + 1}
+                        pair={pair}
                         expanded={expanded}
-                        onToggle={() => togglePair(i)}
+                        onToggle={() => togglePair(originalIndex)}
                       />
                     );
                   })}
@@ -422,7 +544,7 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
               </table>
             </div>
             <div className="px-5 py-2 font-sans text-caption text-muted-foreground italic">
-              Click any row to expand its per-model geometry (cosine distance, angular distance, Euclidean distance, vector norms, dimensions).
+              Rows are open by default; toggle individual rows with their chevron or use Expand / Collapse all. Click any column header to sort by that measure.
             </div>
           </div>
 
@@ -451,10 +573,12 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
 }
 
 function ExpandableRow({
+  rowNumber,
   pair,
   expanded,
   onToggle,
 }: {
+  rowNumber: number;
   pair: GrammarPairResult;
   expanded: boolean;
   onToggle: () => void;
@@ -469,6 +593,9 @@ function ExpandableRow({
           ) : (
             <ChevronRight size={12} className="text-muted-foreground inline" />
           )}
+        </td>
+        <td className="px-2 py-2.5 text-right tabular-nums text-muted-foreground text-caption">
+          {rowNumber}
         </td>
         <td className="px-3 py-2.5 max-w-[360px]">
           <div className="font-medium">{pair.instance.raw}</div>
@@ -494,7 +621,7 @@ function ExpandableRow({
       {expanded && (
         <tr className="bg-cream/20">
           <td></td>
-          <td colSpan={modelCount + 2} className="px-3 py-3">
+          <td colSpan={modelCount + 3} className="px-3 py-3">
             <div className="overflow-x-auto">
               <table className="w-full font-sans text-caption">
                 <thead>
@@ -555,7 +682,12 @@ function ExpandableRow({
                         {m.oppositionPreserved ? (
                           <span className="text-success-600 font-semibold">preserved</span>
                         ) : (
-                          <span className="text-error-600 font-semibold">pseudo-dialectic</span>
+                          <span
+                            className="text-error-600 font-semibold cursor-help decoration-dotted underline underline-offset-2 decoration-error-600/40 underline"
+                            title="Synthetic dialectic — the rhetorical performance of thesis and antithesis in prose whose underlying geometry performs only a slight rotation between near-neighbours. Dialectic as style, not as operation."
+                          >
+                            syn-dialectic
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -567,6 +699,83 @@ function ExpandableRow({
         </tr>
       )}
     </>
+  );
+}
+
+/**
+ * Sort pairs by the requested key and direction. Returns pair objects
+ * paired with their original index so the UI can keep chevron state
+ * consistent across re-sorts.
+ */
+function getSortedPairs(
+  pairs: GrammarPairResult[],
+  sortKey: string,
+  sortDir: "asc" | "desc"
+): Array<{ pair: GrammarPairResult; originalIndex: number }> {
+  const indexed = pairs.map((pair, originalIndex) => ({ pair, originalIndex }));
+  if (sortKey === "index") {
+    if (sortDir === "asc") return indexed;
+    return indexed.slice().reverse();
+  }
+  const sorted = indexed.slice().sort((a, b) => {
+    let va: number | string = 0;
+    let vb: number | string = 0;
+    if (sortKey === "construction") {
+      va = a.pair.instance.raw.toLowerCase();
+      vb = b.pair.instance.raw.toLowerCase();
+    } else if (sortKey === "range") {
+      va = a.pair.crossModelRange;
+      vb = b.pair.crossModelRange;
+    } else {
+      // Treat as model id
+      const amm = a.pair.models.find(m => m.modelId === sortKey);
+      const bmm = b.pair.models.find(m => m.modelId === sortKey);
+      va = amm ? amm.cosineSimilarity : 0;
+      vb = bmm ? bmm.cosineSimilarity : 0;
+    }
+    if (va < vb) return sortDir === "asc" ? -1 : 1;
+    if (va > vb) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+  return sorted;
+}
+
+/**
+ * Header cell for the per-construction cosines table that handles
+ * click-to-sort and a visual indicator for the active sort column.
+ */
+function SortableTh({
+  label,
+  sortKey,
+  currentKey,
+  currentDir,
+  onSort,
+  align = "left",
+  tip,
+}: {
+  label: string;
+  sortKey: string;
+  currentKey: string;
+  currentDir: "asc" | "desc";
+  onSort: (key: string) => void;
+  align?: "left" | "right";
+  tip?: string;
+}) {
+  const active = sortKey === currentKey;
+  const arrow = active ? (currentDir === "asc" ? " \u25B2" : " \u25BC") : "";
+  return (
+    <th
+      onClick={() => onSort(sortKey)}
+      title={tip}
+      className={`${
+        align === "right" ? "text-right" : "text-left"
+      } px-3 py-2 text-caption uppercase tracking-wider font-semibold cursor-pointer select-none transition-colors ${
+        active ? "text-burgundy" : "text-muted-foreground hover:text-foreground"
+      } ${tip ? "decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline" : ""}`}
+    >
+      {label}
+      {arrow}
+    </th>
   );
 }
 
@@ -589,7 +798,10 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
     <div className="px-5 pb-5 pt-1 border-t border-parchment space-y-6">
       {/* Per-model aggregates */}
       <section>
-        <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+        <h4
+          className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
+          title="Aggregate statistics per enabled embedding model: count of tested constructions, mean cosine, standard deviation, min / max, preservation rate, and the construction each model rates as most deceptive (highest cosine) and most preserved (lowest cosine). Differences between models here are evidence that the pattern's geometric fate depends partly on training decisions, not only on the construction itself."
+        >
           Per-model aggregates
         </h4>
         <div className="overflow-x-auto">
@@ -644,7 +856,10 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
 
       {/* Threshold sweep */}
       <section>
-        <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+        <h4
+          className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
+          title="Preservation rate at a range of cosine thresholds. Checks how sensitive the overall finding is to the 0.55 default. If preservation flips dramatically around the threshold, the finding is threshold-dependent; if it stays broadly stable across 0.5–0.7, the finding is robust. A flat profile in the 0.6–0.8 band is the signature of genuine syn-dialectic: the similarities are not marginal, they are consistently high."
+        >
           Threshold sweep
         </h4>
         <p className="font-sans text-caption text-muted-foreground italic mb-2">
@@ -685,11 +900,14 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
 
       {/* Cosine distribution */}
       <section>
-        <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+        <h4
+          className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
+          title="Histogram of every cosine value across every construction and every enabled model, bucketed in 0.1-wide bins over [0, 1]. Clustering above the threshold (red bars) is the visual signature of synthetic dialectic at scale: the rhetoric claims oppositions the geometry doesn't deliver. A distribution concentrated below the threshold (green) would instead indicate that the constructions preserve the antithesis they claim."
+        >
           Cosine distribution
         </h4>
         <p className="font-sans text-caption text-muted-foreground italic mb-2">
-          All {summary.totalTests} cosine values across every construction × every model, bucketed in 0.1-wide bins. Clustering above the threshold is the signature of pseudo-dialectic: the rhetoric claims opposition the geometry doesn&rsquo;t deliver.
+          All {summary.totalTests} cosine values across every construction × every model, bucketed in 0.1-wide bins. Clustering above the threshold is the signature of synthetic dialectic: the rhetoric claims opposition the geometry doesn&rsquo;t deliver.
         </p>
         <div className="space-y-1">
           {cosineDistribution.map((b, i) => {
@@ -719,7 +937,10 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
       {/* Contested constructions */}
       {contested.length > 0 && (
         <section>
-          <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+          <h4
+            className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
+            title="Top constructions ranked by cross-model range (max cosine minus min cosine). High range = models disagree about whether the antithesis survives in the geometry. Low range = models agree (the agreement itself is evidence — if multiple independently-trained models converge on the same reading, the reading is structural rather than contingent)."
+          >
             Most contested constructions
           </h4>
           <p className="font-sans text-caption text-muted-foreground italic mb-2">
@@ -751,7 +972,10 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
       {/* Extremes */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+          <h4
+            className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
+            title="Top constructions ranked by mean cosine across models (highest first). These are the constructions where the rhetoric of opposition most exceeds the cosine reality — the clearest cases of syn-dialectic in this run."
+          >
             Most deceptive ({topDeceptive.length})
           </h4>
           <table className="w-full font-sans text-caption">
@@ -768,7 +992,10 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
           </table>
         </div>
         <div>
-          <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+          <h4
+            className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
+            title="Top constructions ranked by mean cosine across models (lowest first). These are the constructions where the geometry preserves the antithesis the rhetoric claims — cases where 'not X but Y' does what it says."
+          >
             Most preserved ({topPreserved.length})
           </h4>
           <table className="w-full font-sans text-caption">
