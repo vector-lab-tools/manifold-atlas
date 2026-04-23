@@ -104,15 +104,17 @@ export function AboutModal() {
               </p>
               <p className="font-body text-body-sm text-slate leading-relaxed mt-3">
                 The <strong>Library</strong> (fourth tab group) runs curated sequences of
-                operations in one click — eight of the fifteen operations are wired, including
-                Hegemony Compass and Distance Matrix. Every step is editable before running,
-                so you can substitute your own claims, anchors, poles, or terms. Each run
-                exports as Markdown, JSON, CSV, or a researcher-oriented PDF with per-model
-                deep-dive tables and embedded Hegemony Compass images. Add your own tests
-                via markdown (paste, upload, or start from an existing test as a template);
-                they persist in your browser and can be edited, downloaded, or removed.
-                The Negation Battery tab lets you save custom statement sets as named
-                batteries that appear in the dropdown and can be referenced by any protocol.
+                operations in one click — nine of the sixteen operations are wired, including
+                Hegemony Compass, Distance Matrix, and the new <strong>Grammar of Vectors</strong>
+                (which maps the "Not X but Y" discursive quirk of LLM text generation). Every
+                step is editable before running, so you can substitute your own claims, anchors,
+                poles, constructions, or terms. Each run exports as Markdown, JSON, CSV, or a
+                researcher-oriented PDF with per-model deep-dive tables and embedded Hegemony
+                Compass images. Add your own tests via markdown (paste, upload, or start from
+                an existing test as a template); they persist in your browser and can be
+                edited, downloaded, or removed. The Negation Battery tab lets you save custom
+                statement sets as named batteries that appear in the dropdown and can be
+                referenced by any protocol.
               </p>
             </div>
 

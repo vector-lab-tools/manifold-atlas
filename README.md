@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.1.0
+**Version:** 1.2.0
 **Date:** 23 April 2026
 **Licence:** MIT
 
@@ -61,6 +61,7 @@ Manifold Atlas is organised as a tabbed workspace with fifteen operations. Each 
 | Distance Matrix | Where do multiple models disagree most? | Proprietary medium (multi-model) |
 | Agonism Test | Does philosophical opposition survive geometrisation? | Agonism collapse |
 | Vector Logic | Can analogical inference be performed as arithmetic? | A − B + C = ? as critical test |
+| Grammar of Vectors | Does the rhetoric of "not X but Y" antithesis match the cosine geometry of X and Y? | Vector logic's native grammar / the pseudo-dialectic |
 | Silence Detector | Which domains does the geometry flatten? | The taxonomy of silence |
 | Text Vectorisation | What is the shape of reading through the manifold? | Reading as geometric trajectory |
 | Persistent Homology | What can the geometry not represent? | The unthinkable of the machine |
@@ -108,6 +109,9 @@ Compare how much geometric space the manifold allocates to different domains. Wh
 
 ### Text Vectorisation
 Paste a passage of text and watch a particle trace its reading path through the manifold. Every word is embedded and projected to 3D via PCA. The particle visits each word in reading order, with the 6 nearest words in the embedding space highlighted by connecting lines at each step. The trail colour is selectable (red, amber, blue, green, purple) and fades from soft to bright, showing the geometric trajectory of reading. When a word repeats, the particle returns to the same position, revealing how the text loops back through semantic space. The source text is displayed above the 3D scene with the current word highlighted. Step forward/back buttons for manual word-by-word navigation and an adjustable speed slider for the read animation. Smooth transitions between states using per-frame lerping. Batched embedding supports texts up to 200 unique words across multiple API calls. Seven preset passages: Hinton (1977) on distributed representations, Deleuze on societies of control, Impett and Offert on vector media, Kittler on the absence of software, Rosenblatt on the perceptron as brain model, Weizenbaum on the programmer as lawgiver, and Berry on the vector medium. Deep dive panel with summary metrics, word frequency table with nearest neighbours, BPE subword token preview (approximate, using cl100k_base), reading path, and CSV export. PNG screenshot export.
+
+### Grammar of Vectors
+Maps discursive quirks of LLM text generation — currently the "Not X but Y" pattern and its intensified "Not just X but Y" variant. Language models constantly produce constructions like "not a problem, but an opportunity" or "not merely efficient, but meaningful". The rhetoric performs antithesis while the underlying geometric move is a slight rotation to a near-neighbour. The operation embeds the X and Y fragments the construction claims are opposed and measures their cosine similarity — a gap between rhetorical opposition and geometric reality. Ships with four register batteries per grammar (Marketing, AI pedagogical, Political op-ed, Technology discourse, ~12 phrases each) plus a custom mode that parses either pasted prose or `X | Y` pipe pairs. Results show the per-construction × per-model matrix with above-threshold values flagged; CSV export. Companion protocol "Grammar of Vectors Sweep" runs both grammars across all four registers in one click. The operation also accepts deep-link URL parameters (`?x=…&ys=…&source=llmbench-grammar-probe`) so future LLMbench Grammar Probe sessions can hand off candidate continuations for cosine analysis.
 
 ### Persistent Homology
 Persistent homology (Topological Data Analysis) applied to embedding spaces. Measures the shape of the manifold across all scales simultaneously by gradually increasing a distance threshold and tracking when topological features (clusters, loops) appear and disappear. Pure TypeScript Vietoris-Rips implementation. Four visualisation modes: persistence diagram (birth vs death scatter), barcode diagram (horizontal bars sorted by persistence), Rips complex (Three.js 3D scene with component colouring, hover tooltips, auto-rotate, and PNG export), and Betti curve (connected components and loops vs threshold). The Rips complex view includes an optional void cloud: a nebulous particle fog (custom shader with depth-based size attenuation) that fills empty regions inside the manifold, making the unthinkable of the machine visible as ghostly matter. Void colour (amber, burgundy, blue, smoke) and intensity are adjustable. Twenty toggle-chip presets spanning political claims, knowledge domains, critical theory, AI and computation, labour and capital, ecology, media and culture, body and phenomenology, tech company claims, accelerationism, effective altruism, finance, feminism, ecology, neoliberalism, philosophy of mind, existentialism, media archaeology, literary critique, and semiotics. Select multiple presets to overlay them with topic colouring and centroid labels. Double-click the threshold slider to snap to the intra-topic connectivity threshold.
