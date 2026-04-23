@@ -7,6 +7,10 @@
  * dive of the step's full result (stored in ProtocolStepResult.details).
  * Mirrors the collapsible deep-dive convention used across the tool's
  * standalone operation views.
+ *
+ * Compass snapshots are rendered as static SVG (not Plotly) so they
+ * serialise cleanly into the PDF export and are easy to download as
+ * standalone images.
  */
 
 import type { ProtocolStepResult } from "@/types/protocols";
@@ -17,8 +21,12 @@ import type { SemanticSectioningResult } from "@/lib/operations/semantic-section
 import { semanticSectioningSignature } from "@/lib/operations/semantic-sectioning";
 import type { NegationBatteryResult } from "@/lib/operations/negation-battery";
 import type { AgonismTestResult } from "@/lib/operations/agonism-test";
-import type { HegemonyCompassResult } from "@/lib/operations/hegemony-compass";
+import type {
+  HegemonyCompassResult,
+  HegemonyCompassModelResult,
+} from "@/lib/operations/hegemony-compass";
 import type { DistanceMatrixResult } from "@/lib/operations/distance-matrix";
+import { renderCompassSvgString, CompassSvg } from "@/components/viz/CompassSvg";
 
 interface ProtocolStepDeepDiveProps {
   step: ProtocolStepResult;
@@ -350,6 +358,8 @@ function CompassDeepDive({ result }: { result: HegemonyCompassResult }) {
 
       {result.models.map(m => (
         <div key={m.modelId} className="space-y-3">
+          <SectionHeading>{m.modelName} — compass</SectionHeading>
+          <CompassSnapshot result={result} model={m} />
           <SectionHeading>{m.modelName} — axis statistics</SectionHeading>
           <Table>
             <thead>
@@ -416,6 +426,49 @@ function CompassDeepDive({ result }: { result: HegemonyCompassResult }) {
           </Table>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Inline Hegemony Compass visualisation. Rendered as static SVG (not
+ * Plotly) so it serialises cleanly for PDF embedding, downloads, and
+ * copy-paste. Includes a one-click Download SVG action.
+ */
+function CompassSnapshot({
+  result,
+  model,
+}: {
+  result: HegemonyCompassResult;
+  model: HegemonyCompassModelResult;
+}) {
+  const handleDownload = () => {
+    const svg = renderCompassSvgString(result, model);
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const presetSlug = result.presetName.toLowerCase().replace(/\s+/g, "-");
+    const modelSlug = model.modelName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    a.href = url;
+    a.download = `compass-${presetSlug}-${modelSlug}.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div>
+      <div className="rounded-sm border border-parchment overflow-hidden">
+        <CompassSvg result={result} model={model} />
+      </div>
+      <div className="mt-2 flex justify-end">
+        <button
+          onClick={handleDownload}
+          className="btn-editorial-ghost text-caption"
+          title="Download the compass as a standalone SVG file"
+        >
+          Download SVG
+        </button>
+      </div>
     </div>
   );
 }

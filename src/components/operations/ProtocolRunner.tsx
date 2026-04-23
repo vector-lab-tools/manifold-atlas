@@ -21,6 +21,7 @@ import {
   FileText,
   FileJson,
   FileSpreadsheet,
+  FileType,
   ExternalLink,
   CheckCircle2,
   XCircle,
@@ -385,6 +386,17 @@ export function ProtocolRunner({ onQueryTime, subTab, onSubTabChange }: Protocol
     );
   };
 
+  const exportPdf = async () => {
+    if (!run || !activeProtocol) return;
+    const { exportRunAsPDF } = await import("@/lib/protocols/export-pdf");
+    try {
+      await exportRunAsPDF(run, activeProtocol);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      alert(`PDF export failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
   const exportCsv = () => {
     if (!run || !activeProtocol) return;
     const rows: string[] = ["step_index,step_label,operation,status,metric,value"];
@@ -676,7 +688,15 @@ export function ProtocolRunner({ onQueryTime, subTab, onSubTabChange }: Protocol
                 total queries
               </span>
             </div>
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <button
+                onClick={exportPdf}
+                className="btn-editorial-ghost flex items-center gap-1"
+                title="Export a full research-oriented PDF: metadata, deep-dive tables, Hegemony Compass images."
+              >
+                <FileType size={14} />
+                PDF
+              </button>
               <button onClick={exportMarkdown} className="btn-editorial-ghost flex items-center gap-1">
                 <FileText size={14} />
                 Markdown
