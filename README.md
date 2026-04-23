@@ -306,7 +306,7 @@ Type `clippy` anywhere (outside a text input) for the Manifold Atlas Clippy. Typ
 
 Concept and Design by David M. Berry, implemented with Claude Code 4.6. Design system adapted from the [CCS Workbench](https://github.com/dmberry/ccs-wb).
 
-Many thanks to Michael Castelle, Michael Dieter, and others for feedback and comments on the Manifold Atlas.
+Many thanks to Michael Castelle, Michael Dieter, Richard Rogers, Wolfgang Ernst, and others for feedback and comments on the Manifold Atlas.
 
 ## Licence
 

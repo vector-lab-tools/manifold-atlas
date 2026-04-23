@@ -196,8 +196,9 @@ export function AboutModal() {
                 Acknowledgements
               </h3>
               <p className="font-body text-body-sm text-slate">
-                Many thanks to Michael Castelle, Michael Dieter, and others for feedback
-                and comments on the Manifold Atlas.
+                Many thanks to Michael Castelle, Michael Dieter, Richard Rogers,
+                Wolfgang Ernst, and others for feedback and comments on the Manifold
+                Atlas.
               </p>
             </div>
 
