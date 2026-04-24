@@ -150,6 +150,10 @@ export function parseBundle(text: string): BundleParseResult {
   const probes: BundleProbe[] = [];
   let skippedEmpty = 0;
   let skippedMalformed = 0;
+  // Collect unique per-probe `error` strings. Phase B bundles and
+  // provider-failure retries put the actual cause of an empty ys here,
+  // which is far more useful than "empty ys" on its own.
+  const probeErrors = new Map<string, number>();
   for (let i = 0; i < probesRaw.length; i++) {
     const p = probesRaw[i];
     if (!isRecord(p)) {
@@ -170,6 +174,10 @@ export function parseBundle(text: string): BundleParseResult {
     // don't fail the whole import.
     if (!Array.isArray(p.ys) || p.ys.length === 0) {
       skippedEmpty++;
+      if (typeof p.error === "string" && p.error.trim()) {
+        const msg = p.error.trim();
+        probeErrors.set(msg, (probeErrors.get(msg) ?? 0) + 1);
+      }
       continue;
     }
     const ys: BundleProbe["ys"] = [];
@@ -200,16 +208,23 @@ export function parseBundle(text: string): BundleParseResult {
     });
   }
 
+  const errorDigest = summariseProbeErrors(probeErrors);
   if (probes.length === 0) {
-    return {
-      ok: false,
-      error: `No usable probes in bundle. ${skippedEmpty} probe(s) had empty ys arrays and ${skippedMalformed} were malformed.`,
-    };
+    const parts = [
+      `No usable probes in bundle.`,
+      `${skippedEmpty} probe${skippedEmpty === 1 ? "" : "s"} had empty ys arrays; ${skippedMalformed} were malformed.`,
+    ];
+    if (errorDigest) parts.push(`Producer reported: ${errorDigest}`);
+    // Hint at the most common cause: a provider that doesn't expose
+    // logprobs (OpenRouter, Anthropic) was used on the LLMbench side.
+    parts.push(
+      `Re-run the probe on LLMbench with a provider that returns logprobs (OpenAI, OpenAI-compatible, or Google Gemini).`
+    );
+    return { ok: false, error: parts.join(" ") };
   }
   if (skippedEmpty > 0) {
-    warnings.push(
-      `Skipped ${skippedEmpty} probe${skippedEmpty === 1 ? "" : "s"} with empty ys arrays (no logprob distribution returned by the producing API).`
-    );
+    const base = `Skipped ${skippedEmpty} probe${skippedEmpty === 1 ? "" : "s"} with empty ys arrays (no logprob distribution returned by the producing API)`;
+    warnings.push(errorDigest ? `${base} — ${errorDigest}` : `${base}.`);
   }
   if (skippedMalformed > 0) {
     warnings.push(
@@ -250,6 +265,20 @@ export function parseBundle(text: string): BundleParseResult {
 
 function ys0(probes: BundleProbe[]): number {
   return probes[0]?.ys.length ?? 0;
+}
+
+/**
+ * Produce a short human-readable digest of per-probe producer errors.
+ * Groups repeated messages ("5× error message") so a 20-probe bundle
+ * with one recurring producer failure doesn't swamp the UI.
+ */
+function summariseProbeErrors(errs: Map<string, number>): string {
+  if (errs.size === 0) return "";
+  const parts: string[] = [];
+  for (const [msg, count] of errs) {
+    parts.push(count > 1 ? `${count}× "${msg}"` : `"${msg}"`);
+  }
+  return parts.join("; ");
 }
 
 function isRecord(x: unknown): x is Record<string, unknown> {
