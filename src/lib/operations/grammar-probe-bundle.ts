@@ -148,33 +148,46 @@ export function parseBundle(text: string): BundleParseResult {
   }
 
   const probes: BundleProbe[] = [];
+  let skippedEmpty = 0;
+  let skippedMalformed = 0;
   for (let i = 0; i < probesRaw.length; i++) {
     const p = probesRaw[i];
     if (!isRecord(p)) {
-      return { ok: false, error: `probes[${i}] is not an object.` };
+      skippedMalformed++;
+      continue;
     }
     if (typeof p.scaffoldId !== "string" || typeof p.scaffold !== "string" || typeof p.x !== "string") {
-      return { ok: false, error: `probes[${i}] missing scaffoldId, scaffold, or x.` };
+      skippedMalformed++;
+      continue;
     }
     const chosen =
       isRecord(p.chosen) && typeof p.chosen.token === "string" && typeof p.chosen.logprob === "number"
         ? { token: p.chosen.token, logprob: p.chosen.logprob }
         : null;
+    // Some producers (OpenAI when logprobs are suppressed for safety,
+    // rate-limit retries, partial runs) yield probes with no ys. Treat
+    // these as best-effort — keep them out of the run and warn, but
+    // don't fail the whole import.
     if (!Array.isArray(p.ys) || p.ys.length === 0) {
-      return { ok: false, error: `probes[${i}].ys must be a non-empty array.` };
+      skippedEmpty++;
+      continue;
     }
     const ys: BundleProbe["ys"] = [];
+    let yMalformed = false;
     for (let j = 0; j < p.ys.length; j++) {
       const y = p.ys[j];
-      if (
-        !isRecord(y) ||
-        typeof y.token !== "string" ||
-        typeof y.logprob !== "number" ||
-        typeof y.rank !== "number"
-      ) {
-        return { ok: false, error: `probes[${i}].ys[${j}] is missing token, logprob, or rank.` };
+      if (!isRecord(y) || typeof y.token !== "string" || typeof y.logprob !== "number") {
+        yMalformed = true;
+        break;
       }
-      ys.push({ token: y.token, logprob: y.logprob, rank: y.rank });
+      // Rank is per-spec required but infer from position as a
+      // resilience measure — producers occasionally forget to set it.
+      const rank = typeof y.rank === "number" ? y.rank : j + 1;
+      ys.push({ token: y.token, logprob: y.logprob, rank });
+    }
+    if (yMalformed || ys.length === 0) {
+      skippedMalformed++;
+      continue;
     }
     probes.push({
       scaffoldId: p.scaffoldId,
@@ -185,6 +198,23 @@ export function parseBundle(text: string): BundleParseResult {
       ys,
       provenance: isRecord(p.provenance) ? (p.provenance as Record<string, unknown>) : undefined,
     });
+  }
+
+  if (probes.length === 0) {
+    return {
+      ok: false,
+      error: `No usable probes in bundle. ${skippedEmpty} probe(s) had empty ys arrays and ${skippedMalformed} were malformed.`,
+    };
+  }
+  if (skippedEmpty > 0) {
+    warnings.push(
+      `Skipped ${skippedEmpty} probe${skippedEmpty === 1 ? "" : "s"} with empty ys arrays (no logprob distribution returned by the producing API).`
+    );
+  }
+  if (skippedMalformed > 0) {
+    warnings.push(
+      `Skipped ${skippedMalformed} malformed probe${skippedMalformed === 1 ? "" : "s"} (missing scaffoldId / scaffold / x, or malformed ys entries).`
+    );
   }
 
   const bundle: GrammarProbeBundle = {
