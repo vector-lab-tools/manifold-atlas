@@ -302,6 +302,10 @@ Each operation in the Operations at a Glance table above tests a specific claim 
 - [x] Persistent Homology with persistence diagram, barcode, Rips complex, Betti curve, void cloud
 - [x] Multi-provider support (OpenAI, Voyage, Google, Cohere, Hugging Face, Ollama, OpenRouter)
 - [x] IndexedDB cache; editable `models/*.md` registry
+- [x] Grammar of Vectors with the synthetic-dialectic measure and an LLMbench `.grammar.json` bundle importer (Spearman rank correlation between logprob rank and cosine-to-X rank)
+- [x] Per-model attribution on every multi-model output (Concept Distance, Distance Matrix, Negation Gauge, Negation Battery, Vector Logic, Semantic Sectioning, Hegemony Compass, Agonism Test, Real Abstraction)
+- [x] Sticky bottom status bar so the Header and TabNav scroll away on long deep-dive panels
+- [ ] Collapsible Deep Dive panel on every operation (currently four of sixteen — Grammar of Vectors, Text Vectorisation, Persistent Homology, Hegemony Compass; rolling out across the rest)
 - [ ] Cross-provider agreement score for every operation (structural vs contingent findings)
 - [ ] Export harness for reproducible figures with provenance metadata
 - [ ] Layer-aware extension (comparative inspection between layers of the same model)
