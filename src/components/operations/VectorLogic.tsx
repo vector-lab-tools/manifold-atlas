@@ -12,7 +12,7 @@ import {
   vectorLogicTextList,
   type VectorLogicModelResult,
 } from "@/lib/operations/vector-logic";
-import { DeepDivePanel, DeepDiveSection } from "@/components/shared/DeepDivePanel";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const PRESETS = [
   { a: "king", b: "man", c: "woman", label: "king - man + woman = ?" },
@@ -349,27 +349,27 @@ function VectorLogicDeepDive({ results }: { results: VectorLogicModelResult[] })
         title="Cross-model agreement"
         tip="Do enabled embedding models agree on the analogy's answer? Top-1 agreement = a strong reading; top-3 Jaccard ≥ 0.5 = the answer falls in the same neighbourhood across models even when the single best concept differs."
       >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <SummaryStat label="Models" value={String(n)} hint="enabled and embedded" />
-          <SummaryStat
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint="enabled" />
+          <DeepDiveStat
             label="Top-1 agreement"
-            value={allAgreeTop1 ? "all agree" : `${modalTop1.count}/${n} agree`}
+            value={allAgreeTop1 ? "all agree" : `${modalTop1.count}/${n}`}
             hint={allAgreeTop1 ? `“${modalTop1.concept}”` : `modal “${modalTop1.concept}”`}
             tone={allAgreeTop1 ? "success" : modalTop1.count >= n / 2 ? "warning" : "error"}
           />
-          <SummaryStat
+          <DeepDiveStat
             label="Top-3 Jaccard"
             value={meanJaccard.toFixed(2)}
-            hint="mean overlap across model pairs"
+            hint="mean across model pairs"
             tone={meanJaccard >= 0.7 ? "success" : meanJaccard >= 0.4 ? "warning" : "error"}
           />
-          <SummaryStat
+          <DeepDiveStat
             label="Top-1 cosine"
             value={meanCos.toFixed(4)}
             hint={`min ${minCos.toFixed(3)} · max ${maxCos.toFixed(3)}`}
           />
         </div>
-        <p className="mt-3 font-body text-body-sm text-slate italic">{reading}</p>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
       </DeepDiveSection>
 
       <DeepDiveSection
@@ -409,28 +409,3 @@ function VectorLogicDeepDive({ results }: { results: VectorLogicModelResult[] })
   );
 }
 
-function SummaryStat({
-  label,
-  value,
-  hint,
-  tone = "neutral",
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "neutral" | "success" | "warning" | "error";
-}) {
-  const colour = {
-    neutral: "",
-    success: "text-success-600",
-    warning: "text-warning-500",
-    error: "text-error-500",
-  }[tone];
-  return (
-    <div className="bg-muted rounded-sm p-3">
-      <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">{label}</div>
-      <div className={`font-sans text-body-lg font-bold mt-1 tabular-nums ${colour}`}>{value}</div>
-      {hint && <div className="font-sans text-caption text-muted-foreground mt-0.5">{hint}</div>}
-    </div>
-  );
-}

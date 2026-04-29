@@ -10,6 +10,7 @@ import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 interface AbstractionPair {
   useValue: string;
@@ -230,6 +231,8 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
             </div>
           ))}
 
+          <SohnRethelDeepDive results={results} />
+
           {/* Theoretical context */}
           <div className="card-editorial p-4 border-l-4 border-l-burgundy">
             <h4 className="font-display text-body-sm font-bold mb-2">On Real Abstraction</h4>
@@ -246,5 +249,68 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Cross-model Deep Dive for Real Abstraction Test. Per-model mean
+ * cosine across all use-value / exchange-value pairs (high = the
+ * abstraction is more complete in that model's geometry), spread,
+ * agreement reading. */
+function SohnRethelDeepDive({ results }: { results: Array<AbstractionPair & { models: Array<{ modelId: string; modelName: string; similarity: number }> }> }) {
+  if (results.length === 0) return null;
+  const models = results[0].models;
+  const n = models.length;
+  if (n === 0) return null;
+  const pairCount = results.length;
+
+  const perModel = models.map((m, mi) => {
+    const cosines = results.map(r => r.models[mi]?.similarity ?? 0);
+    const completed = cosines.filter(c => c >= 0.7).length;
+    const mean = cosines.reduce((s, x) => s + x, 0) / cosines.length;
+    return { modelId: m.modelId, modelName: m.modelName, completed, completionRate: completed / pairCount, mean };
+  });
+  const means = perModel.map(p => p.mean);
+  const overallMean = means.reduce((s, x) => s + x, 0) / n;
+  const range = Math.max(...means) - Math.min(...means);
+  const reading = range < 0.05
+    ? "Models agree closely on how complete the abstraction is. The real abstraction is structurally legible across the embedding ecosystem — every model collapses use-values into their exchange-equivalents at roughly the same rate."
+    : range < 0.15
+    ? "Models partly agree. Direction is robust (the abstraction is happening) but degree varies — some models preserve more qualitative residue than others."
+    : "Models disagree substantially. The completeness of the abstraction is contingent on training: some models flatten use-values into exchange-equivalents that others keep distinct.";
+
+  return (
+    <DeepDivePanel tagline="per-model abstraction completion · cross-model spread">
+      <DeepDiveSection title="Cross-model summary" tip="Mean cosine across every use-value / exchange-value pair, per enabled model. Higher = the model's geometry has more thoroughly performed the real abstraction. Cross-model agreement = the abstraction is structural across the ecosystem.">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint={`${pairCount} pairs each`} />
+          <DeepDiveStat label="Mean cosine" value={overallMean.toFixed(4)} hint="across all models and pairs" tone={overallMean >= 0.7 ? "error" : overallMean >= 0.5 ? "warning" : "success"} />
+          <DeepDiveStat label="Range" value={range.toFixed(4)} hint="across model means" tone={range < 0.05 ? "success" : range < 0.15 ? "warning" : "error"} />
+          <DeepDiveStat label="Agreement" value={range < 0.05 ? "high" : range < 0.15 ? "mixed" : "low"} hint={range < 0.05 ? "structural" : range < 0.15 ? "robust" : "contingent"} tone={range < 0.05 ? "success" : range < 0.15 ? "warning" : "error"} />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead><tr className="border-b border-parchment">
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Mean cosine</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Pairs ≥ 0.7</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Completion rate</th>
+            </tr></thead>
+            <tbody className="divide-y divide-parchment">
+              {perModel.map(p => (
+                <tr key={p.modelId}>
+                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.mean.toFixed(4)}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.completed} / {pairCount}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{(p.completionRate * 100).toFixed(0)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }

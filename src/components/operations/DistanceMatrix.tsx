@@ -14,6 +14,7 @@ import {
   type DistanceMatrixResult,
   type DistanceMatrixModelResult,
 } from "@/lib/operations/distance-matrix";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const PlotlyPlot = dynamic(
   () => import("@/components/viz/PlotlyPlot").then(mod => ({ default: mod.PlotlyPlot })),
@@ -161,6 +162,8 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
         </div>
       )}
 
+      {result && <DistanceMatrixDeepDive result={result} />}
+
       {/* Per-model heatmaps */}
       {result && result.models.map(r => (
         <div key={r.modelId} className="card-editorial overflow-hidden">
@@ -235,5 +238,80 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Cross-model Deep Dive for Distance Matrix. Reports agreement on the
+ * most-similar / least-similar pair across enabled models, the spread
+ * of average similarities, and a per-model summary table.
+ */
+function DistanceMatrixDeepDive({ result }: { result: DistanceMatrixResult }) {
+  const models = result.models;
+  const n = models.length;
+  if (n === 0) return null;
+
+  const avgs = models.map(m => m.avgSimilarity);
+  const mean = avgs.reduce((s, x) => s + x, 0) / n;
+  const minAvg = Math.min(...avgs);
+  const maxAvg = Math.max(...avgs);
+  const range = maxAvg - minAvg;
+
+  const mostSims = models.map(m => `${m.mostSimilar.a}↔${m.mostSimilar.b}`);
+  const distinctMost = new Set(mostSims);
+  const allAgreeMost = distinctMost.size === 1;
+  const leastSims = models.map(m => `${m.leastSimilar.a}↔${m.leastSimilar.b}`);
+  const distinctLeast = new Set(leastSims);
+  const allAgreeLeast = distinctLeast.size === 1;
+
+  const reading = allAgreeMost && allAgreeLeast
+    ? "Models agree on both extremes. The matrix's geometric story is structural — the manifold ranks these concepts the same way regardless of model."
+    : allAgreeMost
+    ? "Models agree on the most-similar pair but diverge on the least-similar. The shared neighbourhood is structural; the periphery is contingent."
+    : allAgreeLeast
+    ? "Models agree on the least-similar pair but disagree on the most-similar. The far edge of the manifold is structural; the near neighbourhood depends on training."
+    : `Models disagree on both extremes (${distinctMost.size} distinct most-similar pairs, ${distinctLeast.size} distinct least-similar pairs). The matrix is contingent across the whole concept set — see the Contested Geometry table for which pairs drive the disagreement.`;
+
+  return (
+    <DeepDivePanel tagline="cross-model extremes · spread · per-model summary">
+      <DeepDiveSection title="Cross-model summary" tip="Do enabled models agree on which pairs are closest and farthest? Convergence here means the matrix's geometry is structural; divergence means contingent.">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint="enabled" />
+          <DeepDiveStat label="Mean avg sim" value={mean.toFixed(4)} hint={`range ${range.toFixed(3)}`} tone={range < 0.05 ? "success" : range < 0.15 ? "warning" : "error"} />
+          <DeepDiveStat label="Top-pair agreement" value={allAgreeMost ? "all agree" : `${distinctMost.size} answers`} hint={allAgreeMost ? mostSims[0] : "models disagree"} tone={allAgreeMost ? "success" : "error"} />
+          <DeepDiveStat label="Bottom-pair agreement" value={allAgreeLeast ? "all agree" : `${distinctLeast.size} answers`} hint={allAgreeLeast ? leastSims[0] : "models disagree"} tone={allAgreeLeast ? "success" : "error"} />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead>
+              <tr className="border-b border-parchment">
+                <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Avg cosine</th>
+                <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Most similar</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Cos</th>
+                <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Least similar</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Cos</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-parchment">
+              {models.map((m: DistanceMatrixModelResult) => (
+                <tr key={m.modelId}>
+                  <td className="px-2 py-1 font-medium">{m.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{m.avgSimilarity.toFixed(4)}</td>
+                  <td className="px-2 py-1">{m.mostSimilar.a} ↔ {m.mostSimilar.b}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{m.mostSimilar.sim.toFixed(4)}</td>
+                  <td className="px-2 py-1">{m.leastSimilar.a} ↔ {m.leastSimilar.b}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{m.leastSimilar.sim.toFixed(4)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }

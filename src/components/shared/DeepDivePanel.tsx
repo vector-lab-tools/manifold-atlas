@@ -33,21 +33,21 @@ export function DeepDivePanel({ tagline, defaultOpen = false, children }: DeepDi
     <div className="card-editorial overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full px-5 py-3 flex items-center gap-2 hover:bg-cream/50 transition-colors"
+        className="w-full px-4 py-2 flex items-center gap-2 hover:bg-cream/50 transition-colors"
       >
         {open ? (
-          <ChevronDown size={14} className="text-burgundy" />
+          <ChevronDown size={12} className="text-burgundy" />
         ) : (
-          <ChevronRight size={14} className="text-muted-foreground" />
+          <ChevronRight size={12} className="text-muted-foreground" />
         )}
-        <span className="font-display text-body-lg font-bold">Deep Dive</span>
+        <span className="font-display text-body-sm font-bold">Deep Dive</span>
         {tagline && (
           <span className="ml-2 font-sans text-caption text-muted-foreground text-left">
             {tagline}
           </span>
         )}
       </button>
-      {open && <div className="px-5 pb-5 pt-1 border-t border-parchment">{children}</div>}
+      {open && <div className="px-4 pb-4 pt-1 border-t border-parchment">{children}</div>}
     </div>
   );
 }
@@ -66,10 +66,10 @@ export function DeepDiveSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-2 mt-5 first:mt-0">
+    <section className="space-y-1.5 mt-4 first:mt-0">
       <h4
         title={tip}
-        className={`font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold inline-block ${
+        className={`font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold inline-block ${
           tip
             ? "cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline"
             : ""
@@ -79,5 +79,35 @@ export function DeepDiveSection({
       </h4>
       {children}
     </section>
+  );
+}
+
+/**
+ * Compact summary stat tile for Deep Dive sections. Uniform size
+ * across operations so the panel reads as one piece of UI.
+ */
+export function DeepDiveStat({
+  label,
+  value,
+  hint,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "neutral" | "success" | "warning" | "error";
+}) {
+  const colour = {
+    neutral: "",
+    success: "text-success-600",
+    warning: "text-warning-500",
+    error: "text-error-500",
+  }[tone];
+  return (
+    <div className="bg-muted rounded-sm p-2">
+      <div className="font-sans text-[9px] text-muted-foreground uppercase tracking-wider">{label}</div>
+      <div className={`font-sans text-body-sm font-bold mt-0.5 tabular-nums ${colour}`}>{value}</div>
+      {hint && <div className="font-sans text-[10px] text-muted-foreground mt-0.5">{hint}</div>}
+    </div>
   );
 }

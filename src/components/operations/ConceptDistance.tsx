@@ -15,7 +15,7 @@ import {
   computeConceptDistance,
   type ConceptDistanceResult,
 } from "@/lib/operations/concept-distance";
-import { DeepDivePanel, DeepDiveSection } from "@/components/shared/DeepDivePanel";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const DEFAULT_A = "solidarity";
 const DEFAULT_B = "compliance";
@@ -404,23 +404,23 @@ function ConceptDistanceDeepDive({ result }: { result: ConceptDistanceResult }) 
         title="Cross-model summary"
         tip="Aggregate cosine similarity across every enabled embedding model. Low cross-model range = the finding is structural and reproducible; high range = the finding is contingent on which model you ask."
       >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <SummaryStat label="Models" value={String(n)} hint="enabled and successfully embedded" />
-          <SummaryStat label="Mean cosine" value={mean.toFixed(4)} hint={`± ${stdDev.toFixed(4)} std dev`} />
-          <SummaryStat
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint="enabled" />
+          <DeepDiveStat label="Mean cosine" value={mean.toFixed(4)} hint={`± ${stdDev.toFixed(4)} σ`} />
+          <DeepDiveStat
             label="Range"
             value={range.toFixed(4)}
             hint={`min ${minCos.toFixed(3)} · max ${maxCos.toFixed(3)}`}
             tone={readingTone}
           />
-          <SummaryStat
+          <DeepDiveStat
             label="Agreement"
             value={range < 0.05 ? "high" : range < 0.15 ? "mixed" : "low"}
-            hint={range < 0.05 ? "structural finding" : range < 0.15 ? "robust direction" : "contingent finding"}
+            hint={range < 0.05 ? "structural" : range < 0.15 ? "robust direction" : "contingent"}
             tone={readingTone}
           />
         </div>
-        <p className="mt-3 font-body text-body-sm text-slate italic">{readingText}</p>
+        <p className="mt-2 font-body text-caption text-slate italic">{readingText}</p>
       </DeepDiveSection>
 
       <DeepDiveSection
@@ -462,28 +462,3 @@ function ConceptDistanceDeepDive({ result }: { result: ConceptDistanceResult }) 
   );
 }
 
-function SummaryStat({
-  label,
-  value,
-  hint,
-  tone = "neutral",
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "neutral" | "success" | "warning" | "error";
-}) {
-  const colour = {
-    neutral: "",
-    success: "text-success-600",
-    warning: "text-warning-500",
-    error: "text-error-500",
-  }[tone];
-  return (
-    <div className="bg-muted rounded-sm p-3">
-      <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">{label}</div>
-      <div className={`font-sans text-body-lg font-bold mt-1 tabular-nums ${colour}`}>{value}</div>
-      {hint && <div className="font-sans text-caption text-muted-foreground mt-0.5">{hint}</div>}
-    </div>
-  );
-}

@@ -17,7 +17,7 @@ import {
   negationGaugeTextList,
   type NegationGaugeResult,
 } from "@/lib/operations/negation-gauge";
-import { DeepDivePanel, DeepDiveSection } from "@/components/shared/DeepDivePanel";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const DEFAULT_STATEMENT = "This policy is fair";
 
@@ -348,23 +348,23 @@ function NegationGaugeDeepDive({ result }: { result: NegationGaugeResult }) {
         title="Cross-model summary"
         tip="Aggregate cosine similarity between the claim and its negation across every enabled embedding model. Low cross-model range = the negation deficit is structural; high range = the deficit is contingent on which model you ask."
       >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <SummaryStat label="Models" value={String(n)} hint="enabled and successfully embedded" />
-          <SummaryStat
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint="enabled" />
+          <DeepDiveStat
             label="Collapse rate"
             value={`${(collapseRate * 100).toFixed(0)}%`}
-            hint={`${collapsedCount} / ${n} above threshold ${result.threshold}`}
+            hint={`${collapsedCount} / ${n} ≥ ${result.threshold}`}
             tone={collapseRate >= 0.5 ? "error" : collapseRate > 0 ? "warning" : "success"}
           />
-          <SummaryStat label="Mean cosine" value={mean.toFixed(4)} hint={`± ${stdDev.toFixed(4)} std dev`} />
-          <SummaryStat
+          <DeepDiveStat label="Mean cosine" value={mean.toFixed(4)} hint={`± ${stdDev.toFixed(4)} σ`} />
+          <DeepDiveStat
             label="Range"
             value={range.toFixed(4)}
             hint={`min ${minCos.toFixed(3)} · max ${maxCos.toFixed(3)}`}
             tone={range < 0.05 ? "success" : range < 0.15 ? "warning" : "error"}
           />
         </div>
-        <p className="mt-3 font-body text-body-sm text-slate italic">{reading}</p>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
       </DeepDiveSection>
 
       <DeepDiveSection
@@ -408,28 +408,3 @@ function NegationGaugeDeepDive({ result }: { result: NegationGaugeResult }) {
   );
 }
 
-function SummaryStat({
-  label,
-  value,
-  hint,
-  tone = "neutral",
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "neutral" | "success" | "warning" | "error";
-}) {
-  const colour = {
-    neutral: "",
-    success: "text-success-600",
-    warning: "text-warning-500",
-    error: "text-error-500",
-  }[tone];
-  return (
-    <div className="bg-muted rounded-sm p-3">
-      <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">{label}</div>
-      <div className={`font-sans text-body-lg font-bold mt-1 tabular-nums ${colour}`}>{value}</div>
-      {hint && <div className="font-sans text-caption text-muted-foreground mt-0.5">{hint}</div>}
-    </div>
-  );
-}

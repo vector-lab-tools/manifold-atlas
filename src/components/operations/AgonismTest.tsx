@@ -16,6 +16,7 @@ import {
   type AgonismPair,
   type AgonismPairResult,
 } from "@/lib/operations/agonism-test";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 type OpposedPair = AgonismPair;
 const PRELOADED_PAIRS = AGONISM_PAIRS;
@@ -228,6 +229,8 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
             </div>
           ))}
 
+          <AgonismDeepDive results={results} />
+
           {/* Theoretical context */}
           <div className="card-editorial p-4 border-l-4 border-l-burgundy">
             <h4 className="font-display text-body-sm font-bold mb-2">On Agonism and Geometrisation</h4>
@@ -248,5 +251,67 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Cross-model Deep Dive for Agonism Test. Per-model collapse rate
+ * (where opposition was not preserved), mean cosine across all
+ * antagonistic pairs, agreement reading. */
+function AgonismDeepDive({ results }: { results: AgonismResult[] }) {
+  if (results.length === 0) return null;
+  const models = results[0].models;
+  const n = models.length;
+  if (n === 0) return null;
+  const pairCount = results.length;
+
+  const perModel = models.map((m, mi) => {
+    const cosines = results.map(r => r.models[mi]?.similarity ?? 0);
+    const collapsed = results.filter(r => !r.models[mi]?.agonismPreserved).length;
+    const mean = cosines.reduce((s, x) => s + x, 0) / cosines.length;
+    return { modelId: m.modelId, modelName: m.modelName, collapsed, collapseRate: collapsed / pairCount, mean };
+  });
+  const rates = perModel.map(p => p.collapseRate);
+  const meanRate = rates.reduce((s, x) => s + x, 0) / n;
+  const range = Math.max(...rates) - Math.min(...rates);
+  const reading = range < 0.1
+    ? "Models agree closely on the agonism collapse rate. Opposition flattens at roughly the same rate across embedding models — this is structural agonism collapse."
+    : range < 0.3
+    ? "Models partly agree. The collapse direction is robust but its degree varies — some models give philosophical opposition more geometric room than others."
+    : "Models disagree substantially. The collapse is contingent on which model you ask; some preserve antagonism that others fold into proximity.";
+
+  return (
+    <DeepDivePanel tagline="per-model agonism collapse rate · cross-model spread">
+      <DeepDiveSection title="Cross-model summary" tip="Per-model rate at which philosophical opposition collapses into geometric proximity, aggregated across every antagonistic pair in the run.">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint={`${pairCount} pairs each`} />
+          <DeepDiveStat label="Mean collapse rate" value={`${(meanRate * 100).toFixed(0)}%`} tone={meanRate >= 0.5 ? "error" : meanRate > 0 ? "warning" : "success"} />
+          <DeepDiveStat label="Range" value={`${(range * 100).toFixed(0)}%`} tone={range < 0.1 ? "success" : range < 0.3 ? "warning" : "error"} />
+          <DeepDiveStat label="Agreement" value={range < 0.1 ? "high" : range < 0.3 ? "mixed" : "low"} tone={range < 0.1 ? "success" : range < 0.3 ? "warning" : "error"} />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead><tr className="border-b border-parchment">
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Collapsed</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Rate</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Mean cosine</th>
+            </tr></thead>
+            <tbody className="divide-y divide-parchment">
+              {perModel.map(p => (
+                <tr key={p.modelId}>
+                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.collapsed} / {pairCount}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{(p.collapseRate * 100).toFixed(0)}%</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.mean.toFixed(4)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }

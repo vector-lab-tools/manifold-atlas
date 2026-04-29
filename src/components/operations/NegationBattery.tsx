@@ -20,6 +20,7 @@ import {
   removeUserBattery,
   type UserBatteries,
 } from "@/lib/operations/user-batteries";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const BATTERIES = NEGATION_BATTERIES;
 type BatteryResult = NegationBatteryStatementResult;
@@ -364,8 +365,88 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
               </table>
             </div>
           </div>
+          <NegationBatteryDeepDive results={results} threshold={settings.negationThreshold} />
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Cross-model Deep Dive for Negation Battery. Per-model collapse rate
+ * across the whole battery, mean cosine, agreement reading on whether
+ * the deficit is structural (every model collapses on most claims) or
+ * contingent (rates vary).
+ */
+function NegationBatteryDeepDive({ results, threshold }: { results: BatteryResult[]; threshold: number }) {
+  if (results.length === 0) return null;
+  const models = results[0].models;
+  const n = models.length;
+  if (n === 0) return null;
+  const stmtCount = results.length;
+
+  // Per-model: collapse rate + mean cosine across statements.
+  const perModel = models.map((m, mi) => {
+    const cosines = results.map(r => r.models[mi]?.similarity ?? 0);
+    const collapsed = results.filter(r => r.models[mi]?.collapsed).length;
+    const mean = cosines.reduce((s, x) => s + x, 0) / cosines.length;
+    return {
+      modelId: m.modelId,
+      modelName: m.modelName,
+      collapsed,
+      collapseRate: collapsed / stmtCount,
+      mean,
+    };
+  });
+
+  // Cross-model: mean of per-model collapse rates, range.
+  const rates = perModel.map(p => p.collapseRate);
+  const meanRate = rates.reduce((s, x) => s + x, 0) / n;
+  const minRate = Math.min(...rates);
+  const maxRate = Math.max(...rates);
+  const rangeRate = maxRate - minRate;
+
+  const reading = rangeRate < 0.1
+    ? "Models agree closely on the collapse rate. The negation deficit is structural — every model in this run collapses on roughly the same proportion of statements."
+    : rangeRate < 0.3
+    ? "Models partly agree on the collapse rate. Direction is robust (the deficit is real across all models) but degree is contingent (some allocate more manifold space to negation than others)."
+    : "Models disagree substantially on the collapse rate. The deficit is contingent on training decisions; some models in this run preserve negation distinctions that others flatten.";
+
+  return (
+    <DeepDivePanel tagline="per-model collapse rate · cross-model spread · agreement reading">
+      <DeepDiveSection title="Cross-model summary" tip="Per-model collapse rate aggregated across the whole battery. Low cross-model range = the negation deficit is structural; high range = some models preserve negation that others collapse.">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint={`${stmtCount} statements each`} />
+          <DeepDiveStat label="Mean collapse rate" value={`${(meanRate * 100).toFixed(0)}%`} hint={`above threshold ${threshold}`} tone={meanRate >= 0.5 ? "error" : meanRate > 0 ? "warning" : "success"} />
+          <DeepDiveStat label="Range" value={`${(rangeRate * 100).toFixed(0)}%`} hint={`min ${(minRate*100).toFixed(0)}% · max ${(maxRate*100).toFixed(0)}%`} tone={rangeRate < 0.1 ? "success" : rangeRate < 0.3 ? "warning" : "error"} />
+          <DeepDiveStat label="Agreement" value={rangeRate < 0.1 ? "high" : rangeRate < 0.3 ? "mixed" : "low"} hint={rangeRate < 0.1 ? "structural" : rangeRate < 0.3 ? "robust direction" : "contingent"} tone={rangeRate < 0.1 ? "success" : rangeRate < 0.3 ? "warning" : "error"} />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead>
+              <tr className="border-b border-parchment">
+                <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Collapsed</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Rate</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Mean cosine</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-parchment">
+              {perModel.map(p => (
+                <tr key={p.modelId}>
+                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.collapsed} / {stmtCount}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{(p.collapseRate * 100).toFixed(0)}%</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.mean.toFixed(4)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }

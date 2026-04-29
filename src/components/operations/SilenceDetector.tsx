@@ -11,6 +11,7 @@ import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 interface DomainSpec {
   name: string;
@@ -352,6 +353,66 @@ export function SilenceDetector({ onQueryTime }: SilenceDetectorProps) {
           )}
         </div>
       ))}
+      <SilenceDeepDive results={results} />
     </div>
+  );
+}
+
+/** Cross-model Deep Dive for Silence Detector. Per-model density
+ * ratio (domain A density / domain B density) — values > 1 mean the
+ * model packs A's vocabulary tighter than B's, which is the signature
+ * of differential geometric allocation. Cross-model agreement reading. */
+function SilenceDeepDive({ results }: { results: DensityResult[] }) {
+  if (results.length === 0) return null;
+  const n = results.length;
+  const ratios = results.map(r => r.densityRatio);
+  const meanRatio = ratios.reduce((s, x) => s + x, 0) / n;
+  const minR = Math.min(...ratios);
+  const maxR = Math.max(...ratios);
+  const range = maxR - minR;
+  // Direction agreement: do all models agree which domain is denser?
+  const allSameDirection = ratios.every(r => r > 1) || ratios.every(r => r < 1);
+  const reading = !allSameDirection
+    ? "Models disagree on which domain the manifold packs tighter. Whether silence runs in one direction or the other depends on training — the differential is contingent."
+    : range < 0.2
+    ? "Models agree closely on the density ratio. The differential geometric allocation is structural across the embedding ecosystem — every model in this run gives one domain less room than the other at roughly the same rate."
+    : range < 0.5
+    ? "Models agree on direction but vary in magnitude. The silence is robust but its severity depends on the model."
+    : "Models agree on direction but the magnitude varies substantially. The silence is real but its severity is contingent on training decisions.";
+
+  return (
+    <DeepDivePanel tagline="per-model density ratio · cross-model spread · direction agreement">
+      <DeepDiveSection title="Cross-model summary" tip="Per-model density ratio between the two domains' vocabularies. Cross-model agreement on the ratio = the manifold's differential allocation of geometric space is structural; disagreement = contingent on training.">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} />
+          <DeepDiveStat label="Mean ratio" value={meanRatio.toFixed(3)} hint="A density / B density" />
+          <DeepDiveStat label="Range" value={range.toFixed(3)} tone={range < 0.2 ? "success" : range < 0.5 ? "warning" : "error"} />
+          <DeepDiveStat label="Direction" value={allSameDirection ? "agree" : "split"} tone={allSameDirection ? "success" : "error"} />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead><tr className="border-b border-parchment">
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">{results[0].domainA.name} density</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">{results[0].domainB.name} density</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Ratio</th>
+            </tr></thead>
+            <tbody className="divide-y divide-parchment">
+              {results.map(r => (
+                <tr key={r.modelId}>
+                  <td className="px-2 py-1 font-medium">{r.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{r.domainA.avgPairwiseSim.toFixed(4)}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{r.domainB.avgPairwiseSim.toFixed(4)}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{r.densityRatio.toFixed(3)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }

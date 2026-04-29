@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 import { Loader2, GitBranch, Download, ChevronRight, ChevronDown } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
@@ -258,6 +259,89 @@ export function SemanticSectioning({ onQueryTime }: SemanticSectioningProps) {
           )}
         </div>
       ))}
+      <SemanticSectioningDeepDive results={results} />
     </div>
+  );
+}
+
+/** Cross-model Deep Dive for Semantic Sectioning. Per-model anchor
+ * cosine, mean nearest-neighbour similarity along the path,
+ * agreement on intermediate concepts (Jaccard overlap). */
+function SemanticSectioningDeepDive({ results }: { results: SemanticSectioningModelResult[] }) {
+  if (results.length === 0) return null;
+  const n = results.length;
+
+  const perModel = results.map(r => {
+    const sims = r.path.map(p => p.nearestSimilarity);
+    const meanNearest = sims.reduce((s, x) => s + x, 0) / Math.max(1, sims.length);
+    return {
+      modelId: r.modelId,
+      modelName: r.modelName,
+      anchorSim: r.anchorSimilarity,
+      meanNearest,
+      conceptSet: new Set(r.path.map(p => p.nearestConcept)),
+      conceptCount: new Set(r.path.map(p => p.nearestConcept)).size,
+    };
+  });
+
+  // Pairwise Jaccard on intermediate concept sets.
+  let jSum = 0;
+  let jPairs = 0;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = perModel[i].conceptSet;
+      const b = perModel[j].conceptSet;
+      const inter = [...a].filter(x => b.has(x)).length;
+      const uni = new Set([...a, ...b]).size;
+      if (uni > 0) {
+        jSum += inter / uni;
+        jPairs += 1;
+      }
+    }
+  }
+  const meanJaccard = jPairs > 0 ? jSum / jPairs : 1;
+
+  const reading = n === 1
+    ? "Only one model enabled. Add more to test whether the interpolation path is structural or contingent."
+    : meanJaccard >= 0.6
+    ? "Models walk through similar intermediate concepts. The semantic path between the two anchors is structural across the embedding ecosystem."
+    : meanJaccard >= 0.3
+    ? "Models share some intermediate concepts but diverge in detail. The high-level trajectory is robust; the specific stops along the way are contingent."
+    : "Models traverse different intermediate concepts. The path between these anchors is contingent on which model you ask — different geometries pass through different territory.";
+
+  return (
+    <DeepDivePanel tagline="path agreement · per-model anchor cosine">
+      <DeepDiveSection title="Cross-model summary" tip="Do enabled models walk through the same intermediate concepts when interpolating between the two anchors? High Jaccard overlap = the semantic path is structural; low = contingent on training.">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} />
+          <DeepDiveStat label="Path Jaccard" value={meanJaccard.toFixed(2)} hint="mean across model pairs" tone={meanJaccard >= 0.6 ? "success" : meanJaccard >= 0.3 ? "warning" : "error"} />
+          <DeepDiveStat label="Mean anchor cos" value={(perModel.reduce((s, p) => s + p.anchorSim, 0) / n).toFixed(4)} hint="across models" />
+          <DeepDiveStat label="Mean step cos" value={(perModel.reduce((s, p) => s + p.meanNearest, 0) / n).toFixed(4)} hint="nearest concept similarity" />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead><tr className="border-b border-parchment">
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Anchor cosine</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Mean step</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Distinct concepts</th>
+            </tr></thead>
+            <tbody className="divide-y divide-parchment">
+              {perModel.map(p => (
+                <tr key={p.modelId}>
+                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.anchorSim.toFixed(4)}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.meanNearest.toFixed(4)}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.conceptCount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }
