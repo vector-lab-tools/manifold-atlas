@@ -15,6 +15,7 @@ import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { projectPCA3D, spreadPoints3D } from "@/lib/geometry/pca";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const WalkScene = dynamic(
   () => import("@/components/viz/WalkScene").then(mod => ({ default: mod.WalkScene })),
@@ -233,7 +234,110 @@ export function VectorWalk({ onQueryTime }: VectorWalkProps) {
       {results.map(r => (
         <WalkPlayer key={r.modelId} result={r} isDark={isDark} />
       ))}
+
+      {results.length > 0 && <WalkDeepDive results={results} />}
     </div>
+  );
+}
+
+/** Cross-model Deep Dive for Vector Walk. Per-model summary covering
+ * step count, mean nearest-neighbour cosine, the set of concepts the
+ * walk passes through, and Jaccard overlap between models on those
+ * concept sets. */
+function WalkDeepDive({ results }: { results: WalkResult[] }) {
+  const n = results.length;
+  if (n === 0) return null;
+
+  const perModel = results.map(r => {
+    const sims = r.steps.map(s => s.nearestSimilarity);
+    const meanNearest = sims.length > 0 ? sims.reduce((s, x) => s + x, 0) / sims.length : 0;
+    const concepts = new Set(r.steps.map(s => s.nearestConcept));
+    return {
+      modelId: r.modelId,
+      modelName: r.modelName,
+      stepCount: r.steps.length,
+      meanNearest,
+      concepts,
+      conceptCount: concepts.size,
+    };
+  });
+
+  // Pairwise Jaccard overlap of nearest-concept sets across models.
+  let jSum = 0;
+  let jPairs = 0;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = perModel[i].concepts;
+      const b = perModel[j].concepts;
+      const inter = [...a].filter(x => b.has(x)).length;
+      const uni = new Set([...a, ...b]).size;
+      if (uni > 0) {
+        jSum += inter / uni;
+        jPairs += 1;
+      }
+    }
+  }
+  const meanJaccard = jPairs > 0 ? jSum / jPairs : 1;
+
+  const reading =
+    n === 1
+      ? "Only one model enabled. Add more to test whether the walk's territory is structural or contingent."
+      : meanJaccard >= 0.6
+      ? "Models walk through similar territory. The interpolation path between these anchors is structural — different embedding geometries pass through overlapping concept neighbourhoods."
+      : meanJaccard >= 0.3
+      ? "Models share some concepts along the walk but diverge in detail. The high-level trajectory is robust; the specific waypoints depend on the model."
+      : "Models walk through different territory. The interpolation path is contingent on which model you ask — the same conceptual move passes through different geometric regions in different manifolds.";
+
+  return (
+    <DeepDivePanel tagline="walk concept-set agreement · per-model nearest cosine">
+      <DeepDiveSection
+        title="Cross-model summary"
+        tip="Do enabled models pass through the same nearest concepts when interpolating between the two anchors? High Jaccard overlap = the walk's territory is structural; low = contingent on training."
+      >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint={`${perModel[0]?.stepCount ?? 0} steps each`} />
+          <DeepDiveStat
+            label="Path Jaccard"
+            value={meanJaccard.toFixed(2)}
+            hint="mean across model pairs"
+            tone={meanJaccard >= 0.6 ? "success" : meanJaccard >= 0.3 ? "warning" : "error"}
+          />
+          <DeepDiveStat
+            label="Mean step cosine"
+            value={(perModel.reduce((s, p) => s + p.meanNearest, 0) / n).toFixed(4)}
+            hint="averaged across models"
+          />
+          <DeepDiveStat
+            label="Distinct concepts"
+            value={(perModel.reduce((s, p) => s + p.conceptCount, 0) / n).toFixed(1)}
+            hint="mean per model"
+          />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead><tr className="border-b border-parchment">
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Steps</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Distinct concepts</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Mean step cosine</th>
+            </tr></thead>
+            <tbody className="divide-y divide-parchment">
+              {perModel.map(p => (
+                <tr key={p.modelId}>
+                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.stepCount}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.conceptCount}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.meanNearest.toFixed(4)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }
 

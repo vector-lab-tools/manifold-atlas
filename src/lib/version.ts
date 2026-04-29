@@ -6,5 +6,5 @@
  * Single source of truth for the application version.
  * All UI components should import from here.
  */
-export const VERSION = "1.4.1";
+export const VERSION = "1.4.2";
 export const VERSION_DATE = "29 April 2026";

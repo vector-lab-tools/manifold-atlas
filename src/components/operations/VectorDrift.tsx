@@ -14,6 +14,7 @@ import { similarityColor } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { Plot3DControls } from "@/components/viz/Plot3DControls";
 import type { PlotlyPlotHandle } from "@/components/viz/PlotlyPlot";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const PlotlyPlot = dynamic(
   () => import("@/components/viz/PlotlyPlot").then(mod => ({ default: mod.PlotlyPlot })),
@@ -467,7 +468,110 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
           isDark={isDark}
         />
       ))}
+
+      {result && mode === "drift" && <DriftDeepDive result={result} />}
     </div>
+  );
+}
+
+/** Cross-model Deep Dive for Vector Drift. Per-model summary covering
+ * mean displacement (how much context moves the concept on average),
+ * max displacement (the most context-sensitive variant), and the
+ * range of mean displacements across models. */
+function DriftDeepDive({ result }: { result: DriftResult }) {
+  const models = result.models;
+  const n = models.length;
+  if (n === 0) return null;
+
+  const perModel = models.map(m => {
+    const disps = m.drifts.map(d => d.displacement);
+    const meanDisp = disps.length > 0 ? disps.reduce((s, x) => s + x, 0) / disps.length : 0;
+    const maxIdx = disps.length > 0 ? disps.indexOf(Math.max(...disps)) : -1;
+    const minIdx = disps.length > 0 ? disps.indexOf(Math.min(...disps)) : -1;
+    return {
+      modelId: m.modelId,
+      modelName: m.modelName,
+      meanDisp,
+      maxDisp: maxIdx >= 0 ? disps[maxIdx] : 0,
+      maxVariant: maxIdx >= 0 ? m.drifts[maxIdx].variant : "—",
+      minDisp: minIdx >= 0 ? disps[minIdx] : 0,
+      minVariant: minIdx >= 0 ? m.drifts[minIdx].variant : "—",
+      variantCount: m.drifts.length,
+    };
+  });
+
+  const meanDisps = perModel.map(p => p.meanDisp);
+  const overallMean = meanDisps.reduce((s, x) => s + x, 0) / n;
+  const range = Math.max(...meanDisps) - Math.min(...meanDisps);
+
+  // Top-disp agreement: do all models agree on which context produces
+  // the most drift?
+  const topVariants = perModel.map(p => p.maxVariant);
+  const distinctTop = new Set(topVariants);
+  const allAgreeTop = distinctTop.size === 1;
+
+  const reading =
+    n === 1
+      ? "Only one model enabled. Add more to test whether contextual sensitivity is structural or contingent."
+      : range < 0.05 && allAgreeTop
+      ? "Models agree closely on both magnitude and direction of drift. The concept's contextual sensitivity is structural — every model is moved by the same context most strongly, by roughly the same amount."
+      : allAgreeTop
+      ? "Models agree on which context produces the most drift but disagree on magnitude. Direction is structural; degree is contingent."
+      : range < 0.05
+      ? "Models agree on the overall amount of drift but disagree on which context drives it. The concept is contextually sensitive across the ecosystem, but different models are sensitive to different framings."
+      : "Models disagree on both which context produces the most drift and on overall magnitude. Contextual sensitivity is contingent on training.";
+
+  return (
+    <DeepDivePanel tagline="per-model drift magnitude · top-disp agreement · cross-model spread">
+      <DeepDiveSection
+        title="Cross-model summary"
+        tip="Do enabled models agree on how much context moves the concept and on which framing produces the largest drift? Convergence here means contextual sensitivity is structural."
+      >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} hint={`${perModel[0]?.variantCount ?? 0} variants each`} />
+          <DeepDiveStat label="Mean displacement" value={overallMean.toFixed(4)} hint="averaged across models" />
+          <DeepDiveStat
+            label="Range"
+            value={range.toFixed(4)}
+            hint="spread of model means"
+            tone={range < 0.05 ? "success" : range < 0.15 ? "warning" : "error"}
+          />
+          <DeepDiveStat
+            label="Top-drift agreement"
+            value={allAgreeTop ? "all agree" : `${distinctTop.size} answers`}
+            hint={allAgreeTop ? "same variant" : "models disagree"}
+            tone={allAgreeTop ? "success" : "error"}
+          />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead><tr className="border-b border-parchment">
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Mean disp.</th>
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Most-drifted variant</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Max</th>
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Least-drifted</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Min</th>
+            </tr></thead>
+            <tbody className="divide-y divide-parchment">
+              {perModel.map(p => (
+                <tr key={p.modelId}>
+                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.meanDisp.toFixed(4)}</td>
+                  <td className="px-2 py-1 max-w-[260px] truncate" title={p.maxVariant}>{p.maxVariant}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.maxDisp.toFixed(4)}</td>
+                  <td className="px-2 py-1 max-w-[260px] truncate" title={p.minVariant}>{p.minVariant}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.minDisp.toFixed(4)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }
 

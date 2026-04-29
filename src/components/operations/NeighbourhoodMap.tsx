@@ -15,6 +15,7 @@ import { ResetButton } from "@/components/shared/ResetButton";
 import { BenchmarkLoader } from "@/components/shared/BenchmarkLoader";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
 import type { NeighbourhoodMapResult, NeighbourhoodPoint } from "@/types/embeddings";
+import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 interface ConceptGroupInput {
   id: number;
@@ -446,8 +447,118 @@ export function NeighbourhoodMap({ onQueryTime }: NeighbourhoodMapProps) {
               />
             ))}
           </div>
+          <NeighbourhoodMapDeepDive result={result} clusterData={clusterData} />
         </div>
       )}
     </div>
+  );
+}
+
+/** Cross-model Deep Dive for Neighbourhood Map. Per-model summary
+ * covering point count, projection method, dimensions, and (when
+ * cluster detection has run) cluster count. */
+function NeighbourhoodMapDeepDive({
+  result,
+  clusterData,
+}: {
+  result: NeighbourhoodMapResult;
+  clusterData: Map<string, number[]>;
+}) {
+  const projections = result.projections;
+  const n = projections.length;
+  if (n === 0) return null;
+
+  const perModel = projections.map(p => {
+    const clusters = clusterData.get(p.modelId);
+    const clusterCount = clusters ? new Set(clusters).size : 0;
+    // Spread = max axis range across x/y/(z), gives a sense of how
+    // dispersed the projection is.
+    const xs = p.points.map(pt => pt.x);
+    const ys = p.points.map(pt => pt.y);
+    const zs = p.points.map(pt => pt.z ?? 0);
+    const spread = Math.max(
+      Math.max(...xs) - Math.min(...xs),
+      Math.max(...ys) - Math.min(...ys),
+      p.dimensions === 3 ? Math.max(...zs) - Math.min(...zs) : 0
+    );
+    return {
+      modelId: p.modelId,
+      modelName: p.modelName,
+      pointCount: p.points.length,
+      method: p.method,
+      dimensions: p.dimensions,
+      clusterCount,
+      spread,
+    };
+  });
+
+  // Cluster-count agreement across models.
+  const clusterCounts = perModel.map(p => p.clusterCount).filter(c => c > 0);
+  const clusterAgreement =
+    clusterCounts.length === 0
+      ? null
+      : clusterCounts.every(c => c === clusterCounts[0])
+      ? "exact"
+      : Math.max(...clusterCounts) - Math.min(...clusterCounts) <= 1
+      ? "near"
+      : "split";
+
+  const reading =
+    n === 1
+      ? "Only one model enabled. Add more to test whether the manifold's local structure is structural or contingent."
+      : clusterAgreement === "exact"
+      ? `All ${n} models partition the neighbourhood into the same number of clusters. The local geometry is structural — different training corpora and architectures all carve up this concept set the same way.`
+      : clusterAgreement === "near"
+      ? "Models nearly agree on cluster count, differing by one. The neighbourhood structure is robust at the level of broad partitioning but contingent at the boundary."
+      : clusterAgreement === "split"
+      ? `Models disagree on cluster count (${Math.min(...clusterCounts)} to ${Math.max(...clusterCounts)}). The neighbourhood's geometric structure is contingent on training; different models carve up this concept set differently.`
+      : "Cluster detection has not run — toggle clusters on the projection to populate this reading.";
+
+  return (
+    <DeepDivePanel tagline="per-model projection · cluster-count agreement">
+      <DeepDiveSection
+        title="Cross-model summary"
+        tip="Do enabled models partition the local neighbourhood into the same number of clusters? Convergence here means the local structure is structural; divergence means contingent on training."
+      >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <DeepDiveStat label="Models" value={String(n)} />
+          <DeepDiveStat label="Points each" value={String(perModel[0]?.pointCount ?? 0)} hint={`projected to ${perModel[0]?.dimensions ?? 0}D`} />
+          <DeepDiveStat
+            label="Cluster agreement"
+            value={clusterAgreement === "exact" ? "all agree" : clusterAgreement === "near" ? "near agreement" : clusterAgreement === "split" ? "split" : "—"}
+            hint={clusterCounts.length > 0 ? `${Math.min(...clusterCounts)}–${Math.max(...clusterCounts)} clusters` : "no cluster data"}
+            tone={clusterAgreement === "exact" ? "success" : clusterAgreement === "near" ? "warning" : clusterAgreement === "split" ? "error" : "neutral"}
+          />
+          <DeepDiveStat label="Mean spread" value={(perModel.reduce((s, p) => s + p.spread, 0) / n).toFixed(3)} hint="projected axis range" />
+        </div>
+        <p className="mt-2 font-body text-caption text-slate italic">{reading}</p>
+      </DeepDiveSection>
+      <DeepDiveSection title="Per-model summary">
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead><tr className="border-b border-parchment">
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Model</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Points</th>
+              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Method</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Dims</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Clusters</th>
+              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Spread</th>
+            </tr></thead>
+            <tbody className="divide-y divide-parchment">
+              {perModel.map(p => (
+                <tr key={p.modelId}>
+                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.pointCount}</td>
+                  <td className="px-2 py-1 uppercase">{p.method}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.dimensions}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.clusterCount > 0 ? p.clusterCount : "—"}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">{p.spread.toFixed(3)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+    </DeepDivePanel>
   );
 }
