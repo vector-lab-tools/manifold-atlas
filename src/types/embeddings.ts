@@ -80,7 +80,7 @@ export const EMBEDDING_PROVIDERS: Record<EmbeddingProviderId, EmbeddingProviderC
   ollama: {
     id: "ollama",
     name: "Ollama (Local)",
-    description: "Run embedding models locally with Ollama",
+    description: "Embeds via an Ollama instance you run yourself. Requires Manifold Atlas to be running locally too (npm run dev or a local build) — the hosted vector-lab-tools.github.io / Vercel preview cannot reach localhost:11434 in your browser. To use Ollama, clone the repo, run the dev server, and point this provider at your local Ollama (default: http://localhost:11434). The base-URL field also accepts a remote Ollama endpoint or an Ollama Cloud endpoint, so the same provider entry can be repurposed for cloud-hosted Ollama models when those are available.",
     requiresApiKey: false,
     baseUrlConfigurable: true,
     defaultBaseUrl: "http://localhost:11434",
