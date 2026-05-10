@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.4.4
+**Version:** 1.5.0
 **Date:** 29 April 2026
 **Licence:** MIT
 
@@ -90,7 +90,7 @@ Watch a particle walk through the manifold from one concept to another. Built wi
 Measure how much context displaces a concept's position in the manifold. Embed the same term as a propositional sentence with different contextual framings and watch it move through the geometry. Three visualisations per model: a 3D drift cloud showing all positions simultaneously with connecting lines back to the bare concept; sorted displacement bars showing which contexts produce the largest geometric displacement; and a pairwise pathway heatmap revealing which contextual framings converge (similar routes through the manifold) and which diverge. Includes Sentence Sensitivity mode, which auto-generates 15 phrasings per concept across five categories (definitional, contextual, negational, propositional, metaphorical) and fires them all into the embedding space.
 
 ### Hegemony Compass
-Place a contested concept ("freedom", "democracy", "intelligence") between two competing ideological clusters and measure which side the manifold pulls it toward. Pre-loaded tests for Freedom (market liberalism vs emancipatory politics), Democracy (liberal proceduralism vs radical democracy), Intelligence (techno-rationalism vs embodied cognition), Security, and Progress. The result reveals which ideological framing the geometry has naturalised as the default meaning.
+Place a contested concept ("freedom", "democracy", "intelligence") between two competing ideological clusters and measure which side the manifold pulls it toward. Pre-loaded tests for Freedom (market liberalism vs emancipatory politics), Democracy (liberal proceduralism vs radical democracy), Intelligence (techno-rationalism vs embodied cognition), Security, and Progress. The result reveals which ideological framing the geometry has naturalised as the default meaning. **Concept-guided amplification (α sliders)** let you steer the embeddings along each axis direction before projection (Latent Manipulator-style, after Bhowmick & Heer, CHI EA '26; the underlying mean-difference / contrastive-activation-addition primitive follows Mikolov 2013, Park, Choe & Veitch 2024, Rimsky et al. 2024). Positive α amplifies alignment with the positive pole; negative α attenuates; α = −1 removes the linear contribution. The Technical Dashboard reports per-model **axis polarisation** (mean |x|, mean |y|, mean radial displacement) — Atlas's analogue of cluster purity. A polarisation reading that rises sharply as α increases is evidence the axis is doing genuine geometric work; a flat profile means the concepts don't load on that axis (or the axis was already saturated in the default view).
 
 ### Real Abstraction Test
 Measure how far the manifold has performed the real abstraction (after Sohn-Rethel). Each pair contrasts a concrete use-value description ("a warm coat that keeps the rain off") with its abstract exchange-value equivalent ("a commodity worth twenty yards of linen"). If the distance is small, the abstraction is already complete in the geometry. If large, the use-value has partially resisted encoding. 12 pre-loaded pairs across domains from clothing to care work.

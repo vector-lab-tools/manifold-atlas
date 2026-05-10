@@ -30,6 +30,17 @@ export interface HegemonyCompassInputs {
   yAxis?: CompassAxis;
   /** Concepts to plot. Falls back to the preset's defaults if omitted. */
   concepts?: string[];
+  /**
+   * Concept-guided amplification factors. Each is a scalar α applied
+   * along the normalised axis direction (xPosCentroid − xNegCentroid,
+   * yPosCentroid − yNegCentroid). Positive α amplifies alignment with
+   * the positive pole; α ∈ [−1, 0) attenuates; α = −1 removes the
+   * linear contribution. Defaults to 0 (baseline view). Following the
+   * mean-difference / contrastive-activation steering literature
+   * (Mikolov 2013; Park, Choe & Veitch 2024; Rimsky et al. 2024) and
+   * the Latent Manipulator visualisation system (CHI EA '26).
+   */
+  amplification?: { x?: number; y?: number };
 }
 
 /**
@@ -100,6 +111,17 @@ export interface HegemonyCompassModelResult {
   yInterPoleCosine: number;
   xAxisNorm: number;
   yAxisNorm: number;
+  /**
+   * Mean |x| of plotted concepts: how strongly the points polarise
+   * along the X axis. Compass-equivalent of cluster purity from
+   * Latent Manipulator (CHI EA '26): higher = the axis is doing more
+   * geometric work; rises as amplification α_x increases.
+   */
+  xPolarisation: number;
+  /** Mean |y| of plotted concepts. */
+  yPolarisation: number;
+  /** Mean distance from origin (sqrt(x²+y²)) — joint polarisation. */
+  meanRadialDisplacement: number;
 }
 
 export interface HegemonyCompassResult {
@@ -108,6 +130,8 @@ export interface HegemonyCompassResult {
   xAxisLabels: { negative: string; positive: string };
   yAxisLabels: { negative: string; positive: string };
   models: HegemonyCompassModelResult[];
+  /** Echoed back so the UI can show what amplification was applied. */
+  amplification: { x: number; y: number };
 }
 
 // --- Small helpers kept local so the module has no React deps. ------
@@ -168,6 +192,8 @@ export function computeHegemonyCompass(
   const xNegCount = preset.xAxis.negative.terms.length;
   const xPosCount = preset.xAxis.positive.terms.length;
   const yNegCount = preset.yAxis.negative.terms.length;
+  const alphaX = inputs.amplification?.x ?? 0;
+  const alphaY = inputs.amplification?.y ?? 0;
 
   const models: HegemonyCompassModelResult[] = [];
 
@@ -182,29 +208,53 @@ export function computeHegemonyCompass(
     const yNegVecs = vectors.slice(offset, offset + yNegCount); offset += yNegCount;
     const yPosVecs = vectors.slice(offset);
 
+    const xNegCentroid = meanVector(xNegVecs);
+    const xPosCentroid = meanVector(xPosVecs);
+    const yNegCentroid = meanVector(yNegVecs);
+    const yPosCentroid = meanVector(yPosVecs);
+
+    // Concept-direction vectors v_x and v_y, mean-difference style.
+    // Normalised so the amplification slider has a model-independent
+    // interpretation: α * unit_vector. This follows Latent Manipulator
+    // (CHI EA '26) and the broader contrastive-activation-addition
+    // steering literature.
+    const xDir = normaliseInPlace(subtract(xPosCentroid, xNegCentroid));
+    const yDir = normaliseInPlace(subtract(yPosCentroid, yNegCentroid));
+
     const points: HegemonyCompassPointResult[] = [];
+    let polX = 0;
+    let polY = 0;
+    let polR = 0;
     for (let ci = 0; ci < concepts.length; ci++) {
-      const conceptVec = vectors[ci];
-      if (!conceptVec) continue;
+      const raw = vectors[ci];
+      if (!raw) continue;
+      // Apply amplification: e' = e + α_x v_x + α_y v_y. When alphas
+      // are zero (the default) this is the identity.
+      const conceptVec =
+        alphaX === 0 && alphaY === 0
+          ? raw
+          : amplify(raw, xDir, alphaX, yDir, alphaY);
       const avgSimXNeg = xNegVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / xNegVecs.length;
       const avgSimXPos = xPosVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / xPosVecs.length;
       const avgSimYNeg = yNegVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / yNegVecs.length;
       const avgSimYPos = yPosVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / yPosVecs.length;
+      const x = avgSimXPos - avgSimXNeg;
+      const y = avgSimYPos - avgSimYNeg;
       points.push({
         concept: concepts[ci],
-        x: avgSimXPos - avgSimXNeg,
-        y: avgSimYPos - avgSimYNeg,
+        x,
+        y,
         simXNeg: avgSimXNeg,
         simXPos: avgSimXPos,
         simYNeg: avgSimYNeg,
         simYPos: avgSimYPos,
       });
+      polX += Math.abs(x);
+      polY += Math.abs(y);
+      polR += Math.sqrt(x * x + y * y);
     }
 
-    const xNegCentroid = meanVector(xNegVecs);
-    const xPosCentroid = meanVector(xPosVecs);
-    const yNegCentroid = meanVector(yNegVecs);
-    const yPosCentroid = meanVector(yPosVecs);
+    const nPts = Math.max(1, points.length);
 
     models.push({
       modelId: m.id,
@@ -239,6 +289,9 @@ export function computeHegemonyCompass(
       yInterPoleCosine: cosineSimilarity(yNegCentroid, yPosCentroid),
       xAxisNorm: euclideanDist(xNegCentroid, xPosCentroid),
       yAxisNorm: euclideanDist(yNegCentroid, yPosCentroid),
+      xPolarisation: polX / nPts,
+      yPolarisation: polY / nPts,
+      meanRadialDisplacement: polR / nPts,
     });
   }
 
@@ -248,7 +301,38 @@ export function computeHegemonyCompass(
     xAxisLabels: { negative: preset.xAxis.negative.label, positive: preset.xAxis.positive.label },
     yAxisLabels: { negative: preset.yAxis.negative.label, positive: preset.yAxis.positive.label },
     models,
+    amplification: { x: alphaX, y: alphaY },
   };
+}
+
+/** v_a - v_b. */
+function subtract(a: number[], b: number[]): number[] {
+  const out = new Array<number>(a.length);
+  for (let i = 0; i < a.length; i++) out[i] = a[i] - b[i];
+  return out;
+}
+
+/** Normalise a vector in place. Returns the same array for convenience. */
+function normaliseInPlace(v: number[]): number[] {
+  const n = l2Norm(v);
+  if (n === 0) return v;
+  for (let i = 0; i < v.length; i++) v[i] /= n;
+  return v;
+}
+
+/** e + α_x v_x + α_y v_y. Returns a new array; does not mutate e. */
+function amplify(
+  e: number[],
+  vx: number[],
+  alphaX: number,
+  vy: number[],
+  alphaY: number
+): number[] {
+  const out = new Array<number>(e.length);
+  for (let i = 0; i < e.length; i++) {
+    out[i] = e[i] + alphaX * vx[i] + alphaY * vy[i];
+  }
+  return out;
 }
 
 /** Headline metrics for the Protocol Runner result card. */

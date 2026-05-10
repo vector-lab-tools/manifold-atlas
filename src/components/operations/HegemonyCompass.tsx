@@ -82,6 +82,22 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
   // via mouse interaction.
   const [recentreKey, setRecentreKey] = useState(0);
   const [dashboardOpen, setDashboardOpen] = useState(false);
+  // Concept-guided amplification along each axis direction (Latent
+  // Manipulator-style steering, CHI EA '26). Positive = amplify
+  // alignment with positive pole; negative = attenuate; −1 removes
+  // the linear contribution. Stored separately from plotConcepts so
+  // the user can re-run amplification at a different α without re-
+  // embedding the points (the vectors come from the embedding cache).
+  const [alphaX, setAlphaX] = useState(0);
+  const [alphaY, setAlphaY] = useState(0);
+  // Last polarisation reading per model id, populated alongside
+  // axisStats so the Technical Dashboard can show how strongly the
+  // axes are doing geometric work at the current amplification level.
+  const [polarisation, setPolarisation] = useState<Map<string, { x: number; y: number; r: number }>>(new Map());
+  // Holds the last set of concepts the user plotted, so the "Re-steer
+  // with new α" button can re-run them with the current alpha values
+  // without forcing the user to re-type or re-pick a preset.
+  const [lastPlotted, setLastPlotted] = useState<string[]>([]);
   // Custom axis state - prepopulated with an example (Nature vs Culture)
   const [customXNegLabel, setCustomXNegLabel] = useState("Nature");
   const [customXNegTerms, setCustomXNegTerms] = useState("The natural world has intrinsic value independent of human use, Biodiversity is essential for the health of ecosystems, Wilderness should be preserved from human intervention, Natural processes are self-regulating and should not be disrupted");
@@ -125,11 +141,24 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
         xAxis: preset.xAxis,
         yAxis: preset.yAxis,
         concepts,
+        amplification: { x: alphaX, y: alphaY },
       };
       const texts = hegemonyCompassTextList(inputs);
       const modelVectors = await embedAll(texts);
       const enabledModels = getEnabledModels();
       const computed = computeHegemonyCompass(inputs, modelVectors, enabledModels);
+      // Capture polarisation per model for the dashboard. The cache
+      // hits on re-runs at different α, so re-steering is fast.
+      const newPolarisation = new Map<string, { x: number; y: number; r: number }>();
+      for (const m of computed.models) {
+        newPolarisation.set(m.modelId, {
+          x: m.xPolarisation,
+          y: m.yPolarisation,
+          r: m.meanRadialDisplacement,
+        });
+      }
+      setPolarisation(newPolarisation);
+      setLastPlotted(concepts);
 
       // Flatten into the shapes the render code already expects:
       // PlottedConcept[] (one per point × model) and ModelAxisStats[].
@@ -214,7 +243,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
       <div className="card-editorial p-6">
         <div className="flex items-start justify-between mb-1">
           <h2 className="font-display text-display-md font-bold">Hegemony Compass</h2>
-          <ResetButton onReset={() => { setPlottedConcepts([]); setConceptInput(""); setError(null); setZoomOverride(null); }} />
+          <ResetButton onReset={() => { setPlottedConcepts([]); setConceptInput(""); setError(null); setZoomOverride(null); setAlphaX(0); setAlphaY(0); setLastPlotted([]); setPolarisation(new Map()); }} />
         </div>
         <p className="font-sans text-body-sm text-slate mb-4">
           A four-pole compass that plots where the manifold positions contested concepts.
@@ -305,6 +334,74 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
               ))}
             </div>
           )}
+
+          {/* Concept-guided amplification (Latent Manipulator-style
+              steering). Two sliders apply α along each axis direction.
+              At α = 0 the compass is baseline; positive α amplifies
+              alignment with the positive pole, negative α attenuates,
+              α = −1 removes the linear contribution. Re-steer re-runs
+              the last-plotted concept set under the new α values; the
+              embedding cache means there is no additional API cost. */}
+          <div className="rounded-sm border border-parchment bg-muted/30 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline"
+                title="Concept-guided embedding manipulation. Each slider amplifies (positive) or attenuates (negative) alignment with the corresponding axis direction before the compass is computed. Default α = 0 is the unmodified manifold; α = 5 amplifies the axis concept five-fold; α = −1 removes its linear contribution entirely. Following the mean-difference / contrastive-activation-addition steering literature (Mikolov 2013; Park, Choe & Veitch 2024; Rimsky et al. 2024) and the Latent Manipulator visualisation system (CHI EA '26). Use to see what the manifold looks like with the ideological dimension suppressed or amplified — and what the default view was hiding."
+              >
+                Amplification (α)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setAlphaX(0); setAlphaY(0); }}
+                  className="font-sans text-[10px] text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
+                  title="Reset both sliders to 0 (baseline / unmodified manifold)."
+                >
+                  Reset
+                </button>
+                {lastPlotted.length > 0 && (
+                  <button
+                    onClick={() => plotConcepts(lastPlotted)}
+                    disabled={loading}
+                    className="btn-editorial-ghost text-caption px-2 py-0.5 disabled:opacity-50"
+                    title="Re-run the most recently plotted concepts under the current α values. The embedding cache means this is free of API cost."
+                  >
+                    Re-steer
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center gap-2 font-sans text-caption">
+                <span className="font-mono text-muted-foreground w-20 shrink-0 text-right">α<sub>x</sub> ({alphaX >= 0 ? "+" : ""}{alphaX.toFixed(1)})</span>
+                <input
+                  type="range"
+                  min="-1"
+                  max="5"
+                  step="0.5"
+                  value={alphaX}
+                  onChange={e => setAlphaX(parseFloat(e.target.value))}
+                  className="flex-1 accent-burgundy"
+                />
+              </label>
+              <label className="flex items-center gap-2 font-sans text-caption">
+                <span className="font-mono text-muted-foreground w-20 shrink-0 text-right">α<sub>y</sub> ({alphaY >= 0 ? "+" : ""}{alphaY.toFixed(1)})</span>
+                <input
+                  type="range"
+                  min="-1"
+                  max="5"
+                  step="0.5"
+                  value={alphaY}
+                  onChange={e => setAlphaY(parseFloat(e.target.value))}
+                  className="flex-1 accent-burgundy"
+                />
+              </label>
+            </div>
+            <p className="font-sans text-[10px] text-muted-foreground italic">
+              {alphaX === 0 && alphaY === 0
+                ? "Baseline view. Move a slider away from 0 and click Re-steer (or Plot) to amplify or attenuate alignment with an axis."
+                : `Steered view: α_x = ${alphaX >= 0 ? "+" : ""}${alphaX.toFixed(1)}, α_y = ${alphaY >= 0 ? "+" : ""}${alphaY.toFixed(1)}. Points are repositioned by reweighting their embeddings along the axis directions before projection.`}
+            </p>
+          </div>
 
           {/* Concept input */}
           <div className="flex items-center gap-3">
@@ -667,6 +764,48 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Polarisation readout: how strongly the axes are doing
+                  geometric work at the current amplification level.
+                  Compass-equivalent of cluster purity (Latent
+                  Manipulator, CHI EA '26): rises as α moves away from
+                  0 if the axis genuinely separates the concept set,
+                  stays flat if the axis was already saturated or the
+                  concepts don't load on it. */}
+              {polarisation.has(modelId) && (
+                <div>
+                  <h4
+                    className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
+                    title={`Axis polarisation: mean absolute position along each axis. Higher = the axis is doing more geometric work to separate the plotted concepts. Compass-equivalent of cluster purity from Latent Manipulator (CHI EA '26). Compare across α values: if polarisation rises sharply as α increases, the axis concept is genuinely separating the concept set; if it stays flat, the axis was already saturated or the concepts don't load on it. Current α: x = ${alphaX >= 0 ? "+" : ""}${alphaX.toFixed(1)}, y = ${alphaY >= 0 ? "+" : ""}${alphaY.toFixed(1)}.`}
+                  >
+                    Axis Polarisation (at α<sub>x</sub> = {alphaX >= 0 ? "+" : ""}{alphaX.toFixed(1)}, α<sub>y</sub> = {alphaY >= 0 ? "+" : ""}{alphaY.toFixed(1)})
+                  </h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(() => {
+                      const pol = polarisation.get(modelId)!;
+                      return (
+                        <>
+                          <div className="bg-muted rounded-sm p-2">
+                            <div className="font-sans text-[9px] text-muted-foreground uppercase tracking-wider">X polarisation</div>
+                            <div className="font-sans text-body-sm font-bold tabular-nums mt-0.5">{pol.x.toFixed(4)}</div>
+                            <div className="font-sans text-[9px] text-muted-foreground mt-0.5">mean |x|</div>
+                          </div>
+                          <div className="bg-muted rounded-sm p-2">
+                            <div className="font-sans text-[9px] text-muted-foreground uppercase tracking-wider">Y polarisation</div>
+                            <div className="font-sans text-body-sm font-bold tabular-nums mt-0.5">{pol.y.toFixed(4)}</div>
+                            <div className="font-sans text-[9px] text-muted-foreground mt-0.5">mean |y|</div>
+                          </div>
+                          <div className="bg-muted rounded-sm p-2">
+                            <div className="font-sans text-[9px] text-muted-foreground uppercase tracking-wider">Radial</div>
+                            <div className="font-sans text-body-sm font-bold tabular-nums mt-0.5">{pol.r.toFixed(4)}</div>
+                            <div className="font-sans text-[9px] text-muted-foreground mt-0.5">mean √(x²+y²)</div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
 
               {/* Per-concept table with normalised values */}
               {(() => {
