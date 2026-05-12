@@ -43,6 +43,18 @@ async function fetchEmbeddingsOllamaBrowserDirect(
   texts: string[],
   baseUrl: string
 ): Promise<EmbedResponse> {
+  // Sanity guard: this function must run in the browser. If we somehow
+  // land here on the server, fall through to the API-route path —
+  // because a server-side fetch to localhost from a deployed Atlas will
+  // fail with undici's "fetch failed" message and the user has no way
+  // to read it as a CORS hint.
+  if (typeof window === "undefined") {
+    throw new Error(
+      "Ollama browser-direct path was invoked on the server; this is a bug. " +
+      "The browser must call Ollama directly so the request reaches the user's machine, " +
+      "not the deployment's container."
+    );
+  }
   const url = baseUrl.replace(/\/$/, "");
   try {
     const vectors = await embedOllama(texts, model, url);
@@ -53,28 +65,36 @@ async function fetchEmbeddingsOllamaBrowserDirect(
     };
   } catch (err) {
     const original = err instanceof Error ? err.message : String(err);
-    // The browser raises a generic TypeError("Failed to fetch") for
-    // both CORS blocks and connection-refused. Disambiguate via the
-    // page's origin: if we're on a non-localhost origin and the call
-    // failed, almost certainly CORS.
-    const isBrowser = typeof window !== "undefined";
     const onLocalhost =
-      isBrowser &&
-      (window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1" ||
-        window.location.hostname === "0.0.0.0");
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname === "0.0.0.0";
+    // Browsers and various fetch implementations raise different generic
+    // messages for what is almost always either CORS or connection-
+    // refused: Chrome "Failed to fetch", Firefox "NetworkError",
+    // Safari "Load failed", Node/undici "fetch failed", some wrappers
+    // "Network request failed" / "TypeError: fetch". Match permissively.
     const looksLikeNetworkError =
-      /failed to fetch|networkerror|load failed/i.test(original);
+      /failed to fetch|fetch failed|networkerror|load failed|network request failed|^typeerror/i.test(
+        original
+      );
     if (looksLikeNetworkError) {
       if (!onLocalhost) {
         throw new Error(
-          `Cannot reach Ollama at ${url} from ${window.location.origin}. This is almost certainly a CORS block — start Ollama with OLLAMA_ORIGINS="${window.location.origin},http://localhost:3000,http://127.0.0.1:3000" ollama serve so it accepts requests from this page. The Settings panel shows the exact command. (Safari blocks HTTPS pages from calling http://localhost regardless of CORS — use Chrome / Firefox / Edge from a deployed Atlas.)`
+          `Cannot reach Ollama at ${url} from ${window.location.origin}. ` +
+          `This is almost certainly a CORS block — start Ollama with ` +
+          `OLLAMA_ORIGINS="${window.location.origin},http://localhost:3000,http://127.0.0.1:3000" ollama serve ` +
+          `so it accepts requests from this page. The Settings panel shows the exact command. ` +
+          `(Safari blocks HTTPS pages from calling http://localhost regardless of CORS — use ` +
+          `Chrome / Firefox / Edge from a deployed Atlas.)`
         );
       }
       throw new Error(
         `Cannot reach Ollama at ${url}. Is it running? Start it with: ollama serve`
       );
     }
+    // Anything else (e.g. HTTP 4xx/5xx with a real response body) bubbles
+    // up unchanged so the actual Ollama error reaches the user.
     throw err;
   }
 }
@@ -89,6 +109,15 @@ export async function fetchEmbeddings(
   // Ollama path: browser-direct so deployed Atlas can reach a user's
   // local Ollama (subject to OLLAMA_ORIGINS on the Ollama side).
   if (provider === "ollama") {
+    if (typeof window !== "undefined") {
+      // One-time diagnostic so DevTools confirms the browser-direct path
+      // is in use. Easy to remove once we trust the routing.
+      // eslint-disable-next-line no-console
+      console.debug(
+        "[manifold-atlas] Ollama: browser-direct call",
+        { model, baseUrl: baseUrl || "http://localhost:11434", textCount: texts.length }
+      );
+    }
     return fetchEmbeddingsOllamaBrowserDirect(
       model,
       texts,
