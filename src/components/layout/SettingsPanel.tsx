@@ -5,6 +5,7 @@ import { X, Check, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbeddingCache } from "@/context/EmbeddingCacheContext";
 import { EMBEDDING_PROVIDERS, type EmbeddingProviderId } from "@/types/embeddings";
+import { CopyableCommand } from "@/components/shared/CopyableCommand";
 
 /**
  * Read window.location after mount so the values are correct on the
@@ -22,39 +23,6 @@ function useClientOrigin(): { hostname: string; origin: string; isLocal: boolean
     });
   }, []);
   return info;
-}
-
-/**
- * Inline code block with a copy-to-clipboard button. Used for the
- * OLLAMA_ORIGINS command so users can paste the exact string with
- * their own origin pre-filled.
- */
-function CopyableCommand({ command }: { command: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(command);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* clipboard unavailable; user can still select manually */
-    }
-  };
-  return (
-    <span className="block my-1.5 flex items-start gap-1.5">
-      <code className="flex-1 font-mono text-[11px] bg-muted/60 px-2 py-1 rounded select-all break-all">
-        {command}
-      </code>
-      <button
-        type="button"
-        onClick={copy}
-        className="btn-editorial-ghost text-[10px] px-2 py-1 shrink-0"
-        title="Copy to clipboard"
-      >
-        {copied ? "Copied" : "Copy"}
-      </button>
-    </span>
-  );
 }
 
 /**

@@ -33,6 +33,37 @@ export class RateLimitError extends Error {
 }
 
 /**
+ * Structured Ollama CORS error. Carries the pieces ErrorDisplay needs
+ * to render a copyable command block rather than a long flat string:
+ * the page's origin, the Ollama URL, and the full OLLAMA_ORIGINS
+ * command pre-filled with the origin.
+ */
+export class OllamaCorsError extends Error {
+  public origin: string;
+  public ollamaUrl: string;
+  public command: string;
+  public kind: "cors" | "unreachable";
+  constructor(args: {
+    origin: string;
+    ollamaUrl: string;
+    command: string;
+    kind: "cors" | "unreachable";
+    message: string;
+  }) {
+    super(args.message);
+    this.name = "OllamaCorsError";
+    this.origin = args.origin;
+    this.ollamaUrl = args.ollamaUrl;
+    this.command = args.command;
+    this.kind = args.kind;
+  }
+}
+
+export function isOllamaCorsError(err: unknown): err is OllamaCorsError {
+  return err instanceof OllamaCorsError;
+}
+
+/**
  * Browser-direct Ollama call with friendly error mapping. CORS,
  * connection-refused, and HTTP-status failures all surface as
  * actionable messages rather than the generic "Failed to fetch" the
@@ -80,18 +111,25 @@ async function fetchEmbeddingsOllamaBrowserDirect(
       );
     if (looksLikeNetworkError) {
       if (!onLocalhost) {
-        throw new Error(
-          `Cannot reach Ollama at ${url} from ${window.location.origin}. ` +
-          `This is almost certainly a CORS block — start Ollama with ` +
-          `OLLAMA_ORIGINS="${window.location.origin},http://localhost:3000,http://127.0.0.1:3000" ollama serve ` +
-          `so it accepts requests from this page. The Settings panel shows the exact command. ` +
-          `(Safari blocks HTTPS pages from calling http://localhost regardless of CORS — use ` +
-          `Chrome / Firefox / Edge from a deployed Atlas.)`
-        );
+        const origin = window.location.origin;
+        const command = `OLLAMA_ORIGINS="${origin},http://localhost:3000,http://127.0.0.1:3000" ollama serve`;
+        throw new OllamaCorsError({
+          origin,
+          ollamaUrl: url,
+          command,
+          kind: "cors",
+          message: `Cannot reach Ollama at ${url} from ${origin}. Almost certainly a CORS block. Restart Ollama with the command below so it accepts requests from this page.`,
+        });
       }
-      throw new Error(
-        `Cannot reach Ollama at ${url}. Is it running? Start it with: ollama serve`
-      );
+      // Same structured shape so ErrorDisplay can render the
+      // unreachable case with a copyable `ollama serve` block too.
+      throw new OllamaCorsError({
+        origin: window.location.origin,
+        ollamaUrl: url,
+        command: `ollama serve`,
+        kind: "unreachable",
+        message: `Cannot reach Ollama at ${url}. Is it running?`,
+      });
     }
     // Anything else (e.g. HTTP 4xx/5xx with a real response body) bubbles
     // up unchanged so the actual Ollama error reaches the user.
