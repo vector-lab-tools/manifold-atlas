@@ -17,42 +17,54 @@ export function OllamaHelper({ modelName, baseUrl = "http://localhost:11434", on
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(true);
 
-  // Fetch available models on mount
+  // Browser-direct call helper. Friendly error mapping for CORS vs
+  // connection-refused — see client.ts for the rationale.
+  const url = baseUrl.replace(/\/$/, "");
+  const friendlyError = (e: unknown): string => {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+      if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+        return `Cannot reach Ollama at ${url} from ${window.location.origin}. Almost certainly a CORS block — start Ollama with OLLAMA_ORIGINS including this origin.`;
+      }
+      return "Cannot connect to Ollama. Is it running? Start with: ollama serve";
+    }
+    return msg;
+  };
+
+  // Fetch available models on mount, browser-direct.
   useEffect(() => {
-    fetch("/api/ollama", {
-      headers: { "X-Ollama-Base-URL": baseUrl },
-    })
+    fetch(`${url}/api/tags`)
       .then(res => res.json())
       .then(data => {
         if (data.models) {
           setAvailableModels(data.models.map((m: { name: string }) => m.name));
         }
       })
-      .catch(() => setError("Cannot connect to Ollama. Is it running?"))
+      .catch(e => setError(friendlyError(e)))
       .finally(() => setLoadingModels(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseUrl]);
 
   const handlePull = async () => {
     setPulling(true);
     setError(null);
     try {
-      const res = await fetch("/api/ollama", {
+      const res = await fetch(`${url}/api/pull`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Ollama-Base-URL": baseUrl,
-        },
-        body: JSON.stringify({ model: modelName }),
+        headers: { "Content-Type": "application/json" },
+        // Ollama's /api/pull accepts both `name` and `model`; the older
+        // `name` form is more universally supported across Ollama versions.
+        body: JSON.stringify({ name: modelName, stream: false }),
       });
-      const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Pull failed");
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `Pull failed (${res.status})`);
       } else {
         setPulled(true);
         setTimeout(() => onPulled(), 1500);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Pull failed");
+      setError(friendlyError(e));
     } finally {
       setPulling(false);
     }
