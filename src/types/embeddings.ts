@@ -80,7 +80,11 @@ export const EMBEDDING_PROVIDERS: Record<EmbeddingProviderId, EmbeddingProviderC
   ollama: {
     id: "ollama",
     name: "Ollama (Local)",
-    description: "Embeds via an Ollama instance you run yourself. The default base URL http://localhost:11434 works out of the box when Manifold Atlas is running locally (npm run dev). To use the same local Ollama from the hosted build at vector-lab-tools.github.io or a Vercel preview, start Ollama with OLLAMA_ORIGINS=* set in its environment so it accepts CORS requests from any origin (e.g. OLLAMA_ORIGINS=* ollama serve, or set it in launchctl on macOS / the systemd unit on Linux). Modern browsers treat localhost as a secure context, so the deployed page can then reach your local Ollama directly. The base-URL field is also configurable, so the same provider entry can be pointed at a remote Ollama endpoint or an Ollama Cloud endpoint when those are available.",
+    // Short description used by tooltips and the Runner; the long-form
+    // setup help is rendered by the OllamaSetupHelp component in the
+    // Settings panel (origin-aware copyable OLLAMA_ORIGINS command +
+    // Safari caveat), mirroring the LLMbench pattern.
+    description: "Embeds via an Ollama instance you run yourself. Works from a local dev build out of the box, and from the hosted build when Ollama is started with OLLAMA_ORIGINS including this page's origin.",
     requiresApiKey: false,
     baseUrlConfigurable: true,
     defaultBaseUrl: "http://localhost:11434",

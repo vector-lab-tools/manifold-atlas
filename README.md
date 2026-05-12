@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.5.2
+**Version:** 1.5.3
 **Date:** 29 April 2026
 **Licence:** MIT
 
@@ -172,18 +172,19 @@ To use Hugging Face: sign up at [huggingface.co](https://huggingface.co/) (free)
 
 | Provider | Models |
 |----------|--------|
-| Ollama | nomic-embed-text, mxbai-embed-large, all-minilm, or any embedding model you pull |
+| Ollama | nomic-embed-text, mxbai-embed-large, all-minilm, embeddinggemma, gemma4, or any embedding model you pull |
 
-> **Note on browser CORS.** By default, Ollama only accepts requests from the same origin, so out of the box the local default `http://localhost:11434` works only when Manifold Atlas is also running locally (`npm run dev`). To use your local Ollama from the **hosted build** at vector-lab-tools.github.io or a Vercel preview, start Ollama with `OLLAMA_ORIGINS=*` set in its environment so it responds to CORS requests from any origin. Modern browsers treat `localhost` as a secure context, so the deployed page can then reach your local Ollama directly. The base-URL field is also configurable, so the same provider entry works against a remote Ollama endpoint or an Ollama Cloud endpoint when those are available.
+**Two ways to run Ollama with Manifold Atlas.**
 
-**Two ways to run Ollama with Manifold Atlas:**
+1. **Local Atlas + local Ollama** (simplest, no extra configuration). Install Ollama, pull a model (`ollama pull nomic-embed-text`), clone Manifold Atlas, run `npm run dev`, enable Ollama in Settings. A plain `ollama serve` is enough.
 
-1. **Local Atlas + local Ollama** (simplest, no extra configuration). Install Ollama, pull a model (`ollama pull nomic-embed-text`), clone Manifold Atlas, run `npm run dev`, enable Ollama in Settings.
-2. **Hosted Atlas + local Ollama** (no install of Manifold Atlas needed). Install Ollama, pull a model, then start it with permissive CORS:
+2. **Deployed Atlas + local Ollama** (no Atlas install needed). Manifold Atlas calls Ollama directly from your browser, so the hosted build at vector-lab-tools.github.io can reach the Ollama instance on your own machine — but Ollama's CORS policy must allow this page's origin. Install Ollama, pull a model, then start it with the deployed origin pre-approved. The Settings panel for the Ollama provider detects your current origin and shows a pre-filled copyable command, ready to paste. The pattern is:
    ```bash
-   OLLAMA_ORIGINS=* ollama serve
+   OLLAMA_ORIGINS="https://your-manifold-atlas-origin,http://localhost:3000,http://127.0.0.1:3000" ollama serve
    ```
-   On macOS, set the variable persistently with `launchctl setenv OLLAMA_ORIGINS '*'` and restart Ollama. On Linux with systemd, add `Environment="OLLAMA_ORIGINS=*"` to the Ollama service unit. Open the hosted Manifold Atlas in your browser, enable Ollama in Settings, leave the default base URL.
+   To make this persistent: on macOS, `launchctl setenv OLLAMA_ORIGINS "<comma-separated-origins>"` and restart Ollama. On Linux with systemd, add `Environment="OLLAMA_ORIGINS=<comma-separated-origins>"` to the Ollama service unit. `OLLAMA_ORIGINS=*` works too but is more permissive than needed.
+
+**Safari note.** The browser-direct Ollama path works in Chrome, Firefox, Edge, Arc, and Brave. Safari currently blocks HTTPS pages from calling `http://localhost` regardless of CORS, so use one of the Chromium-family browsers (or Firefox) for Ollama from a deployed Atlas. Local dev (`npm run dev` on `localhost:3000`) works in Safari too.
 
 Either way, no API key is needed and no data leaves your machine.
 

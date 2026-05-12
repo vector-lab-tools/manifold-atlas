@@ -1,10 +1,137 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Check, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbeddingCache } from "@/context/EmbeddingCacheContext";
 import { EMBEDDING_PROVIDERS, type EmbeddingProviderId } from "@/types/embeddings";
+
+/**
+ * Read window.location after mount so the values are correct on the
+ * client without breaking SSR hydration (mirrors the LLMbench pattern).
+ * Returns empty strings during SSR; real values after first effect.
+ */
+function useClientOrigin(): { hostname: string; origin: string; isLocal: boolean } {
+  const [info, setInfo] = useState({ hostname: "", origin: "", isLocal: false });
+  useEffect(() => {
+    const host = window.location.hostname;
+    setInfo({
+      hostname: host,
+      origin: window.location.origin,
+      isLocal: host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0",
+    });
+  }, []);
+  return info;
+}
+
+/**
+ * Inline code block with a copy-to-clipboard button. Used for the
+ * OLLAMA_ORIGINS command so users can paste the exact string with
+ * their own origin pre-filled.
+ */
+function CopyableCommand({ command }: { command: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable; user can still select manually */
+    }
+  };
+  return (
+    <span className="block my-1.5 flex items-start gap-1.5">
+      <code className="flex-1 font-mono text-[11px] bg-muted/60 px-2 py-1 rounded select-all break-all">
+        {command}
+      </code>
+      <button
+        type="button"
+        onClick={copy}
+        className="btn-editorial-ghost text-[10px] px-2 py-1 shrink-0"
+        title="Copy to clipboard"
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </span>
+  );
+}
+
+/**
+ * Origin-aware Ollama setup help. Detects whether Atlas is being viewed
+ * from localhost (in which case plain `ollama serve` is enough) or a
+ * deployed origin (in which case Ollama must be started with
+ * OLLAMA_ORIGINS including this page's origin so its CORS policy lets
+ * the browser call it). The exact command is pre-filled with the user's
+ * real origin and rendered as a one-click copy block. Mirrors the
+ * LLMbench Ollama help pattern.
+ */
+function OllamaSetupHelp() {
+  const { hostname, origin, isLocal } = useClientOrigin();
+  return (
+    <div className="space-y-2 font-sans text-caption text-slate">
+      <p>
+        <strong className="text-foreground">Ollama (Local)</strong> runs embedding
+        models on your own machine. Manifold Atlas calls Ollama directly from your
+        browser, so it works from both a local dev build and a deployed Atlas — as
+        long as you let Ollama&rsquo;s CORS policy talk to this page&rsquo;s origin.
+      </p>
+      <p>
+        Setup: install from{" "}
+        <a
+          href="https://ollama.com/download"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
+        >
+          ollama.com/download
+        </a>
+        , pull an embedding model (
+        <code className="font-mono text-[11px] bg-muted/60 px-1 py-0.5 rounded">
+          ollama pull nomic-embed-text
+        </code>
+        ), and start the server.{" "}
+        {isLocal ? (
+          <>
+            A plain{" "}
+            <code className="font-mono text-[11px] bg-muted/60 px-1 py-0.5 rounded">
+              ollama serve
+            </code>{" "}
+            is enough when you&rsquo;re running Atlas on localhost.
+          </>
+        ) : (
+          <>
+            You&rsquo;re viewing Manifold Atlas from{" "}
+            <span className="font-mono">{hostname || "a deployed origin"}</span>.
+            Start Ollama with this exact command so its CORS policy lets the
+            browser call it from here:
+            <CopyableCommand
+              command={`OLLAMA_ORIGINS="${origin || "https://your-manifold-atlas-origin"},http://localhost:3000,http://127.0.0.1:3000" ollama serve`}
+            />
+            <span className="block mt-1">
+              <strong className="text-foreground">Safari note:</strong> the
+              browser-direct path works in Chrome, Firefox, Edge, Arc, and Brave.
+              Safari currently blocks HTTPS pages from calling{" "}
+              <code className="font-mono text-[11px] bg-muted/60 px-1 py-0.5 rounded">
+                http://localhost
+              </code>{" "}
+              regardless of CORS, so use one of the Chromium-family browsers (or
+              Firefox) for Ollama from a deployed Atlas. Local dev (
+              <code className="font-mono text-[11px] bg-muted/60 px-1 py-0.5 rounded">
+                npm run dev
+              </code>{" "}
+              on{" "}
+              <code className="font-mono text-[11px] bg-muted/60 px-1 py-0.5 rounded">
+                localhost:3000
+              </code>
+              ) works in Safari too.
+            </span>
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
 
 export function SettingsPanel() {
   const { settings, settingsOpen, setSettingsOpen, updateProvider, providerModels } = useSettings();
@@ -52,22 +179,28 @@ export function SettingsPanel() {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <h3 className="font-sans text-body-sm font-semibold">{provider.name}</h3>
-                      <p className="font-sans text-caption text-slate mt-0.5">
-                        {provider.description}
-                        {provider.signupUrl && (
-                          <>
-                            {" "}
-                            <a
-                              href={provider.signupUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
-                            >
-                              Get API key &rarr;
-                            </a>
-                          </>
-                        )}
-                      </p>
+                      {pid === "ollama" ? (
+                        <div className="mt-1">
+                          <OllamaSetupHelp />
+                        </div>
+                      ) : (
+                        <p className="font-sans text-caption text-slate mt-0.5">
+                          {provider.description}
+                          {provider.signupUrl && (
+                            <>
+                              {" "}
+                              <a
+                                href={provider.signupUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
+                              >
+                                Get API key &rarr;
+                              </a>
+                            </>
+                          )}
+                        </p>
+                      )}
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
