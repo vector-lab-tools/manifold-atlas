@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
@@ -12,6 +12,7 @@ import { QueryHistory } from "@/components/shared/QueryHistory";
 import { addHistoryEntry, type HistoryEntry } from "@/lib/history";
 import { negationSimilarityLevel } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
+import { generateNegation } from "@/lib/negation";
 import {
   computeNegationGauge,
   negationGaugeTextList,
@@ -50,15 +51,40 @@ interface NegationGaugeProps {
 
 export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
   const [statement, setStatement] = useState("");
+  // Optional user-supplied negation. Empty string = use the auto-
+  // generated form. Letting the user override is useful when (a) the
+  // rule-based generator produces awkward output, (b) the user wants
+  // to test a specific antithetical phrasing (e.g. "This is injustice"
+  // rather than "This is not justice"), or (c) the statement is in a
+  // language the rule-based generator doesn't handle.
+  const [negationOverride, setNegationOverride] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<NegationGaugeResult | null>(null);
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
 
-  const handleCompute = async (overrideStatement?: string) => {
+  // Auto-generated negation suggestion, computed live from the
+  // statement. Shown as the placeholder in the negation input so the
+  // user can either accept it (leave the box blank) or override it.
+  const autoNegation = useMemo(() => {
+    const trimmed = statement.trim() || DEFAULT_STATEMENT;
+    try {
+      return generateNegation(trimmed);
+    } catch {
+      return "";
+    }
+  }, [statement]);
+
+  const handleCompute = async (
+    overrideStatement?: string,
+    overrideNegation?: string
+  ) => {
     const effectiveStatement = overrideStatement || statement.trim() || DEFAULT_STATEMENT;
     if (!statement.trim() && !overrideStatement) setStatement(DEFAULT_STATEMENT);
+    // Negation: explicit override > user-typed override > auto-generated
+    const userNegation = (overrideNegation ?? negationOverride).trim();
+    const negatedForRun = userNegation || undefined; // undefined → pure module auto-generates
     setLoading(true);
     setError(null);
     const start = performance.now();
@@ -67,6 +93,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
       const inputs = {
         statement: effectiveStatement,
         threshold: settings.negationThreshold,
+        negated: negatedForRun,
       };
       const texts = negationGaugeTextList(inputs);
       const original = texts[0];
@@ -99,13 +126,25 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
 
   const handleReset = () => {
     setStatement("");
+    setNegationOverride("");
     setResult(null);
     setError(null);
   };
 
   const handleHistorySelect = (entry: HistoryEntry) => {
     if (entry.original) setStatement(entry.original);
-    handleCompute(entry.original);
+    // History entries store the actual negated form that was used; if
+    // it differs from the auto-generated one, restore it into the
+    // override box so re-running reproduces the same pair.
+    if (entry.original && entry.negated) {
+      try {
+        const fresh = generateNegation(entry.original);
+        setNegationOverride(entry.negated === fresh ? "" : entry.negated);
+      } catch {
+        setNegationOverride(entry.negated);
+      }
+    }
+    handleCompute(entry.original, entry.negated);
   };
 
   const collapsedCount = result?.models.filter(m => m.collapsed).length ?? 0;
@@ -127,22 +166,52 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
           stores them close together, differing in only a few dimensions out of hundreds.
           This gauge measures how much space the manifold actually gives to negation.
         </p>
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={statement}
-            onChange={e => setStatement(e.target.value)}
-            placeholder={DEFAULT_STATEMENT}
-            className="input-editorial flex-1"
-            onKeyDown={e => e.key === "Enter" && handleCompute()}
-          />
-          <button
-            onClick={() => handleCompute()}
-            disabled={loading}
-            className="btn-editorial-primary flex-shrink-0 disabled:opacity-50"
-          >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : "Test"}
-          </button>
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-sans text-caption text-muted-foreground uppercase tracking-wider mb-1">
+                A — statement
+              </label>
+              <input
+                type="text"
+                value={statement}
+                onChange={e => setStatement(e.target.value)}
+                placeholder={DEFAULT_STATEMENT}
+                className="input-editorial w-full"
+                onKeyDown={e => e.key === "Enter" && handleCompute()}
+              />
+            </div>
+            <div>
+              <label
+                className="block font-sans text-caption text-muted-foreground uppercase tracking-wider mb-1 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline"
+                title="Optional. Leave blank to auto-generate the negation by inserting 'not' after the first auxiliary verb (the placeholder shows the auto-suggestion). Override it when you want to test a specific antithetical phrasing — e.g. 'This is injustice' rather than 'This is not justice' — or when the statement is in a language the auto-generator doesn't handle."
+              >
+                Not A — negation (optional override)
+              </label>
+              <input
+                type="text"
+                value={negationOverride}
+                onChange={e => setNegationOverride(e.target.value)}
+                placeholder={autoNegation || "auto-generated from the statement"}
+                className="input-editorial w-full"
+                onKeyDown={e => e.key === "Enter" && handleCompute()}
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-sans text-caption text-muted-foreground italic">
+              {negationOverride.trim()
+                ? "Using your override as the negation."
+                : `Auto-generated negation: "${autoNegation}". Type in the right box to override.`}
+            </p>
+            <button
+              onClick={() => handleCompute()}
+              disabled={loading}
+              className="btn-editorial-primary flex-shrink-0 disabled:opacity-50"
+            >
+              {loading ? <Loader2 size={16} className="animate-spin" /> : "Test"}
+            </button>
+          </div>
         </div>
       </div>
 
