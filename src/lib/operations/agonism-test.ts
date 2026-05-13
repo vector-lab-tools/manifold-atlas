@@ -60,6 +60,95 @@ export const AGONISM_PAIRS: AgonismPair[] = [
     positionA: { thinker: "Lenin", quote: "The state is an organ of class rule, an organ for the oppression of one class by another" },
     positionB: { thinker: "Rousseau", quote: "The social contract establishes a form of association which defends and protects with the whole common force the person and goods of each associate" },
   },
+  // ────────────────────────────────────────────────────────────────
+  // Expanded set (14 May 2026). Broader coverage of philosophical and
+  // political-theoretical agonisms: justice, democracy, recognition,
+  // race, phenomenology, aesthetics, power, history, language, ethics,
+  // technology, modernity, economics, truth, subject, liberty. The
+  // labels and quotes are concise paraphrases of each thinker's
+  // canonical position, chosen so the lexical fields of the two poles
+  // are plausibly distinct without being engineered for separation.
+  // ────────────────────────────────────────────────────────────────
+  {
+    label: "Justice as fairness vs justice as entitlement",
+    positionA: { thinker: "Rawls", quote: "Justice is the first virtue of social institutions: a fair distribution of primary goods is what rational persons behind a veil of ignorance would agree to" },
+    positionB: { thinker: "Nozick", quote: "Whatever arises from a just situation by just steps is itself just; redistribution by the state violates the entitlement of holdings legitimately acquired" },
+  },
+  {
+    label: "Deliberative democracy vs agonistic democracy",
+    positionA: { thinker: "Habermas", quote: "Democratic legitimacy rests on procedures of rational deliberation aimed at consensus among free and equal citizens" },
+    positionB: { thinker: "Mouffe", quote: "The political consists in the ineradicability of antagonism; democratic politics must channel conflict into agonistic contestation rather than eliminate it through consensus" },
+  },
+  {
+    label: "Recognition vs redistribution",
+    positionA: { thinker: "Honneth", quote: "Struggles for social justice are at their deepest struggles for recognition: the demand to be acknowledged as a person of equal moral standing" },
+    positionB: { thinker: "Fraser", quote: "Injustice is rooted in the political economy of distribution; cultural recognition without material redistribution leaves the structural sources of inequality untouched" },
+  },
+  {
+    label: "Double consciousness vs accommodation",
+    positionA: { thinker: "Du Bois", quote: "One ever feels his twoness, an American, a Negro, two souls, two thoughts, two unreconciled strivings warring in one dark body" },
+    positionB: { thinker: "Washington", quote: "No race can prosper till it learns that there is as much dignity in tilling a field as in writing a poem; advance comes through industry and accommodation rather than agitation" },
+  },
+  {
+    label: "Being-toward-death vs the face of the Other",
+    positionA: { thinker: "Heidegger", quote: "Authentic existence is the resolute being-toward-death that wrests Dasein from its lostness in the they and gives it back to itself" },
+    positionB: { thinker: "Levinas", quote: "Ethics precedes ontology: the face of the Other commands me before any concern for my own being, the infinite responsibility for the other is the originary scene" },
+  },
+  {
+    label: "Autonomy of art vs art in the age of reproduction",
+    positionA: { thinker: "Adorno", quote: "The autonomous artwork's irreconcilability with the empirical world is its truth content; the moment it accommodates itself to mass culture it forfeits its critical force" },
+    positionB: { thinker: "Benjamin", quote: "Mechanical reproduction emancipates the work of art from its parasitical dependence on ritual, opening politics of art rather than aestheticised politics" },
+  },
+  {
+    label: "Communicative reason vs disciplinary power",
+    positionA: { thinker: "Habermas", quote: "Communicative action oriented toward mutual understanding is a fundamental capacity of human language that grounds democratic legitimation" },
+    positionB: { thinker: "Foucault", quote: "Power is not held but exercised; it operates through capillary networks of discipline, normalisation, and biopolitical regulation that produce subjects rather than repress them" },
+  },
+  {
+    label: "Progress vs jetztzeit",
+    positionA: { thinker: "Hegel", quote: "World history is the progress of the consciousness of freedom; the rational unfolds itself in time toward its self-actualisation in the modern state" },
+    positionB: { thinker: "Benjamin", quote: "History is not a homogeneous empty time of progress but a constellation pregnant with tensions, redeemable only by blasting open the continuum and seizing the moment of jetztzeit" },
+  },
+  {
+    label: "Forms of life vs différance",
+    positionA: { thinker: "Wittgenstein", quote: "To imagine a language is to imagine a form of life; meaning is use within a public practice, not an inner mental object referred to by a private sign" },
+    positionB: { thinker: "Derrida", quote: "There is nothing outside the text; meaning is endlessly deferred along a chain of differences, never fully present, always already inhabited by its other" },
+  },
+  {
+    label: "Categorical imperative vs greatest happiness",
+    positionA: { thinker: "Kant", quote: "Act only according to that maxim by which you can at the same time will that it should become a universal law; the moral worth of an action lies in the rational will, not in its consequences" },
+    positionB: { thinker: "Mill", quote: "Actions are right in proportion as they tend to promote happiness, wrong as they tend to produce the reverse; utility is the foundation of morals" },
+  },
+  {
+    label: "Technology as enframing vs technology as liberation",
+    positionA: { thinker: "Heidegger", quote: "The essence of modern technology is enframing, a mode of revealing that reduces nature and human beings alike to standing reserve, calculable resources awaiting use" },
+    positionB: { thinker: "Marcuse", quote: "Technology is in itself no fate; the same productive forces that enslave under capital could, if liberated from the imperatives of domination, ground a pacified existence" },
+  },
+  {
+    label: "Modernity as incomplete project vs incredulity toward metanarratives",
+    positionA: { thinker: "Habermas", quote: "Modernity is an unfinished project; the rational potentials of the Enlightenment have not been exhausted but corrupted, and the task is to redeem them through procedural rationality" },
+    positionB: { thinker: "Lyotard", quote: "I define postmodern as incredulity toward metanarratives; the grand narratives of emancipation and speculative dialectic have lost their credibility in the wake of late capitalism" },
+  },
+  {
+    label: "Free market vs the great transformation",
+    positionA: { thinker: "Hayek", quote: "The spontaneous order of the market coordinates dispersed knowledge through prices; deliberate central planning is incapable of matching its informational efficiency and inevitably tends to coercion" },
+    positionB: { thinker: "Polanyi", quote: "The idea of a self-regulating market is a stark utopia; markets disembedded from social relations produce dislocation, and society protects itself through countermovements of social legislation and protectionism" },
+  },
+  {
+    label: "Will to power vs Platonic Forms",
+    positionA: { thinker: "Nietzsche", quote: "Truths are illusions of which one has forgotten that they are illusions; the will to power is the only reality, perspectives interpret each other without ever reaching a ground" },
+    positionB: { thinker: "Plato", quote: "The Forms are eternal, changeless, and intelligible; sensible particulars participate in them imperfectly, and philosophy is the ascent from appearance to the reality of the Good" },
+  },
+  {
+    label: "Sovereign subject vs split subject",
+    positionA: { thinker: "Descartes", quote: "I think, therefore I am: the cogito is the indubitable foundation of certainty, a transparent self-presence on which the edifice of knowledge can be built" },
+    positionB: { thinker: "Lacan", quote: "The subject is not master in its own house; the unconscious is structured like a language, and the I is constituted in the field of the Other through the mirror stage and the symbolic order" },
+  },
+  {
+    label: "Liberty as non-interference vs liberty as non-domination",
+    positionA: { thinker: "Berlin", quote: "Negative liberty is the area within which a man can act unobstructed by others; the larger the area of non-interference, the wider one's liberty" },
+    positionB: { thinker: "Pettit", quote: "Liberty consists in non-domination, in not being subject to the arbitrary power of another; a person dependent on the goodwill of a master is unfree even when the master happens to be benevolent" },
+  },
 ];
 
 /**

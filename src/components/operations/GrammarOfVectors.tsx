@@ -624,28 +624,28 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
                 tip="Number of cosine measurements taken — constructions multiplied by the number of enabled embedding models."
               />
               <SummaryBox
-                label="Opposition preserved"
+                label="Distinct lexical fields"
                 value={`${(result.summary.preservedRate * 100).toFixed(1)}%`}
                 tone={result.summary.preservedRate < 0.25 ? "error" : result.summary.preservedRate < 0.5 ? "warning" : "success"}
-                tip="Proportion of tests where cosine(X, Y) falls below the threshold — the geometry preserves the antithesis the rhetoric claims. Low rates indicate the rhetoric of opposition exceeds what the geometry delivers; this is synthetic dialectic at scale."
+                tip="Proportion of tests where cosine(X, Y) falls below the threshold — the geometry registers distinct lexical fields for the two fragments. Whether that separation amounts to the antithesis the rhetorical construction claims is the reader's interpretive move. Low rates mean the X and Y fragments are geometrically close across most of the run — the empirical material for the synthetic-dialectic argument, but not by itself the verdict that the rhetoric outruns the geometry."
               />
               <SummaryBox
                 label="Avg cosine"
                 value={result.summary.avgSimilarity.toFixed(4)}
-                tip={`Mean cosine similarity between X and Y across all tests, ± ${result.summary.stdDevSimilarity.toFixed(4)} standard deviation. The construction's rhetorical frame claims X and Y are opposed; the closer this value sits to 1.0, the more the rhetoric outruns the geometry.`}
+                tip={`Mean cosine similarity between X and Y across all tests, ± ${result.summary.stdDevSimilarity.toFixed(4)} standard deviation. The construction's rhetorical frame claims X and Y are opposed; the closer this value sits to 1.0, the smaller the lexical-field separation the geometry registers between the two fragments.`}
               />
               <SummaryBox
                 label="Threshold"
                 value={String(result.threshold)}
-                hint="above = synthetic dialectic · below = opposition preserved"
-                tip="Cosine threshold separating preserved opposition (below) from synthetic dialectic (above). Use the Deep Dive's threshold sweep to see how sensitive the finding is to this choice — typically stable across the 0.5–0.7 range."
+                hint="above = lexical-field overlap · below = distinct lexical fields"
+                tip="Cosine threshold separating distinct-lexical-fields (below) from lexical-field overlap (above). The synthetic-dialectic reading — that the rhetorical performance of antithesis runs on a near-neighbour geometric move — is the interpretation the user brings to a run whose overlap rate is high. Use the Deep Dive's threshold sweep to see how sensitive the rate is to this choice; typically stable across 0.5–0.7."
               />
               {result.summary.mostDeceptive && (
                 <SummaryBox
-                  label="Most deceptive"
+                  label="Highest cosine pair"
                   value={`"${truncate(result.summary.mostDeceptive.raw, 36)}"`}
                   hint={`cos ${result.summary.mostDeceptive.cosine.toFixed(3)} in ${result.summary.mostDeceptive.modelName}`}
-                  tip="The construction × model combination with the highest cosine similarity — the largest gap between the rhetorical claim of opposition and the cosine reality."
+                  tip="The construction × model combination with the highest cosine similarity in this run — the strongest case in this sample for reading the rhetorical antithesis as outrunning the geometry. The reader judges whether the high overlap means the construction performs more opposition than the geometry can deliver (synthetic dialectic), or simply that the two fragments share enough vocabulary for cosine to register them as close."
                 />
               )}
             </div>
@@ -886,13 +886,18 @@ function ExpandableRow({
                       <td className="px-2 py-1 text-right tabular-nums">{m.dimensions}</td>
                       <td className="px-2 py-1 text-right">
                         {m.oppositionPreserved ? (
-                          <span className="text-success-600 font-semibold">preserved</span>
+                          <span
+                            className="text-success-600 font-semibold cursor-help decoration-dotted underline underline-offset-2 decoration-success-600/40 underline"
+                            title="The cosine sits below the threshold: the geometry registers a distinct lexical field for X and a distinct lexical field for Y. Whether that separation amounts to the antithesis the construction claims is the reader's interpretive move; the cell reports the measurement, not the verdict."
+                          >
+                            distinct fields
+                          </span>
                         ) : (
                           <span
                             className="text-error-600 font-semibold cursor-help decoration-dotted underline underline-offset-2 decoration-error-600/40 underline"
-                            title="Synthetic dialectic — the rhetorical performance of thesis and antithesis in prose whose underlying geometry performs only a slight rotation between near-neighbours. Dialectic as style, not as operation."
+                            title="The cosine sits at or above the threshold: the geometry registers lexical overlap between X and Y. This is the empirical material for the synthetic-dialectic reading — that the rhetorical performance of thesis-and-antithesis runs on a slight rotation between near-neighbours — but the inference from overlap to synthetic-dialectic is the reader's, not the instrument's."
                           >
-                            syn-dialectic
+                            lexical overlap
                           </span>
                         )}
                       </td>

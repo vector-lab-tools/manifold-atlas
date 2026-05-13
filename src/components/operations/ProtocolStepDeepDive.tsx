@@ -499,7 +499,12 @@ function GrammarDeepDive({ result }: { result: GrammarOfVectorsResult }) {
           <div className="font-sans text-body-sm font-bold">{result.register ?? "custom"}</div>
         </div>
         <div className="bg-muted rounded-sm p-2">
-          <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Opposition preserved</div>
+          <div
+            className="text-[9px] uppercase tracking-wider text-muted-foreground cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline"
+            title="Proportion of tests where cosine(X, Y) falls below the threshold — the geometry registers distinct lexical fields for the two fragments of each construction. Low rates are the empirical material for the synthetic-dialectic argument; the inference from lexical overlap to rhetorical overreach is the reader's, not the instrument's."
+          >
+            Distinct lexical fields
+          </div>
           <div className="font-sans text-body-sm font-bold tabular-nums">
             {(result.summary.preservedRate * 100).toFixed(1)}%
           </div>
@@ -559,7 +564,7 @@ function GrammarDeepDive({ result }: { result: GrammarOfVectorsResult }) {
               <Th align="right" tip="Standard deviation of cosines for this model.">Std dev</Th>
               <Th align="right">Min</Th>
               <Th align="right">Max</Th>
-              <Th align="right" tip="Proportion of constructions where cosine < threshold (opposition preserved).">Preserved</Th>
+              <Th align="right" tip="Proportion of constructions where cosine < threshold — the geometry registers distinct lexical fields for X and Y. Whether that separation amounts to the antithesis the construction performs is the reader's interpretive move.">Distinct fields</Th>
             </tr>
           </thead>
           <tbody className="divide-y divide-parchment">
@@ -591,7 +596,7 @@ function GrammarDeepDive({ result }: { result: GrammarOfVectorsResult }) {
                 <Th
                   key={n}
                   align="right"
-                  tip={`Cosine similarity between the X and Y fragments of each construction, as reported by ${n}. Red = at or above threshold (synthetic dialectic). Green = below threshold (opposition preserved).`}
+                  tip={`Cosine similarity between the X and Y fragments of each construction, as reported by ${n}. Red = at or above threshold — the geometry registers lexical overlap between the two fragments; the empirical material for the synthetic-dialectic reading, though the inference from overlap to rhetorical overreach is the reader's. Green = below threshold — the geometry registers distinct lexical fields; the reader judges whether that constitutes the antithesis the construction performs.`}
                 >
                   {n}
                 </Th>
