@@ -210,6 +210,169 @@ export const AGONISM_PAIRS: AgonismPair[] = [
     positionB: { thinker: "Pettit", quote: "Liberty consists in non-domination, in not being subject to the arbitrary power of another; a person dependent on the goodwill of a master is unfree even when the master happens to be benevolent" },
     theme: "Political theory",
   },
+  // ────────────────────────────────────────────────────────────────
+  // Thematic balancing (14 May 2026). 24 new pairs added so every
+  // theme carries six pairs. Targets the under-covered themes:
+  // Economics & property (+4), Power & knowledge (+4), Ethics &
+  // phenomenology (+4), Metaphysics & truth (+3), Language & subject
+  // (+4), Race & identity (+5). Total set now 48.
+  // ────────────────────────────────────────────────────────────────
+
+  // Economics & property
+  {
+    label: "Invisible hand vs alienated labour",
+    positionA: { thinker: "Smith", quote: "The wealth of nations arises from the division of labour and the invisible hand of the market; each pursuing his own interest is led to promote that of society more effectually than when he really intends to promote it" },
+    positionB: { thinker: "Marx", quote: "Labour produces wonderful things for the rich, but it produces privation for the worker; the worker is alienated from the product of his labour, from the act of production, from his species-being, and from other workers" },
+    theme: "Economics & property",
+  },
+  {
+    label: "Demand management vs monetarist discipline",
+    positionA: { thinker: "Keynes", quote: "In the long run we are all dead; effective demand is the determinant of output and employment, and government must intervene to manage aggregate demand in periods of slack" },
+    positionB: { thinker: "Friedman", quote: "Inflation is always and everywhere a monetary phenomenon; the role of government is to provide a stable rule for the money supply, not to fine-tune the economy through discretionary intervention" },
+    theme: "Economics & property",
+  },
+  {
+    label: "Institutionalism vs marginalism",
+    positionA: { thinker: "Veblen", quote: "The conspicuous consumption of goods is the means of reputability under the regime of pecuniary culture; economic life cannot be understood apart from the institutions of leisure and the predatory habits they conceal" },
+    positionB: { thinker: "Marshall", quote: "The economist studies the equilibrium of supply and demand at the margin; rational agents maximising utility under given constraints provide the framework for a science of economic behaviour" },
+    theme: "Economics & property",
+  },
+  {
+    label: "Creative destruction vs the technostructure",
+    positionA: { thinker: "Schumpeter", quote: "Capitalism is by nature a form of economic change; the perennial gale of creative destruction is its essential fact, driven by the entrepreneur who introduces new combinations and disrupts the old" },
+    positionB: { thinker: "Galbraith", quote: "The modern corporation operates not through market competition but through the technostructure, a planning system that creates the demand for what it produces and is checked only by countervailing power" },
+    theme: "Economics & property",
+  },
+
+  // Power & knowledge
+  {
+    label: "Knowledge as conquest vs knowledge as dwelling",
+    positionA: { thinker: "Bacon", quote: "Knowledge is power: the empire of man over things depends wholly on the arts and sciences; nature must be put to the question and her secrets extracted by the patient experiment of the inquirer" },
+    positionB: { thinker: "Heidegger", quote: "The essence of thinking is not calculation but a thanking openness to the truth of Being; modern science's enframing of nature as standing-reserve is itself a forgetfulness of Being to be overcome" },
+    theme: "Power & knowledge",
+  },
+  {
+    label: "Paradigm shift vs falsifiability",
+    positionA: { thinker: "Kuhn", quote: "Normal science proceeds within a paradigm whose anomalies eventually trigger a revolution; rival paradigms are incommensurable, and what counts as evidence shifts when the paradigm shifts" },
+    positionB: { thinker: "Popper", quote: "Science advances by conjecture and refutation; a theory is scientific only if it forbids certain outcomes, and the demarcation of science from pseudo-science is falsifiability" },
+    theme: "Power & knowledge",
+  },
+  {
+    label: "Orientalism as power vs orientalism as scholarship",
+    positionA: { thinker: "Said", quote: "Orientalism is a Western style for dominating, restructuring, and having authority over the Orient; the discipline produced the very object it claimed to describe, in service of imperial power" },
+    positionB: { thinker: "Lewis", quote: "The study of the Middle East requires philological precision and historical depth; reducing it to ideology critique mistakes scholarship for politics and forecloses the genuine understanding of a civilisation" },
+    theme: "Power & knowledge",
+  },
+  {
+    label: "Hegemony of consent vs circulation of elites",
+    positionA: { thinker: "Gramsci", quote: "Hegemony is the spontaneous consent given by the great masses of the population to the general direction imposed on social life by the dominant fundamental group; revolutionary politics is a war of position in civil society" },
+    positionB: { thinker: "Pareto", quote: "History is a graveyard of aristocracies; political power circulates among elites whose composition changes but whose existence is permanent — the lions and the foxes alternate, but elite rule does not end" },
+    theme: "Power & knowledge",
+  },
+
+  // Ethics & phenomenology
+  {
+    label: "Transcendental ego vs embodied perception",
+    positionA: { thinker: "Husserl", quote: "The transcendental ego is the absolute ground of constitution; through phenomenological reduction we suspend the natural attitude and recover the intentional structures by which consciousness constitutes its objects" },
+    positionB: { thinker: "Merleau-Ponty", quote: "The body is our general medium for having a world; perception is not constituted by a sovereign consciousness but is the prepersonal opening onto being that all reflection presupposes" },
+    theme: "Ethics & phenomenology",
+  },
+  {
+    label: "Virtue tradition vs moral sentiment",
+    positionA: { thinker: "MacIntyre", quote: "After virtue, moral discourse is fragmented; the recovery of a coherent ethical life requires returning to the Aristotelian tradition of virtues embedded in practices, narratives, and communities" },
+    positionB: { thinker: "Hume", quote: "Reason is and ought only to be the slave of the passions; moral distinctions are not derived from reason but from the sentiments of approval and disapproval that arise in observers of human conduct" },
+    theme: "Ethics & phenomenology",
+  },
+  {
+    label: "Ethics of care vs ethics of justice",
+    positionA: { thinker: "Gilligan", quote: "Women's moral reasoning is structured around an ethic of care, responsibility, and the maintenance of relationships, not by the abstract rules of justice the standard stage theory measures" },
+    positionB: { thinker: "Kohlberg", quote: "Moral development progresses through invariant stages culminating in post-conventional reasoning oriented to universal principles of justice; the highest stage is structurally the same across cultures" },
+    theme: "Ethics & phenomenology",
+  },
+  {
+    label: "Original sin vs human perfectibility",
+    positionA: { thinker: "Augustine", quote: "Without grace, the will is incapable of the good; original sin has corrupted human nature, and salvation is the unmerited gift of God rather than the achievement of human striving" },
+    positionB: { thinker: "Pelagius", quote: "Human beings are created free and capable of choosing the good without inherited corruption; if righteousness were impossible, God could not justly command it, and grace cooperates with the will rather than substituting for it" },
+    theme: "Ethics & phenomenology",
+  },
+
+  // Metaphysics & truth
+  {
+    label: "Being vs becoming",
+    positionA: { thinker: "Parmenides", quote: "What is, is, and what is not, is not; being is one, eternal, unchanging, indivisible — the path of becoming and not-being is the way of mortal opinion, never of truth" },
+    positionB: { thinker: "Heraclitus", quote: "Everything flows; you cannot step into the same river twice. The unity of opposites is the deep structure of the world: war is the father of all, and conflict is justice" },
+    theme: "Metaphysics & truth",
+  },
+  {
+    label: "Empiricism vs transcendental idealism",
+    positionA: { thinker: "Hume", quote: "All knowledge of matters of fact derives from impressions; causation is nothing more than the customary conjunction of events, and metaphysics extending beyond experience is sophistry and illusion" },
+    positionB: { thinker: "Kant", quote: "Experience itself is structured by the a priori categories of the understanding; the conditions of possible experience are not derived from experience but make experience possible — a transcendental rather than empirical inquiry" },
+    theme: "Metaphysics & truth",
+  },
+  {
+    label: "Naturalised epistemology vs logical empiricism",
+    positionA: { thinker: "Quine", quote: "There is no analytic-synthetic distinction and no first philosophy outside science; epistemology is naturalised, our beliefs face the tribunal of experience as a corporate body, and ontology is what our best theories quantify over" },
+    positionB: { thinker: "Carnap", quote: "Logical analysis of language separates meaningful empirical statements from metaphysical pseudo-statements; the choice of a linguistic framework is conventional, but within a framework, questions of existence have determinate answers" },
+    theme: "Metaphysics & truth",
+  },
+
+  // Language & subject
+  {
+    label: "Langue as system vs utterance as dialogue",
+    positionA: { thinker: "Saussure", quote: "Language is a system of differences without positive terms; the linguistic sign is arbitrary, and meaning arises from the structural relations between signs within langue rather than from particular utterances" },
+    positionB: { thinker: "Bakhtin", quote: "The word is half someone else's; every utterance is dialogic, oriented toward a respondent and saturated with the intentions of previous speakers — the abstract system langue is a fiction of grammarians" },
+    theme: "Language & subject",
+  },
+  {
+    label: "Universal grammar vs operant conditioning",
+    positionA: { thinker: "Chomsky", quote: "Language acquisition presupposes an innate universal grammar; the speed and uniformity with which children master complex syntactic structures cannot be explained by environmental conditioning alone" },
+    positionB: { thinker: "Skinner", quote: "Verbal behaviour, like any operant behaviour, is shaped by reinforcement contingencies; positing innate mental structures explains nothing and confuses the description of behaviour with its causes" },
+    theme: "Language & subject",
+  },
+  {
+    label: "The unconscious vs lucid consciousness",
+    positionA: { thinker: "Freud", quote: "The ego is not master in its own house; consciousness is the smallest part of mental life, and the unconscious — structured by repression, condensation, and displacement — determines what we take for free decision" },
+    positionB: { thinker: "Sartre", quote: "Consciousness is always consciousness of something, and always transparent to itself; the appeal to an unconscious is bad faith, a flight from the radical freedom and responsibility of the for-itself" },
+    theme: "Language & subject",
+  },
+  {
+    label: "Interpellation vs communicative action",
+    positionA: { thinker: "Althusser", quote: "Ideology interpellates individuals as subjects through ideological state apparatuses; what we experience as our free agency is the effect of a structural hailing that constitutes us as subjects in the first place" },
+    positionB: { thinker: "Habermas", quote: "Communicative action oriented to mutual understanding presupposes a counterfactual ideal speech situation; emancipation lies in the redemption of validity claims through rational discourse, not in the dissolution of the subject" },
+    theme: "Language & subject",
+  },
+
+  // Race & identity
+  {
+    label: "Anticolonial violence vs negritude",
+    positionA: { thinker: "Fanon", quote: "Decolonisation is always a violent phenomenon; the colonised person finds his freedom in and through violence, and the abstract reclamation of cultural identity cannot substitute for the material overthrow of colonial structures" },
+    positionB: { thinker: "Senghor", quote: "Negritude is the sum total of the cultural values of the black world; the reclamation of African civilisation, its rhythms, philosophy, and art, is the precondition for any authentic political emancipation" },
+    theme: "Race & identity",
+  },
+  {
+    label: "By any means necessary vs nonviolent resistance",
+    positionA: { thinker: "Malcolm X", quote: "We declare our right on this earth to be a human being, to be respected as a human being, to be given the rights of a human being in this society, on this earth, in this day, which we intend to bring into existence by any means necessary" },
+    positionB: { thinker: "King", quote: "Nonviolence is a powerful and just weapon, which cuts without wounding and ennobles the man who wields it; the choice is no longer between violence and nonviolence but between nonviolence and nonexistence" },
+    theme: "Race & identity",
+  },
+  {
+    label: "Afropessimism vs revolutionary humanism",
+    positionA: { thinker: "Wilderson", quote: "Anti-Blackness is the structural ground of modern civil society, not a contingent injustice within it; the Black is structurally positioned as social death, and revolutionary humanism inherited from Fanon underestimates the gratuitousness of Black suffering" },
+    positionB: { thinker: "Fanon", quote: "The black man is asked to be black in relation to the white man, but liberation requires a new humanism beyond the colour line; the future demands the disalienation of the human, not the perfection of identity politics" },
+    theme: "Race & identity",
+  },
+  {
+    label: "Intersectionality vs single-axis feminism",
+    positionA: { thinker: "Crenshaw", quote: "The single-axis framework of antidiscrimination law and feminist theory fails Black women whose experience is constituted at the intersection of race and gender; intersectionality names what neither feminism nor antiracism alone can see" },
+    positionB: { thinker: "MacKinnon", quote: "The condition of women under patriarchy is constituted by the eroticisation of dominance; gender is the form taken by inequality of power, and the legal recognition of sexual subordination is the urgent task of feminist jurisprudence" },
+    theme: "Race & identity",
+  },
+  {
+    label: "Can the subaltern speak vs third world women's agency",
+    positionA: { thinker: "Spivak", quote: "The subaltern cannot speak — not because she has no voice but because the structures of representation that would make her speech intelligible are constituted by the very colonial power that silences her" },
+    positionB: { thinker: "Mohanty", quote: "Western feminist scholarship constitutes the third world woman as a singular monolithic subject, denying her historical specificity and agency; solidarity requires recognising her as a producer of theory rather than only its object" },
+    theme: "Race & identity",
+  },
 ];
 
 /** Return the subset of AGONISM_PAIRS in a given theme, or the full
