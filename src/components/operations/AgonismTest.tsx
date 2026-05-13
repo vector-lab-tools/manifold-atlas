@@ -11,16 +11,20 @@ import { ResetButton } from "@/components/shared/ResetButton";
 import { conceptSimilarityLevel } from "@/lib/similarity-scale";
 import {
   AGONISM_PAIRS,
+  AGONISM_THEMES,
+  agonismPairsByTheme,
   computeAgonismTest,
   agonismTestTextList,
   type AgonismPair,
   type AgonismPairResult,
+  type AgonismTheme,
 } from "@/lib/operations/agonism-test";
 import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 type OpposedPair = AgonismPair;
 const PRELOADED_PAIRS = AGONISM_PAIRS;
 type AgonismResult = AgonismPairResult;
+type ThemeChoice = "All" | AgonismTheme;
 
 interface AgonismTestProps {
   onQueryTime: (time: number) => void;
@@ -32,8 +36,15 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
   const [results, setResults] = useState<AgonismResult[]>([]);
   const [customPairs, setCustomPairs] = useState("");
   const [useCustom, setUseCustom] = useState(false);
+  // Thematic filter for the canonical pair set. "All" runs the full
+  // 24-pair battery; any specific theme name runs only that subset.
+  const [selectedTheme, setSelectedTheme] = useState<ThemeChoice>("All");
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+
+  const filteredPairs: OpposedPair[] = useCustom
+    ? []
+    : agonismPairsByTheme(selectedTheme);
 
   const handleCompute = async () => {
     let pairs: OpposedPair[];
@@ -48,7 +59,7 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
         };
       });
     } else {
-      pairs = PRELOADED_PAIRS;
+      pairs = filteredPairs;
     }
 
     setLoading(true);
@@ -110,6 +121,35 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
         </p>
 
         <div className="space-y-3">
+          {/* Theme selector: filters the canonical 24-pair set down to
+              a coherent thematic subset (Economics, Critical theory,
+              etc.) so a run targets one register of agonism rather
+              than the whole battery. Hidden when custom pairs are in
+              use. */}
+          {!useCustom && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="font-sans text-body-sm text-slate">Theme:</label>
+              <select
+                value={selectedTheme}
+                onChange={e => setSelectedTheme(e.target.value as ThemeChoice)}
+                className="input-editorial w-auto py-1.5 px-3 text-body-sm"
+              >
+                <option value="All">All ({PRELOADED_PAIRS.length} pairs)</option>
+                {AGONISM_THEMES.map(t => {
+                  const count = PRELOADED_PAIRS.filter(p => p.theme === t).length;
+                  return (
+                    <option key={t} value={t} disabled={count === 0}>
+                      {t} ({count} pair{count === 1 ? "" : "s"})
+                    </option>
+                  );
+                })}
+              </select>
+              <span className="font-sans text-caption text-muted-foreground italic">
+                {filteredPairs.length} pair{filteredPairs.length === 1 ? "" : "s"} will run
+              </span>
+            </div>
+          )}
+
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -133,10 +173,10 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
           <div className="flex justify-end">
             <button
               onClick={handleCompute}
-              disabled={loading}
+              disabled={loading || (!useCustom && filteredPairs.length === 0)}
               className="btn-editorial-primary disabled:opacity-50"
             >
-              {loading ? <><Loader2 size={16} className="animate-spin mr-2" />Testing ({results.length}/{useCustom ? "?" : PRELOADED_PAIRS.length})...</> : "Run Agonism Test"}
+              {loading ? <><Loader2 size={16} className="animate-spin mr-2" />Testing ({results.length}/{useCustom ? "?" : filteredPairs.length})...</> : "Run Agonism Test"}
             </button>
           </div>
         </div>
@@ -162,7 +202,12 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
                   <div className="font-sans text-body-lg font-bold mt-0.5">{results.length}</div>
                 </div>
                 <div className="bg-muted rounded-sm p-3">
-                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Opposition Preserved</div>
+                  <div
+                    className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline"
+                    title="Tests where cosine falls below threshold — the geometry registers distinct lexical fields for the two positions. Whether that separation amounts to philosophical opposition is the reader's interpretive move."
+                  >
+                    Distinct Lexical Fields
+                  </div>
                   <div className={`font-sans text-body-lg font-bold mt-0.5 ${preservedCount > totalTests * 0.5 ? "text-success-600" : "text-error-500"}`}>
                     {preservedCount} / {totalTests}
                   </div>
@@ -172,7 +217,12 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
                   <div className="font-sans text-body-lg font-bold mt-0.5 tabular-nums">{avgSimilarity.toFixed(4)}</div>
                 </div>
                 <div className="bg-muted rounded-sm p-3">
-                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Collapse Rate</div>
+                  <div
+                    className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline"
+                    title="Proportion of tests where cosine sits at or above threshold — the geometry registers lexical-field overlap between the two positions. Whether that overlap means the manifold has flattened genuine opposition or only that the two positions share enough vocabulary to read as close is the reader's call."
+                  >
+                    Lexical Overlap Rate
+                  </div>
                   <div className={`font-sans text-body-lg font-bold mt-0.5 ${(totalTests - preservedCount) > totalTests * 0.5 ? "text-error-500" : "text-success-600"}`}>
                     {totalTests > 0 ? ((totalTests - preservedCount) / totalTests * 100).toFixed(0) : 0}%
                   </div>
