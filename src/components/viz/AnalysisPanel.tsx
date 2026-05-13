@@ -45,6 +45,15 @@ export function AnalysisPanel({ points, clusterAssignments, edges, vectors, mode
 
   const uniqueClusters = useMemo(() => [...new Set(clusterAssignments)], [clusterAssignments]);
   const hasMultipleClusters = uniqueClusters.length >= 2;
+  // Cross-domain similarity bridges only make sense when the user
+  // explicitly named two or more domains. With a single named group,
+  // any auto-detected sub-clusters inside it are sub-divisions of the
+  // *same* domain, not different ones — pairing them with "well
+  // separated: distinct domains" verdicts is wrong. Border Concepts
+  // and Bridges still surface useful internal structure, so they
+  // stay; only the cross-domain bridges are gated.
+  const namedGroupCount = groupNames?.filter(n => n.trim().length > 0).length ?? 0;
+  const showCrossDomainBridges = namedGroupCount >= 2;
 
   // Pairwise cluster similarities
   const clusterPairs = useMemo(() => {
@@ -176,21 +185,39 @@ export function AnalysisPanel({ points, clusterAssignments, edges, vectors, mode
 
   return (
     <div className="px-4 pb-4 space-y-2 font-sans text-[11px]">
-      {/* Cross-domain similarity bridges */}
-      {clusterPairs.map((pair, idx) => {
-        const label = similarityLabel(pair.similarity);
+      {/* Cross-domain similarity bridges — only meaningful when the
+          user supplied two or more named groups. With one group, the
+          auto-detected sub-clusters are intra-domain structure and
+          their pairwise similarities don't carry the "distinct
+          domains" reading similarityLabel implies. */}
+      {showCrossDomainBridges &&
+        clusterPairs.map((pair, idx) => {
+          const label = similarityLabel(pair.similarity);
+          return (
+            <div key={idx} className="pt-2 border-t border-border">
+              <SimilarityBridge
+                nameA={pair.nameA}
+                nameB={pair.nameB}
+                similarity={pair.similarity}
+                subtitle={label.text}
+              />
+            </div>
+          );
+        })}
 
-        return (
-          <div key={idx} className="pt-2 border-t border-border">
-            <SimilarityBridge
-              nameA={pair.nameA}
-              nameB={pair.nameB}
-              similarity={pair.similarity}
-              subtitle={label.text}
-            />
-          </div>
-        );
-      })}
+      {/* Single-group note when auto-clustering found internal
+          structure but no cross-domain reading applies. */}
+      {!showCrossDomainBridges && clusterPairs.length > 0 && (
+        <div className="pt-2 border-t border-border">
+          <p className="text-muted-foreground text-[10px] italic leading-relaxed">
+            Only one named group in this run, so no cross-domain
+            similarity bridges are shown. The {uniqueClusters.length}{" "}
+            auto-detected sub-clusters below are subdivisions of the
+            same input domain rather than separate domains. Add a
+            second group to compare across domains.
+          </p>
+        </div>
+      )}
 
       {/* Border concepts */}
       <div className="border-t border-border pt-2">
