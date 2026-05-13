@@ -812,7 +812,12 @@ function AgonismDeepDive({ result }: { result: AgonismTestResult }) {
           <div className="font-sans text-body-sm font-bold tabular-nums">{result.summary.totalPairs}</div>
         </div>
         <div className="bg-muted rounded-sm p-2">
-          <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Opposition preserved</div>
+          <div
+            className="text-[9px] uppercase tracking-wider text-muted-foreground cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline"
+            title="Proportion of pairs where cosine similarity falls below the threshold — the geometry registers distinct lexical fields for the two positions. Whether that separation amounts to philosophical opposition (rather than vocabulary difference or stylistic variation) is the reader's interpretive move; the metric reports the geometry, not the verdict."
+          >
+            Distinct lexical fields
+          </div>
           <div className="font-sans text-body-sm font-bold tabular-nums">
             {(result.summary.preservedRate * 100).toFixed(1)}%
           </div>
@@ -831,9 +836,9 @@ function AgonismDeepDive({ result }: { result: AgonismTestResult }) {
       <Table>
         <thead>
           <tr className="border-b border-parchment">
-            <Th tip="Opposed philosophical pair. Below the label: the two thinkers whose positions are being compared.">Pair</Th>
+            <Th tip="Philosophical pair under test. Below the label: the two thinkers whose positions are being compared.">Pair</Th>
             {modelNames.map(n => (
-              <Th key={n} align="right" tip={`Cosine similarity between the two opposed positions, as reported by ${n}. Red means the value is at or above the threshold — the manifold has collapsed genuine philosophical opposition into geometric proximity.`}>{n}</Th>
+              <Th key={n} align="right" tip={`Cosine similarity between the two positions, as reported by ${n}. Red = at or above the threshold (the geometry registers lexical overlap; the reader judges whether opposition has nonetheless been collapsed or whether the positions simply share vocabulary). Below threshold = the geometry registers distinct lexical fields; the reader judges whether that is genuine philosophical opposition or only stylistic difference.`}>{n}</Th>
             ))}
           </tr>
         </thead>

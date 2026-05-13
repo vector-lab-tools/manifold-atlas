@@ -221,7 +221,17 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
                       nameA={r.pair.positionA.thinker || "A"}
                       nameB={r.pair.positionB.thinker || "B"}
                       similarity={m.similarity}
-                      subtitle={m.agonismPreserved ? "Opposition preserved" : "Opposition collapsed: the manifold treats these as related, not opposed"}
+                      // Strictly, what the geometry registers is lexical
+                      // separation (low cosine) or lexical overlap (high
+                      // cosine). Whether that separation amounts to
+                      // philosophical opposition — or merely to stylistic
+                      // / vocabulary difference — is the reader's
+                      // interpretive move, not a verdict the instrument
+                      // should pre-emptively deliver. Earlier wording
+                      // ("Opposition preserved" / "Opposition collapsed")
+                      // collapsed that decision in advance; replaced with
+                      // observation-only labels per critique 14 May 2026.
+                      subtitle={m.agonismPreserved ? "Distinct lexical fields detected" : "Lexical-field overlap detected"}
                     />
                   </div>
                 ))}
