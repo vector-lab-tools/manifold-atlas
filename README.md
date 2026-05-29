@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.7.0
+**Version:** 1.8.0
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -329,7 +329,7 @@ Each operation in the Operations at a Glance table above tests a specific claim 
 - [x] Persistent Homology with persistence diagram, barcode, Rips complex, Betti curve, void cloud
 - [x] Multi-provider support (OpenAI, Voyage, Google, Cohere, Hugging Face, Ollama, OpenRouter)
 - [x] IndexedDB cache; editable `models/*.md` registry
-- [x] Grammar of Vectors with the synthetic-dialectic measure (embedding-only — earlier LLMbench `.grammar.json` bundle importer was removed in v1.7.0 on methodological grounds: LLM next-token logprobs and embedding-model cosine distances are not from the same manifold)
+- [x] Grammar of Vectors with the synthetic-dialectic measure (embedding-only — earlier LLMbench `.grammar.json` bundle importer was removed in v1.8.0 on methodological grounds: LLM next-token logprobs and embedding-model cosine distances are not from the same manifold)
 - [x] Per-model attribution on every multi-model output (Concept Distance, Distance Matrix, Negation Gauge, Negation Battery, Vector Logic, Semantic Sectioning, Hegemony Compass, Agonism Test, Real Abstraction)
 - [x] Sticky bottom status bar so the Header and TabNav scroll away on long deep-dive panels
 - [x] Collapsible Deep Dive panel on every operation (all sixteen — Concept Distance, Distance Matrix, Negation Gauge, Negation Battery, Vector Logic, Semantic Sectioning, Agonism Test, Real Abstraction, Silence Detector, Neighbourhood Map, Vector Drift, Vector Walk, plus the four already shipped: Grammar of Vectors, Text Vectorisation, Persistent Homology, Hegemony Compass)

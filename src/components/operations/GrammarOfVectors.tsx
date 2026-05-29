@@ -10,7 +10,7 @@
  * accepts free-form pasted constructions, parsed according to the
  * currently-selected grammar.
  *
- * Note (v1.7.0, 14 May 2026): the Grammar Probe Bundle importer and
+ * Note (v1.8.0, 14 May 2026): the Grammar Probe Bundle importer and
  * the inbound `?x=…&ys=…&source=llmbench-grammar-probe` deep link
  * were removed. Bringing LLM next-token logprobs from LLMbench into
  * an embedding-model cosine measurement here mixed manifolds that
