@@ -10,15 +10,20 @@
  * accepts free-form pasted constructions, parsed according to the
  * currently-selected grammar.
  *
- * The component also accepts URL-parameter deep links from LLMbench
- * Grammar Probe (?x=…&ys=…&source=llmbench-grammar-probe) so Phase C
- * candidate Ys can be sent here for cosine analysis against a common
- * X. See the companion spec in
- * `knowledge/wip/blogposts/grammar-of-vectors/WORKING.md`.
+ * Note (v1.7.0, 14 May 2026): the Grammar Probe Bundle importer and
+ * the inbound `?x=…&ys=…&source=llmbench-grammar-probe` deep link
+ * were removed. Bringing LLM next-token logprobs from LLMbench into
+ * an embedding-model cosine measurement here mixed manifolds that
+ * are not the same manifold — an LLM's continuation distribution and
+ * an embedding model's vector geometry come from different models
+ * with different training objectives, and the Spearman correlation
+ * between them lacked methodological warrant. The operation is now
+ * embedding-only: user-supplied X and Y fragments measured in
+ * embedding space.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, ChevronDown, ChevronRight, Download, Gauge, Upload, FileJson, X as XIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, ChevronDown, ChevronRight, Download, Gauge } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
@@ -34,19 +39,12 @@ import {
   type GrammarOfVectorsResult,
   type GrammarPairResult,
 } from "@/lib/operations/grammar-of-vectors";
-import {
-  parseBundle,
-  bundleToInstances,
-  computeBundleFindings,
-  type GrammarProbeBundle,
-  type BundleFindings,
-} from "@/lib/operations/grammar-probe-bundle";
 
 interface GrammarOfVectorsProps {
   onQueryTime: (time: number) => void;
 }
 
-type InputMode = "preset" | "custom" | "bundle";
+type InputMode = "preset" | "custom";
 
 export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
   const [grammarId, setGrammarId] = useState<string>(DEFAULT_GRAMMAR_ID);
@@ -62,18 +60,6 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
   const [result, setResult] = useState<GrammarOfVectorsResult | null>(null);
   const [expandedPairs, setExpandedPairs] = useState<Set<number>>(new Set());
   const [deepDiveOpen, setDeepDiveOpen] = useState(false);
-
-  // Grammar Probe Bundle state. When a `.grammar.json` is loaded, the
-  // bundle's probes are flattened into one instance per (probe × y-
-  // token) and fed into the compute pipeline. After the run, the
-  // bundle findings (Spearman logprob-vs-cosine ranks) are rendered
-  // alongside the standard summary.
-  const [bundle, setBundle] = useState<GrammarProbeBundle | null>(null);
-  const [bundleWarnings, setBundleWarnings] = useState<string[]>([]);
-  const [bundleImportError, setBundleImportError] = useState<string | null>(null);
-  const [bundleDragOver, setBundleDragOver] = useState(false);
-  const [bundleFindings, setBundleFindings] = useState<BundleFindings | null>(null);
-  const bundleFileInput = useRef<HTMLInputElement | null>(null);
 
   // Sort state for the per-construction cosines table. "index" is the
   // natural order. "construction" sorts alphabetically by raw text.
@@ -122,82 +108,11 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
     }
   }, [grammar, register, registerNames]);
 
-  // Deep-link inbound handler: ?x=<X>&ys=<Y1,Y2,...>&source=llmbench-grammar-probe.
-  // Each Y is paired with the shared X as an explicit "X | Y" pipe
-  // construction so it maps cleanly onto the current grammar's parser.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const x = params.get("x");
-    const ysRaw = params.get("ys");
-    if (!x || !ysRaw) return;
-    const ys = ysRaw.split(/\s*,\s*/).filter(Boolean);
-    if (ys.length === 0) return;
-    const lines = ys.map(y => `${x} | ${y}`).join("\n");
-    setMode("custom");
-    setCustomText(lines);
-    setPreviewOpen(true);
-    // Leave grammar at its current selection — the parser will accept
-    // the pipe-delimited form regardless of which grammar is active.
-  }, []);
-
   // Resolved instances for the preview pane and for the run.
   const resolvedInstances: GrammarInstance[] = useMemo(() => {
     if (mode === "custom") return parseInstances(grammarId, customText);
-    if (mode === "bundle") return bundle ? bundleToInstances(bundle) : [];
     return grammar.registers[register] ?? [];
-  }, [mode, grammarId, customText, grammar, register, bundle]);
-
-  const ingestBundleText = (text: string, filename?: string) => {
-    const parsed = parseBundle(text);
-    if (!parsed.ok) {
-      setBundleImportError(parsed.error);
-      setBundle(null);
-      setBundleWarnings([]);
-      return;
-    }
-    setBundle(parsed.bundle);
-    setBundleWarnings(parsed.warnings);
-    setBundleImportError(null);
-    setBundleFindings(null);
-    setResult(null);
-    setPreviewOpen(true);
-    // If the bundle's pattern id matches a grammar we know about,
-    // select it so the UI labelling is coherent. Unknown patterns are
-    // left on the current grammar — the parser is unused in bundle
-    // mode anyway.
-    if (GRAMMARS[parsed.bundle.pattern.id]) {
-      setGrammarId(parsed.bundle.pattern.id);
-    }
-    if (filename) {
-      // No-op today, but preserved for future UI breadcrumb.
-    }
-  };
-
-  const handleBundleFile = async (file: File) => {
-    if (!file) return;
-    try {
-      const text = await file.text();
-      ingestBundleText(text, file.name);
-    } catch (e) {
-      setBundleImportError(`Could not read file: ${(e as Error).message}`);
-    }
-  };
-
-  const handleBundleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setBundleDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) void handleBundleFile(file);
-  };
-
-  const clearBundle = () => {
-    setBundle(null);
-    setBundleWarnings([]);
-    setBundleImportError(null);
-    setBundleFindings(null);
-    if (bundleFileInput.current) bundleFileInput.current.value = "";
-  };
+  }, [mode, grammarId, customText, grammar, register]);
 
   const handleRun = async () => {
     if (resolvedInstances.length === 0) {
@@ -226,13 +141,6 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
         enabledModels
       );
       setResult(computed);
-      // If the run was fed from a bundle, compute logprob-vs-cosine
-      // rank correlations per probe. Ignored in preset / custom modes.
-      if (mode === "bundle" && bundle) {
-        setBundleFindings(computeBundleFindings(computed.pairs));
-      } else {
-        setBundleFindings(null);
-      }
       // Default: open every row so the user can scan the full per-model
       // geometry without having to click each chevron.
       setExpandedPairs(new Set(computed.pairs.map((_, i) => i)));
@@ -283,7 +191,6 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
     setRegister(Object.keys(GRAMMARS[DEFAULT_GRAMMAR_ID].registers)[0] ?? "");
     setCustomText("");
     setPreviewOpen(false);
-    clearBundle();
   };
 
   const exportCsv = () => {
@@ -370,15 +277,6 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
               >
                 Custom
               </button>
-              <button
-                onClick={() => setMode("bundle")}
-                title="Load a Grammar Probe Bundle (.grammar.json) exported from LLMbench Phase C. Atlas embeds each probe's X against every top-K Y token and reports the Spearman correlation between logprob rank and cosine rank."
-                className={`px-3 py-1 font-sans text-caption rounded-sm transition-colors ${
-                  mode === "bundle" ? "bg-burgundy text-primary-foreground shadow-editorial" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                LLMbench bundle
-              </button>
             </div>
             {mode === "preset" && (
               <>
@@ -434,121 +332,6 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
                 {resolvedInstances.length}
                 {" parsed · lines that don\u2019t match the selected grammar or contain a pipe are skipped."}
               </p>
-            </div>
-          )}
-
-          {/* Bundle drop-zone + metadata */}
-          {mode === "bundle" && (
-            <div>
-              {!bundle ? (
-                <div
-                  onDragOver={e => {
-                    e.preventDefault();
-                    setBundleDragOver(true);
-                  }}
-                  onDragLeave={() => setBundleDragOver(false)}
-                  onDrop={handleBundleDrop}
-                  className={`rounded-sm border-2 border-dashed px-4 py-6 text-center transition-colors ${
-                    bundleDragOver
-                      ? "border-burgundy bg-burgundy/5"
-                      : "border-parchment hover:border-muted-foreground/60"
-                  }`}
-                >
-                  <FileJson size={22} className="text-muted-foreground mx-auto mb-2" />
-                  <p className="font-sans text-body-sm text-foreground mb-1">
-                    Drop a <span className="font-mono">.grammar.json</span> bundle here,
-                    or
-                    <button
-                      onClick={() => bundleFileInput.current?.click()}
-                      className="ml-1 underline decoration-burgundy/60 hover:text-burgundy"
-                    >
-                      browse
-                    </button>
-                    .
-                  </p>
-                  <p className="font-sans text-caption text-muted-foreground italic">
-                    Format: <span className="font-mono">vector-lab.grammar-probe.v1</span> — produced by LLMbench Grammar Probe (Phase C).
-                  </p>
-                  <input
-                    ref={bundleFileInput}
-                    type="file"
-                    accept=".json,.grammar.json,application/json"
-                    onChange={e => {
-                      const f = e.target.files?.[0];
-                      if (f) void handleBundleFile(f);
-                    }}
-                    className="hidden"
-                  />
-                </div>
-              ) : (
-                <div className="rounded-sm border border-parchment bg-muted/40 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2">
-                      <FileJson size={18} className="text-burgundy mt-0.5" />
-                      <div>
-                        <div className="font-sans text-body-sm font-semibold">
-                          {bundle.pattern.label}
-                          <span className="ml-2 text-muted-foreground font-mono text-caption">
-                            {bundle.pattern.id}
-                          </span>
-                        </div>
-                        <div className="font-sans text-caption text-muted-foreground mt-0.5">
-                          {bundle.source.tool} {bundle.source.version}
-                          {bundle.source.phase ? ` · Phase ${bundle.source.phase}` : ""}
-                          {" · "}model {bundle.model.displayName ?? bundle.model.name}
-                          {" · "}topK {bundle.parameters.topK}
-                          {" · "}temp {bundle.parameters.temperature}
-                          {" · "}
-                          {bundle.probes.length} probe{bundle.probes.length === 1 ? "" : "s"}
-                          {" · "}
-                          {resolvedInstances.length} Y candidates
-                        </div>
-                        {bundle.createdAt && (
-                          <div className="font-sans text-caption text-muted-foreground">
-                            created {bundle.createdAt}
-                          </div>
-                        )}
-                        {bundleWarnings.length > 0 && (
-                          <ul className="mt-1 list-disc pl-4 font-sans text-caption text-warning-500">
-                            {bundleWarnings.map((w, i) => (
-                              <li key={i}>{w}</li>
-                            ))}
-                          </ul>
-                        )}
-                        {bundle.pattern.note && (
-                          <p className="mt-1 font-sans text-caption text-muted-foreground italic">
-                            {bundle.pattern.note}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      onClick={clearBundle}
-                      title="Clear this bundle."
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <XIcon size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-              {bundleImportError && (
-                <div className="mt-2 rounded-sm border border-error-500/40 bg-error-500/5 px-3 py-2 font-sans text-caption text-error-600">
-                  <span className="font-semibold">Could not import bundle:</span> {bundleImportError}
-                </div>
-              )}
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => bundleFileInput.current?.click()}
-                  className="btn-editorial-ghost text-caption"
-                >
-                  <Upload size={12} className="mr-1" />
-                  {bundle ? "Replace bundle" : "Choose file"}
-                </button>
-                <span className="font-sans text-caption text-muted-foreground italic">
-                  Atlas embeds each X and every top-K Y token, then reports the Spearman correlation between logprob rank and cosine-to-X rank per probe.
-                </span>
-              </div>
             </div>
           )}
 
@@ -659,9 +442,6 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
               between near-neighbours. Dialectic as style, not as operation.
             </p>
           </div>
-
-          {/* Bundle findings (only when run from an LLMbench bundle) */}
-          {bundleFindings && <BundleFindingsCard findings={bundleFindings} bundle={bundle} />}
 
           {/* Per-construction × per-model matrix with expandable rows */}
           <div className="card-editorial overflow-hidden">
@@ -1268,179 +1048,4 @@ function SummaryBox({
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
   return s.slice(0, max - 1) + "…";
-}
-
-/**
- * Spearman findings card. Rendered only for bundle runs. The headline
- * is the mean rho across probes: high positive = the LLM's top-
- * probability Ys are also the embedding model's nearest neighbours of
- * X, i.e. the construction has collapsed into a geometric reflex.
- * Near-zero or negative = the rhetoric is doing work beyond nearest-
- * neighbour retrieval.
- */
-function BundleFindingsCard({
-  findings,
-  bundle,
-}: {
-  findings: BundleFindings;
-  bundle: GrammarProbeBundle | null;
-}) {
-  const rhoTone =
-    findings.overallMeanRho >= 0.5
-      ? "error"
-      : findings.overallMeanRho <= -0.3
-      ? "success"
-      : "warning";
-  const rhoColor = {
-    error: "text-error-600",
-    warning: "text-warning-500",
-    success: "text-success-600",
-    neutral: "",
-  }[rhoTone];
-
-  return (
-    <div className="card-editorial p-5">
-      <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
-        <div>
-          <h3 className="font-display text-body-lg font-bold">Bundle findings</h3>
-          <p className="font-sans text-caption text-muted-foreground italic">
-            Spearman rank correlation between LLM logprob rank and embedding cosine rank.
-            {bundle && (
-              <>
-                {" "}Bundle: {bundle.pattern.label} from {bundle.source.tool} {bundle.source.version}, generator model {bundle.model.displayName ?? bundle.model.name}.
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <div className="bg-muted rounded-sm p-3">
-          <div
-            className="font-sans text-caption text-muted-foreground uppercase tracking-wider cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
-            title="Mean of per-probe Spearman rho values, where each probe's rho is itself the mean across enabled embedding models. Values close to +1 indicate the construction has collapsed into a geometric reflex: the LLM's top-probability Ys are also the nearest-neighbour Ys of X. Values close to 0 indicate the construction is doing rhetorical work beyond nearest-neighbour retrieval. Values close to -1 indicate the construction actively inverts geometric proximity."
-          >
-            Mean rho
-          </div>
-          <div className={`font-sans text-body-lg font-bold mt-1 tabular-nums ${rhoColor}`}>
-            {findings.overallMeanRho.toFixed(3)}
-          </div>
-          <div className="font-sans text-caption text-muted-foreground mt-0.5">
-            across {findings.totalProbes} probe{findings.totalProbes === 1 ? "" : "s"}
-          </div>
-        </div>
-        <div className="bg-muted rounded-sm p-3">
-          <div
-            className="font-sans text-caption text-muted-foreground uppercase tracking-wider cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
-            title="Probes where mean rho ≥ 0.5 — the LLM's continuation preferences track embedding proximity closely. The construction, in these probes, is a nearest-neighbour lookup dressed in antithetical clothing."
-          >
-            Reflex
-          </div>
-          <div className="font-sans text-body-lg font-bold mt-1 tabular-nums text-error-600">
-            {findings.reflexCount}
-          </div>
-          <div className="font-sans text-caption text-muted-foreground mt-0.5">
-            rho ≥ 0.5
-          </div>
-        </div>
-        <div className="bg-muted rounded-sm p-3">
-          <div
-            className="font-sans text-caption text-muted-foreground uppercase tracking-wider cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
-            title="Probes where |mean rho| < 0.2 — the LLM's ranked continuations bear no strong monotonic relationship to cosine proximity. The rhetorical scaffold is doing work that pure nearest-neighbour retrieval cannot explain."
-          >
-            Rhetorical
-          </div>
-          <div className="font-sans text-body-lg font-bold mt-1 tabular-nums text-warning-500">
-            {findings.rhetoricalCount}
-          </div>
-          <div className="font-sans text-caption text-muted-foreground mt-0.5">
-            |rho| &lt; 0.2
-          </div>
-        </div>
-        <div className="bg-muted rounded-sm p-3">
-          <div
-            className="font-sans text-caption text-muted-foreground uppercase tracking-wider cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
-            title="Probes where mean rho ≤ -0.5 — the LLM consistently reaches for Ys that are geometrically far from X. The construction, in these cases, is actively inverting cosine proximity."
-          >
-            Inverted
-          </div>
-          <div className="font-sans text-body-lg font-bold mt-1 tabular-nums text-success-600">
-            {findings.invertedCount}
-          </div>
-          <div className="font-sans text-caption text-muted-foreground mt-0.5">
-            rho ≤ -0.5
-          </div>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full font-sans text-caption">
-          <thead>
-            <tr className="border-b border-parchment">
-              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
-                Scaffold
-              </th>
-              <th className="text-left px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
-                X
-              </th>
-              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
-                n
-              </th>
-              <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
-                Mean rho
-              </th>
-              {findings.perProbe[0]?.spearmanPerModel.map(m => (
-                <th
-                  key={m.modelId}
-                  className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold"
-                  title={`Spearman rho for ${m.modelName}.`}
-                >
-                  {m.modelName}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-parchment">
-            {findings.perProbe.map(p => (
-              <tr key={p.scaffoldId}>
-                <td className="px-2 py-1 font-mono text-muted-foreground" title={p.scaffold}>
-                  {p.scaffoldId}
-                </td>
-                <td className="px-2 py-1">{p.x}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{p.n}</td>
-                <td
-                  className={`px-2 py-1 text-right tabular-nums font-semibold ${rhoClass(p.meanRho)}`}
-                >
-                  {p.meanRho.toFixed(3)}
-                </td>
-                {p.spearmanPerModel.map(m => (
-                  <td
-                    key={m.modelId}
-                    className={`px-2 py-1 text-right tabular-nums ${rhoClass(m.rho)}`}
-                  >
-                    {m.rho.toFixed(3)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="mt-3 font-body text-body-sm text-slate italic">
-        Read: high positive rho means the construction has collapsed into a nearest-neighbour
-        reflex — the LLM&rsquo;s top-probability Ys for a &ldquo;{bundle?.pattern.label ?? "scaffolded"}&rdquo;
-        completion coincide with the embedding model&rsquo;s nearest neighbours of X. Values
-        near zero mean the construction is performing rhetorical work (antithesis, emphasis,
-        correction) that the geometry does not underwrite.
-      </p>
-    </div>
-  );
-}
-
-function rhoClass(rho: number): string {
-  if (rho >= 0.5) return "text-error-600";
-  if (rho <= -0.5) return "text-success-600";
-  if (Math.abs(rho) < 0.2) return "text-warning-500";
-  return "";
 }
