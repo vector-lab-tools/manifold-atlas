@@ -1,4 +1,4 @@
-> Part of the [Vector Lab](https://github.com/vector-lab-tools) — vector methods for vector theory.
+> Part of the [Vector Lab](https://github.com/vector-lab-tools). Vector methods for vector theory.
 > [Overview and map](https://vector-lab-tools.github.io) · [Org profile](https://github.com/vector-lab-tools)
 >
 > **Tier:** comparative model tool. **Object:** output embeddings across models.
