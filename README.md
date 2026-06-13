@@ -45,7 +45,7 @@ In Manifold Atlas, the **embedding models** are the core instrument. Every opera
 
 ## Operations at a Glance
 
-Manifold Atlas is organised as a tabbed workspace with fifteen operations. Each operation tests a specific claim of vector theory.
+Manifold Atlas is organised as a tabbed workspace with sixteen operations. Each operation tests a specific claim of vector theory.
 
 | Operation | Core question | Theoretical anchor |
 |---|---|---|
@@ -124,7 +124,7 @@ The Library (fourth tab group) runs curated sequences of operations in one click
 
 Every step of every protocol is editable before running. The per-step editor lets you substitute your own claims into a Negation Battery, swap anchors in a Semantic Sectioning walk, change the A − B + C terms, reframe the Hegemony Compass, or rewrite the opposed positions in an Agonism Test. Edits apply to the next run and are reflected in the exported bundle, so you can re-run an existing protocol against your own inputs without leaving the app.
 
-Eight of the fifteen operations are wired to the Runner (Concept Distance, Distance Matrix, Vector Logic, Negation Gauge, Negation Battery, Semantic Sectioning, Agonism Test, Hegemony Compass). The remaining visualisation-heavy operations (Neighbourhood Map, Vector Drift, Vector Walk, Text Vectorisation, Persistent Homology, Real Abstraction Test, Silence Detector) remain available in their own tabs.
+Eight of the sixteen operations are wired to the Runner (Concept Distance, Distance Matrix, Vector Logic, Negation Gauge, Negation Battery, Semantic Sectioning, Agonism Test, Hegemony Compass). The remaining visualisation-heavy operations (Neighbourhood Map, Vector Drift, Vector Walk, Text Vectorisation, Persistent Homology, Real Abstraction Test, Silence Detector) remain available in their own tabs.
 
 You can also add your own tests. The Add Test modal accepts either pasted markdown or an uploaded .md file. A Start-from dropdown lets you load any built-in test as a template to edit, or start from a minimal three-step example. Added tests are persisted in browser storage, appear in the Library alongside the built-ins with a Custom badge, and can be edited, downloaded as .md, or removed at any time. This makes the tool extensible without any code changes: researchers can distribute their own test markdown alongside a paper, and anyone with the link can load it into Manifold Atlas.
 
