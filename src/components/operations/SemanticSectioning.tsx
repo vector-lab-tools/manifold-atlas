@@ -6,6 +6,9 @@ import { Loader2, GitBranch, Download, ChevronRight, ChevronDown } from "lucide-
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { similarityColor } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
@@ -31,6 +34,7 @@ export function SemanticSectioning({ onQueryTime }: SemanticSectioningProps) {
   const [detailOpen, setDetailOpen] = useState(false);
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  const floors = useFloors("term");
 
   const handleCompute = async (overrideA?: string, overrideB?: string) => {
     const effectiveA = overrideA || anchorA.trim() || DEFAULT_A;
@@ -98,6 +102,9 @@ export function SemanticSectioning({ onQueryTime }: SemanticSectioningProps) {
         </div>
       </div>
 
+      <CalibrationNotice register="term" missing={floors.missing} />
+
+
       {error != null && <ErrorDisplay error={error} onRetry={() => handleCompute()} />}
 
       {results.map(r => (
@@ -137,7 +144,7 @@ export function SemanticSectioning({ onQueryTime }: SemanticSectioningProps) {
               {/* Gradient bar */}
               <div className="flex h-10 rounded-sm overflow-hidden border border-parchment">
                 {r.path.map((point, i) => {
-                  const color = similarityColor(point.nearestSimilarity);
+                  const color = similarityColor(point.nearestSimilarity, floors.floor(r.modelId));
                   return (
                     <div
                       key={i}
@@ -342,6 +349,13 @@ function SemanticSectioningDeepDive({ results }: { results: SemanticSectioningMo
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="term"
+        modelIds={results.map(r => r.modelId)}
+        notes={[
+          "Path segments are coloured by the nearest concept's position on the model's scale. In a model with a high floor the whole path would otherwise read as uniformly warm, since every point sits high on the raw scale by construction.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }

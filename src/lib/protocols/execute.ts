@@ -340,7 +340,12 @@ export function executeStep(
 
       case "compass": {
         const inputs = resolveCompassInputsForExec(step.inputs);
-        const result = computeHegemonyCompass(inputs, ctx.stepVectors, ctx.enabledModels);
+        const result = computeHegemonyCompass(
+          inputs,
+          ctx.stepVectors,
+          ctx.enabledModels,
+          ctx.calibrations
+        );
         const elapsedMs = performance.now() - started;
         return {
           stepIndex: ctx.stepIndex,
@@ -360,7 +365,12 @@ export function executeStep(
         if (concepts.length < 2) {
           throw new Error(`matrix step requires at least two concepts (under "concepts").`);
         }
-        const result = computeDistanceMatrix({ concepts }, ctx.stepVectors, ctx.enabledModels);
+        const result = computeDistanceMatrix(
+          { concepts },
+          ctx.stepVectors,
+          ctx.enabledModels,
+          ctx.calibrations
+        );
         const elapsedMs = performance.now() - started;
         return {
           stepIndex: ctx.stepIndex,

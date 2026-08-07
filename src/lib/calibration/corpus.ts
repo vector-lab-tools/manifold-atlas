@@ -7,7 +7,17 @@
  * registers are kept out on purpose, because the point is to establish
  * where the space sits when nothing interesting is being asked of it.
  *
- * Three strata, because a single "random pair" number is not enough:
+ * Four strata, because a single "random pair" number is not enough:
+ *
+ *  - TERMS              bare nouns and short noun phrases, one to three
+ *                       words. This is what Concept Distance, Distance
+ *                       Matrix, Hegemony Compass, Silence Detector and
+ *                       Vector Logic actually embed, and a term floor is
+ *                       not a sentence floor: short strings carry less
+ *                       syntactic material, so they sit differently in
+ *                       the cone. Quoting the declarative floor next to
+ *                       a two-word comparison would repeat the mistake
+ *                       the calibration layer exists to fix.
  *
  *  - SHORT_DECLARATIVE  subject-copula-predicate, five to eight words.
  *                       Matched in length and syntax to the statements
@@ -32,7 +42,29 @@
  * they were not computed from.
  */
 
-export const CORPUS_VERSION = 1;
+export const CORPUS_VERSION = 2;
+
+/**
+ * Bare terms and short noun phrases, one to three words, no shared
+ * content words between any two. Mundane and concrete on purpose: an
+ * evaluative or political term would carry the register the probes are
+ * meant to be measured against.
+ */
+export const TERMS: string[] = [
+  "kettle", "envelope", "drawbridge", "bicycle tyre", "reading room",
+  "wet paint", "late harvest", "expired passport", "corridor", "curtain rail",
+  "service lift", "handwriting", "oven thermostat", "garden fence", "low tide",
+  "carpet underlay", "postal round", "allotment", "roof gutter", "saffron",
+  "diesel generator", "carved bench", "car ferry", "wristwatch", "greenhouse pane",
+  "flood plain", "chimney sweep", "runner bean", "railway tunnel", "mattress",
+  "apple orchard", "north window", "central heating", "night flight", "frozen pond",
+  "kitchen cupboard", "scaffolding", "laser printer", "field path", "spanner",
+  "reservoir", "wallpaper", "bakery", "staircase", "canvas awning",
+  "umbrella", "hedgerow", "door frame", "tram", "skylight",
+  "compost heap", "spectacles", "pavement", "preserving jar", "weathervane",
+  "spare fuse", "towpath", "rucksack", "radiator", "gatepost",
+  "lighthouse", "level crossing", "chest freezer", "notebook",
+];
 
 /**
  * Short declarative sentences, five to eight words, subject-copula-
@@ -197,6 +229,7 @@ export const TOPICAL_PAIRS: Array<[string, string]> = [
 /** Every text the calibration run needs to embed, in a stable order. */
 export function calibrationTextList(): string[] {
   return [
+    ...TERMS,
     ...SHORT_DECLARATIVE,
     ...NEUTRAL_PROSE,
     ...TOPICAL_PAIRS.flat(),
@@ -205,13 +238,16 @@ export function calibrationTextList(): string[] {
 
 /** Index ranges of each stratum within calibrationTextList(). */
 export function stratumRanges() {
-  const shortStart = 0;
-  const shortEnd = SHORT_DECLARATIVE.length;
+  const termsStart = 0;
+  const termsEnd = TERMS.length;
+  const shortStart = termsEnd;
+  const shortEnd = shortStart + SHORT_DECLARATIVE.length;
   const proseStart = shortEnd;
   const proseEnd = proseStart + NEUTRAL_PROSE.length;
   const topicalStart = proseEnd;
   const topicalEnd = topicalStart + TOPICAL_PAIRS.length * 2;
   return {
+    terms: [termsStart, termsEnd] as [number, number],
     shortDeclarative: [shortStart, shortEnd] as [number, number],
     neutralProse: [proseStart, proseEnd] as [number, number],
     topical: [topicalStart, topicalEnd] as [number, number],

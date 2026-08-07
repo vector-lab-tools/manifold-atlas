@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.9.0
+**Version:** 1.10.0
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -70,9 +70,9 @@ Manifold Atlas is organised as a tabbed workspace with seventeen operations. Eac
 ## Features
 
 ### Calibration
-A cosine has no meaning without the scale it sits on. Embedding vectors occupy a narrow cone rather than the whole sphere, so two unrelated texts already sit at a high cosine, and where that floor falls differs from model to model. Calibration embeds a 160-text corpus once per model, cached thereafter, and measures four things.
+A cosine has no meaning without the scale it sits on. Embedding vectors occupy a narrow cone rather than the whole sphere, so two unrelated texts already sit at a high cosine, and where that floor falls differs from model to model. Calibration embeds a 224-text corpus once per model, cached thereafter, and measures four things.
 
-**The floor.** Mean pairwise cosine over unrelated texts, reported separately for short declaratives (the register the Negation Gauge and Concept Distance use) and for longer prose (the register Semantic Sectioning and Text Vectorisation use). A floor measured on paragraphs is not the floor for a six-word claim, so the strata are kept apart.
+**The floor, per register.** Mean pairwise cosine over unrelated texts, measured separately for bare terms, short declaratives and prose. The three genuinely differ, and quoting the wrong one is the same error the calibration layer exists to prevent: a floor measured on paragraphs is not the floor for a six-word claim, and neither is the floor for a two-word term. Every operation declares the register it works in and is read against that floor. Concept Distance, Distance Matrix, Hegemony Compass, Silence Detector, Semantic Sectioning and Vector Logic embed terms; Negation Gauge, Negation Battery, Vector Drift and Agonism Test embed short declaratives; Text Vectorisation embeds prose. The register is named in each operation's Deep Dive, and the cone half-angle is reported per register alongside it.
 
 **The topical ceiling.** Same-subject pairs with no shared content words and no shared structure. Floor and ceiling together give the band inside which any real result has to fall.
 
@@ -81,6 +81,8 @@ A cosine has no meaning without the scale it sits on. Embedding vectors occupy a
 **Cross-model comparability.** Two models are only comparable on raw cosine when their floors agree. Where they do not, the panel says so and directs the comparison to the normalised position (cos − floor) / (1 − floor) instead.
 
 Every calibration number carries its definition on hover: what it is, how it is computed, and how to read a value. The definitions live in one glossary module, so the tooltip in one panel and the help text in another cannot drift apart.
+
+**Every operation carries the full record.** The headline views show one derived figure each, a position or a band or a colour. The complete calibration sits in each operation's Deep Dive: the floor for every register with its dispersion and percentiles, the topical ceiling, the cone per register, the usable range, the angular range, the dimension statistics against their sample ceiling, the norm behaviour, this run's own cosines rescaled, and a note on how calibration entered that particular computation. Nothing derived is presented without the numbers behind it.
 
 ### Concept Distance
 Measure the geometric relationship between any two concepts. Enter two terms and see their cosine similarity across all configured embedding models, with detailed metrics (angular separation, euclidean distance, vector norms, top contributing dimensions) and interpretive text explaining what the similarity level means.
@@ -233,6 +235,16 @@ The threshold now defaults to control-derived: a probe is collapsed when its neg
 One approach that was tried and rejected: setting the cutoff at two standard deviations above the random-pair floor. With a floor near 0.15 and a spread near 0.06 that puts the cutoff around 0.27, and every sentence pair sharing a determiner clears it. The random-pair distribution is the right null for asking whether a value is above background, and the wrong null for negation. The right null is an edit of the same size without the reversal.
 
 **Why report the radius rather than a single floor?** Because "how big is this model's space" has several answers and they come apart. A model can have a high floor and a large effective dimension, or a low floor and variance concentrated in five coordinates. The cone half-angle, usable range, effective dimension against its sample ceiling, dominant-coordinate share, and norm behaviour are reported together, because a cosine is only readable against all of them.
+
+**Why does calibration reach every operation, not just the negation ones?** The stipulated bands in `similarity-scale.ts` were shared by every view that reported a cosine, so the objection that landed on the negation threshold landed on all of them equally. Version 1.10 switched the rest over. Three of those changes are more than a recolouring.
+
+Distance Matrix ranks pairs by how much models disagree about them, and that ranking was computed on raw cosines. Two models whose floors differ by 0.10 show a 0.10 spread on *every* pair, so the "contested geometry" list was partly reporting the difference between the instruments as though it were a disagreement about the concepts. It now ranks on floor-to-identity positions whenever every model in the run is calibrated, and says which basis it used.
+
+Hegemony Compass needed the opposite treatment. A compass coordinate is a difference of two cosines, and a difference cancels the floor, so the positions were never affected by anisotropy and calibration does not move a single point on the plots. What does not cancel is the scale: the reachable interval for that difference is bounded by the usable range, which differs by model, so two compasses at the same apparent spread can show quite different amounts of separation. The compass reports the usable range and scales its coordinates by it, and floor-normalises the pole statistics, which are plain cosines rather than differences.
+
+Agonism Test showed a mean cosine across all models and pairs. A mean of raw cosines drawn from models with different floors is not a quantity, so banding it was a category error. It now averages the per-model positions instead.
+
+**Why a term stratum?** Because most of those operations embed bare nouns rather than sentences. Measuring their floor on declaratives would have repeated, one level up, exactly the mistake the calibration layer was built to fix. On a synthetic space with three registers deliberately placed in cones of 35, 55 and 70 degrees, the record recovers all three floors to within 0.002 and all three cone angles to within 0.2 degrees; the floors span 0.56, so a single number would have been wrong for two registers out of three.
 
 **Why no engineering metrics?** Existing vector-geometry tools are designed for engineers tuning a retrieval pipeline. They answer questions like "which embedding gives the best search relevance?" Manifold Atlas answers different questions: where does this model compress what it ought to distinguish? What does the geometry refuse to represent? These are critical-theoretical questions that require geometric evidence, not benchmark scores.
 

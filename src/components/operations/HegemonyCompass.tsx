@@ -6,6 +6,12 @@ import { Loader2, Plus, ChevronRight, ChevronDown, Download } from "lucide-react
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { useCalibration } from "@/context/CalibrationContext";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
+import { DeepDivePanel, DeepDiveSection } from "@/components/shared/DeepDivePanel";
+import { MetricTerm } from "@/components/shared/MetricTerm";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { BenchmarkLoader } from "@/components/shared/BenchmarkLoader";
 import {
@@ -40,6 +46,8 @@ interface PoleStats {
   terms: string[];
   /** Mean pairwise cosine among the pole's defining sentences. */
   coherence: number;
+  /** That coherence on the model's floor-to-identity scale. Null if uncalibrated. */
+  coherencePosition: number | null;
   /** L2 norm of the pole's centroid vector. */
   centroidNorm: number;
 }
@@ -60,6 +68,12 @@ interface ModelAxisStats {
   xAxisNorm: number;
   /** Euclidean length of the Y-axis (centroid distance). */
   yAxisNorm: number;
+  /** Inter-pole cosines as floor-to-identity positions. Null if uncalibrated. */
+  xInterPolePosition: number | null;
+  yInterPolePosition: number | null;
+  /** The model's usable range for terms, the divisor for scaled coordinates. */
+  usableRange: number | null;
+  calibrated: boolean;
 }
 
 interface HegemonyCompassProps {
@@ -93,6 +107,8 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
   const [customYPosTerms, setCustomYPosTerms] = useState("The community is more important than any individual, Collective action is necessary to solve social problems, Shared institutions are the foundation of a just society, Solidarity between people is the basis of human flourishing");
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  const floors = useFloors("term");
+  const { calibrations } = useCalibration();
   const isDark = settings.darkMode;
 
   const isCustom = selectedPreset === "custom";
@@ -129,7 +145,7 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
       const texts = hegemonyCompassTextList(inputs);
       const modelVectors = await embedAll(texts);
       const enabledModels = getEnabledModels();
-      const computed = computeHegemonyCompass(inputs, modelVectors, enabledModels);
+      const computed = computeHegemonyCompass(inputs, modelVectors, enabledModels, calibrations);
 
       // Flatten into the shapes the render code already expects:
       // PlottedConcept[] (one per point × model) and ModelAxisStats[].
@@ -161,6 +177,10 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
           yInterPoleCosine: m.yInterPoleCosine,
           xAxisNorm: m.xAxisNorm,
           yAxisNorm: m.yAxisNorm,
+          xInterPolePosition: m.xInterPolePosition,
+          yInterPolePosition: m.yInterPolePosition,
+          usableRange: m.usableRange,
+          calibrated: m.calibrated,
         });
       }
       setAxisStats(newAxisStats);
@@ -360,6 +380,9 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
           )}
         </div>
       </div>
+
+      <CalibrationNotice register="term" missing={floors.missing} />
+
 
       {error != null && <ErrorDisplay error={error} onRetry={handleAddConcept} />}
 
@@ -897,6 +920,131 @@ export function HegemonyCompass({ onQueryTime }: HegemonyCompassProps) {
           )}
         </div>
       ))}
+
+      {axisStats.length > 0 && <CompassDeepDive axisStats={axisStats} />}
     </div>
+  );
+}
+
+/**
+ * Deep Dive for the compass.
+ *
+ * Calibration enters this operation differently from every other one,
+ * and the difference is worth spelling out rather than leaving the
+ * reader to infer it from a changed number. A compass coordinate is a
+ * difference of two cosines, so the floor cancels and the positions are
+ * unaffected. What does not cancel is the scale: the reachable interval
+ * for that difference is bounded by the usable range, which differs by
+ * model, so two compasses at the same apparent spread can be showing
+ * quite different amounts of separation.
+ */
+function CompassDeepDive({ axisStats }: { axisStats: ModelAxisStats[] }) {
+  const calibrated = axisStats.filter(a => a.calibrated);
+
+  return (
+    <DeepDivePanel tagline="axis geometry · pole coherence · calibration">
+      <DeepDiveSection
+        title="Axis geometry"
+        tip="How far apart the two poles of each axis actually sit. An axis whose poles are close is not measuring the opposition its labels claim."
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption tabular-nums">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b border-parchment">
+                <th className="py-1 pr-3 font-medium">Model</th>
+                <th className="py-1 pr-3 font-medium text-right">X inter-pole</th>
+                <th className="py-1 pr-3 font-medium text-right">X position</th>
+                <th className="py-1 pr-3 font-medium text-right">Y inter-pole</th>
+                <th className="py-1 pr-3 font-medium text-right">Y position</th>
+                <th className="py-1 pr-3 font-medium text-right">X norm</th>
+                <th className="py-1 pr-3 font-medium text-right">Y norm</th>
+                <th className="py-1 pr-3 font-medium text-right">
+                  <MetricTerm termKey="usableRange">usable range</MetricTerm>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-parchment">
+              {axisStats.map(a => (
+                <tr key={a.modelId}>
+                  <td className="py-1 pr-3 font-medium">{a.modelName}</td>
+                  <td className="py-1 pr-3 text-right">{a.xInterPoleCosine.toFixed(4)}</td>
+                  <td className="py-1 pr-3 text-right">
+                    {a.xInterPolePosition !== null
+                      ? `${(a.xInterPolePosition * 100).toFixed(1)}%`
+                      : "—"}
+                  </td>
+                  <td className="py-1 pr-3 text-right">{a.yInterPoleCosine.toFixed(4)}</td>
+                  <td className="py-1 pr-3 text-right">
+                    {a.yInterPolePosition !== null
+                      ? `${(a.yInterPolePosition * 100).toFixed(1)}%`
+                      : "—"}
+                  </td>
+                  <td className="py-1 pr-3 text-right">{a.xAxisNorm.toFixed(4)}</td>
+                  <td className="py-1 pr-3 text-right">{a.yAxisNorm.toFixed(4)}</td>
+                  <td className="py-1 pr-3 text-right">
+                    {a.usableRange !== null ? a.usableRange.toFixed(4) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="font-sans text-[10px] text-muted-foreground mt-1.5">
+          Position is the inter-pole cosine on the model&apos;s floor-to-identity scale. A raw
+          inter-pole cosine of 0.80 reads as strong opposition until the floor is known: in a
+          model whose term floor is 0.75, the two poles are almost on top of each other.
+        </p>
+      </DeepDiveSection>
+
+      <DeepDiveSection
+        title="Pole coherence"
+        tip="How tightly each pole's own terms cluster. A pole whose terms are scattered is a weak anchor, and the concepts projected onto it inherit that weakness."
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption tabular-nums">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b border-parchment">
+                <th className="py-1 pr-3 font-medium">Model</th>
+                <th className="py-1 pr-3 font-medium">Pole</th>
+                <th className="py-1 pr-3 font-medium text-right">terms</th>
+                <th className="py-1 pr-3 font-medium text-right">coherence</th>
+                <th className="py-1 pr-3 font-medium text-right">position</th>
+                <th className="py-1 pr-3 font-medium text-right">centroid norm</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-parchment">
+              {axisStats.flatMap(a =>
+                ([a.xNeg, a.xPos, a.yNeg, a.yPos] as const).map((pole, i) => (
+                  <tr key={`${a.modelId}-${i}`}>
+                    <td className="py-1 pr-3 font-medium">{i === 0 ? a.modelName : ""}</td>
+                    <td className="py-1 pr-3 text-muted-foreground">{pole.label}</td>
+                    <td className="py-1 pr-3 text-right">{pole.terms.length}</td>
+                    <td className="py-1 pr-3 text-right">{pole.coherence.toFixed(4)}</td>
+                    <td className="py-1 pr-3 text-right">
+                      {pole.coherencePosition !== null
+                        ? `${(pole.coherencePosition * 100).toFixed(1)}%`
+                        : "—"}
+                    </td>
+                    <td className="py-1 pr-3 text-right">{pole.centroidNorm.toFixed(4)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </DeepDiveSection>
+
+      <CalibrationDeepDive
+        register="term"
+        modelIds={axisStats.map(a => a.modelId)}
+        notes={[
+          "A compass coordinate is a difference of two cosines, so the floor cancels: subtracting the same floor from both terms leaves the difference unchanged. Calibration therefore does not move any point on the plots above.",
+          "What calibration supplies here is the scale. The reachable interval for a difference of cosines is bounded by the usable range, not by the nominal minus-two to plus-two, and that bound differs by model. A spread of 0.04 in a model with a usable range of 0.25 is a much larger separation than the same spread where the range is 0.86.",
+          calibrated.length === axisStats.length
+            ? "Every model here is calibrated, so the inter-pole positions above are measured rather than stipulated."
+            : `${axisStats.length - calibrated.length} of ${axisStats.length} models are uncalibrated, so their inter-pole cosines have no measured origin and their compasses cannot be compared with the others.`,
+        ]}
+      />
+    </DeepDivePanel>
   );
 }

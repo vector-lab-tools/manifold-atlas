@@ -28,6 +28,7 @@ import {
   negationGaugeTextList,
   type NegationGaugeResult,
 } from "@/lib/operations/negation-gauge";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const DEFAULT_STATEMENT = "This policy is fair";
@@ -768,6 +769,15 @@ function NegationGaugeDeepDive({ result }: { result: NegationGaugeResult }) {
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="short"
+        modelIds={result.models.map(m => m.modelId)}
+        measurements={result.models.map(m => ({ modelId: m.modelId, label: "negation", cosine: m.cosineSimilarity }))}
+        notes={[
+          "The collapse threshold is derived per model from that probe's own controls, so the cutoff in the table above is not the same number for every model and is not a constant at all.",
+          "Angular separation is reported against each model's arc rather than against 180 degrees, which no pair of sentences in an anisotropic space approaches.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }

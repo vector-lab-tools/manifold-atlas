@@ -65,6 +65,14 @@ export function Calibration({ onQueryTime }: CalibrationProps) {
           result elsewhere in the application can be reported against something measured
           rather than against a stipulated constant.
         </p>
+        <p className="font-sans text-body-sm text-muted-foreground max-w-2xl">
+          The floor is measured separately for three registers, because a bare term, a short
+          claim and a paragraph do not sit at the same place in the cone. Concept Distance,
+          Distance Matrix, Hegemony Compass, Silence Detector, Semantic Sectioning and Vector
+          Logic read against the term floor; Negation Gauge, Negation Battery, Vector Drift and
+          Agonism Test read against the declarative floor. Each operation names its register in
+          its own Deep Dive.
+        </p>
       </header>
 
       <div className="card-editorial p-4 space-y-3">
@@ -166,7 +174,7 @@ export function Calibration({ onQueryTime }: CalibrationProps) {
 
           <DeepDiveSection
             title="Floor distributions"
-            tip="Short declaratives are the register the Negation Gauge and Concept Distance use. Prose is the register for Semantic Sectioning and Text Vectorisation."
+            tip="Bare terms are the register for Concept Distance, Distance Matrix, Hegemony Compass, Silence Detector, Semantic Sectioning and Vector Logic. Short declaratives are the register for Negation Gauge, Negation Battery, Vector Drift and Agonism Test. Prose is for Text Vectorisation."
           >
             <div className="overflow-x-auto">
               <table className="w-full font-sans text-caption tabular-nums">
@@ -186,6 +194,7 @@ export function Calibration({ onQueryTime }: CalibrationProps) {
                   {records.flatMap(cal =>
                     (
                       [
+                        ["bare terms", cal.termFloor],
                         ["short declarative", cal.shortFloor],
                         ["prose", cal.proseFloor],
                         ["topical ceiling", cal.topicalCeiling],
@@ -277,9 +286,9 @@ function RadiusCard({
         />
         <MetricStat
           termKey="floor"
-          label="Floor"
+          label="Floor (declaratives)"
           value={cal.shortFloor.mean.toFixed(4)}
-          hint={`sd ${cal.shortFloor.sd.toFixed(4)}`}
+          hint={`terms ${cal.termFloor.mean.toFixed(4)} · prose ${cal.proseFloor.mean.toFixed(4)}`}
         />
         <MetricStat
           termKey="usableRange"
@@ -357,10 +366,10 @@ function RadiusCard({
               hint={`p05 ${cal.shortFloor.p05.toFixed(3)} · p95 ${cal.shortFloor.p95.toFixed(3)}`}
             />
             <MetricStat
-              termKey="floor"
-              label="Prose floor"
-              value={cal.proseFloor.mean.toFixed(4)}
-              hint="for paragraph-level operations"
+              termKey="coneHalfAngle"
+              label="Cone by register"
+              value={`${cal.coneByRegister.term.toFixed(0)}° / ${cal.coneByRegister.short.toFixed(0)}° / ${cal.coneByRegister.prose.toFixed(0)}°`}
+              hint="terms / declaratives / prose"
             />
           </div>
 

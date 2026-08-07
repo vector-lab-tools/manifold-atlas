@@ -12,9 +12,25 @@
  * Also returns per-model axis statistics (inter-pole cosine, axis norm,
  * intra-pole coherence, centroid norm) so the Runner's deep dive can
  * render the same summary that the standalone compass view shows.
+ *
+ * Calibration enters here differently from every other operation. A
+ * compass coordinate is a *difference* of two cosines, and a difference
+ * cancels the floor: (c1 - floor) - (c2 - floor) = c1 - c2. So the
+ * positions do not need the floor subtracted. What they do need is the
+ * scale, because the reachable interval for a difference is bounded by
+ * the usable range rather than by the nominal [-2, 2], and that range
+ * differs from model to model. Dividing by it makes two models'
+ * compasses the same picture rather than two pictures at different
+ * magnifications.
+ *
+ * The pole statistics are plain cosines, not differences, so those are
+ * floor-normalised in the usual way.
  */
 
 import { cosineSimilarity } from "@/lib/geometry/cosine";
+import type { ModelCalibration } from "@/lib/calibration/compute";
+import { floorFor, usableRangeFor } from "@/lib/calibration/compute";
+import { normalisedPosition } from "@/lib/calibration/baseline";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
 import { COMPASS_PRESETS, type CompassAxis, type CompassPreset } from "@/lib/compass-presets";
 
@@ -72,8 +88,15 @@ export function hegemonyCompassTextList(inputs: HegemonyCompassInputs): string[]
 
 export interface HegemonyCompassPointResult {
   concept: string;
+  /** Raw difference of pole similarities. */
   x: number;
   y: number;
+  /**
+   * The difference divided by the model's usable range, so magnitudes
+   * are comparable across models. Null when the model is uncalibrated.
+   */
+  xScaled: number | null;
+  yScaled: number | null;
   simXNeg: number;
   simXPos: number;
   simYNeg: number;
@@ -83,7 +106,10 @@ export interface HegemonyCompassPointResult {
 export interface HegemonyCompassPoleStats {
   label: string;
   terms: string[];
+  /** Mean pairwise cosine within the pole's own terms. */
   coherence: number;
+  /** That coherence as a floor-to-identity position. Null if uncalibrated. */
+  coherencePosition: number | null;
   centroidNorm: number;
 }
 
@@ -98,8 +124,19 @@ export interface HegemonyCompassModelResult {
   yPos: HegemonyCompassPoleStats;
   xInterPoleCosine: number;
   yInterPoleCosine: number;
+  /**
+   * Inter-pole cosines as floor-to-identity positions. A raw inter-pole
+   * cosine of 0.80 says nothing about whether the poles are genuinely
+   * opposed until it is read against the floor; a model whose term floor
+   * is 0.75 has poles that are barely apart at all.
+   */
+  xInterPolePosition: number | null;
+  yInterPolePosition: number | null;
   xAxisNorm: number;
   yAxisNorm: number;
+  /** The model's usable range for terms; the divisor for the scaled coordinates. */
+  usableRange: number | null;
+  calibrated: boolean;
 }
 
 export interface HegemonyCompassResult {
@@ -156,7 +193,8 @@ function meanPairwiseCosine(vecs: number[][]): number {
 export function computeHegemonyCompass(
   inputs: HegemonyCompassInputs,
   modelVectors: Map<string, number[][]>,
-  enabledModels: Array<{ id: string; name: string; providerId: string }>
+  enabledModels: Array<{ id: string; name: string; providerId: string }>,
+  calibrations?: Map<string, ModelCalibration>
 ): HegemonyCompassResult {
   const preset = resolveCompassPreset(inputs);
   if (!preset) {
@@ -175,6 +213,15 @@ export function computeHegemonyCompass(
     const vectors = modelVectors.get(m.id)!;
     const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
 
+    // The compass embeds bare terms, so the term floor is the register.
+    const cal = calibrations?.get(m.id) ?? null;
+    const termFloor = cal ? floorFor(cal, "term").mean : null;
+    const usableRange = cal ? usableRangeFor(cal, "term") : null;
+    const scale = (v: number) =>
+      usableRange !== null && usableRange > 1e-9 ? v / usableRange : null;
+    const position = (c: number) =>
+      termFloor !== null ? normalisedPosition(c, termFloor) : null;
+
     // Axis vectors start after all concepts.
     let offset = concepts.length;
     const xNegVecs = vectors.slice(offset, offset + xNegCount); offset += xNegCount;
@@ -190,10 +237,14 @@ export function computeHegemonyCompass(
       const avgSimXPos = xPosVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / xPosVecs.length;
       const avgSimYNeg = yNegVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / yNegVecs.length;
       const avgSimYPos = yPosVecs.reduce((s, v) => s + cosineSimilarity(conceptVec, v), 0) / yPosVecs.length;
+      const x = avgSimXPos - avgSimXNeg;
+      const y = avgSimYPos - avgSimYNeg;
       points.push({
         concept: concepts[ci],
-        x: avgSimXPos - avgSimXNeg,
-        y: avgSimYPos - avgSimYNeg,
+        x,
+        y,
+        xScaled: scale(x),
+        yScaled: scale(y),
         simXNeg: avgSimXNeg,
         simXPos: avgSimXPos,
         simYNeg: avgSimYNeg,
@@ -215,30 +266,38 @@ export function computeHegemonyCompass(
         label: preset.xAxis.negative.label,
         terms: preset.xAxis.negative.terms,
         coherence: meanPairwiseCosine(xNegVecs),
+        coherencePosition: position(meanPairwiseCosine(xNegVecs)),
         centroidNorm: l2Norm(xNegCentroid),
       },
       xPos: {
         label: preset.xAxis.positive.label,
         terms: preset.xAxis.positive.terms,
         coherence: meanPairwiseCosine(xPosVecs),
+        coherencePosition: position(meanPairwiseCosine(xPosVecs)),
         centroidNorm: l2Norm(xPosCentroid),
       },
       yNeg: {
         label: preset.yAxis.negative.label,
         terms: preset.yAxis.negative.terms,
         coherence: meanPairwiseCosine(yNegVecs),
+        coherencePosition: position(meanPairwiseCosine(yNegVecs)),
         centroidNorm: l2Norm(yNegCentroid),
       },
       yPos: {
         label: preset.yAxis.positive.label,
         terms: preset.yAxis.positive.terms,
         coherence: meanPairwiseCosine(yPosVecs),
+        coherencePosition: position(meanPairwiseCosine(yPosVecs)),
         centroidNorm: l2Norm(yPosCentroid),
       },
       xInterPoleCosine: cosineSimilarity(xNegCentroid, xPosCentroid),
       yInterPoleCosine: cosineSimilarity(yNegCentroid, yPosCentroid),
+      xInterPolePosition: position(cosineSimilarity(xNegCentroid, xPosCentroid)),
+      yInterPolePosition: position(cosineSimilarity(yNegCentroid, yPosCentroid)),
       xAxisNorm: euclideanDist(xNegCentroid, xPosCentroid),
       yAxisNorm: euclideanDist(yNegCentroid, yPosCentroid),
+      usableRange,
+      calibrated: cal !== null,
     });
   }
 

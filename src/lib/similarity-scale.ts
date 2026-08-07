@@ -60,7 +60,18 @@ export function calibratedConceptLevel(
   floorMean: number | null
 ): SimilarityLevel {
   if (floorMean === null) return conceptSimilarityLevel(similarity);
-  const p = normalisedPosition(similarity, floorMean);
+  return levelFromPosition(normalisedPosition(similarity, floorMean));
+}
+
+/**
+ * Band for a floor-to-identity position that has already been computed.
+ *
+ * Needed wherever the headline figure is an aggregate across models. A
+ * mean of raw cosines from models with different floors is not a
+ * quantity, so those views average the per-model positions instead and
+ * band the result here.
+ */
+export function levelFromPosition(p: number): SimilarityLevel {
   if (p >= 0.95) return { label: "Indistinguishable", ...CRITICAL };
   if (p >= 0.85) return { label: "Very close on this model's scale", ...HIGH };
   if (p >= 0.7) return { label: "Close on this model's scale", ...MODERATE };

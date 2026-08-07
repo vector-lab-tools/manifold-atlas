@@ -5,6 +5,9 @@ import { Loader2, Download, ChevronRight, ChevronDown } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { similarityColor } from "@/lib/similarity-scale";
 import {
@@ -37,6 +40,7 @@ export function VectorLogic({ onQueryTime }: VectorLogicProps) {
   const [detailOpen, setDetailOpen] = useState(false);
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  const floors = useFloors("term");
 
   const handleCompute = async (overrideA?: string, overrideB?: string, overrideC?: string) => {
     const a = overrideA || termA.trim() || "king";
@@ -161,6 +165,9 @@ export function VectorLogic({ onQueryTime }: VectorLogicProps) {
         </div>
       </div>
 
+      <CalibrationNotice register="term" missing={floors.missing} />
+
+
       {error != null && <ErrorDisplay error={error} onRetry={() => handleCompute()} />}
 
       {results.map(r => (
@@ -190,7 +197,7 @@ export function VectorLogic({ onQueryTime }: VectorLogicProps) {
                 const barWidth = r.nearest[0].similarity > 0
                   ? (n.similarity / r.nearest[0].similarity) * 100
                   : 0;
-                const color = similarityColor(n.similarity);
+                const color = similarityColor(n.similarity, floors.floor(r.modelId));
 
                 return (
                   <div key={i} className="flex items-center gap-2">
@@ -405,6 +412,14 @@ function VectorLogicDeepDive({ results }: { results: VectorLogicModelResult[] })
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="term"
+        modelIds={results.map(r => r.modelId)}
+        notes={[
+          "Nearest-neighbour bars are coloured by position on each model's scale rather than by raw cosine, so a neighbour that looks close in a high-floor model is not coloured as though it were close in absolute terms.",
+          "The ranking of neighbours is unchanged by calibration: subtracting a constant floor and dividing by a constant range preserves order within a model.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }

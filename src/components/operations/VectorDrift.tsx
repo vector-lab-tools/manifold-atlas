@@ -7,6 +7,9 @@ import { Loader2, Waypoints, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { projectPCA3D } from "@/lib/geometry/pca";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
@@ -101,6 +104,7 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
   const [result, setResult] = useState<DriftResult | null>(null);
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  const floors = useFloors("short");
   const isDark = settings.darkMode;
 
   const handleCompute = async () => {
@@ -312,6 +316,9 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
           </div>
         </div>
       </div>
+
+      <CalibrationNotice register="short" missing={floors.missing} />
+
 
       {error != null && <ErrorDisplay error={error} onRetry={handleCompute} />}
 
@@ -571,6 +578,14 @@ function DriftDeepDive({ result }: { result: DriftResult }) {
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="short"
+        modelIds={result.models.map(m => m.modelId)}
+        notes={[
+          "Displacement is a difference of cosines, so the floor cancels and the raw displacement figures are unaffected by calibration. What calibration supplies is the scale: a displacement of 0.03 is a large move in a model whose usable range is 0.25 and a small one where the range is 0.86.",
+          "Variants are propositional sentences, so this operation reads against the short-declarative floor.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }
@@ -582,6 +597,8 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
   isDark: boolean;
 }) {
   const driftPlotRef = useRef<PlotlyPlotHandle>(null);
+  // Variants are propositional sentences, so the declarative floor.
+  const driftFloor = useFloors("short").floor(model.modelId);
 
   // Project all variant vectors to 3D
   const projection = useMemo(() => {
@@ -604,7 +621,7 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
 
     // Lines from base concept to each variant
     for (let i = 1; i < projection.length; i++) {
-      const color = similarityColor(model.drifts[i].similarity);
+      const color = similarityColor(model.drifts[i].similarity, driftFloor);
       t.push({
         x: [projection[0][0], projection[i][0]],
         y: [projection[0][1], projection[i][1]],
@@ -647,7 +664,7 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
       },
       marker: {
         size: 6,
-        color: model.drifts.slice(1).map(d => similarityColor(d.similarity)),
+        color: model.drifts.slice(1).map(d => similarityColor(d.similarity, driftFloor)),
         opacity: 0.9,
       },
       hoverinfo: "text",
@@ -670,7 +687,7 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
     });
 
     return t;
-  }, [projection, model.drifts, shortLabels, concept, isDark]);
+  }, [projection, model.drifts, shortLabels, concept, isDark, driftFloor]);
 
   const bgColor = isDark ? "#0a0a1a" : "#f5f2ec";
   const gridColor = isDark ? "rgba(60,60,100,0.3)" : "rgba(140,130,110,0.35)";
@@ -777,7 +794,7 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
         <div className="space-y-2">
           {sorted.map((d, i) => {
             const barWidth = maxDisplacement > 0 ? (d.displacement / maxDisplacement) * 100 : 0;
-            const color = similarityColor(d.similarity);
+            const color = similarityColor(d.similarity, driftFloor);
             return (
               <div key={i} className="space-y-0.5">
                 <div className="flex items-center justify-between">

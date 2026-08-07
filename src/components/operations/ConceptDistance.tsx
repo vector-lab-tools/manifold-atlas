@@ -9,7 +9,12 @@ import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { QueryHistory } from "@/components/shared/QueryHistory";
 import { addHistoryEntry, type HistoryEntry } from "@/lib/history";
-import { conceptSimilarityLevel } from "@/lib/similarity-scale";
+import { calibratedConceptLevel } from "@/lib/similarity-scale";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
+import { CalibratedBar } from "@/components/viz/CalibratedBar";
+import { normalisedPosition } from "@/lib/calibration/baseline";
 import { ResetButton } from "@/components/shared/ResetButton";
 import {
   computeConceptDistance,
@@ -60,6 +65,9 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  // Concept Distance embeds bare terms, so it is read against the term
+  // floor rather than the declarative one.
+  const floors = useFloors("term");
 
   const handleCompute = async (overrideA?: string, overrideB?: string) => {
     const effectiveA = overrideA || termA.trim() || DEFAULT_A;
@@ -160,6 +168,9 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
         </div>
       </div>
 
+      <CalibrationNotice register="term" missing={floors.missing} />
+
+
       {error != null && <ErrorDisplay error={error} onRetry={() => handleCompute()} />}
 
       {result && (
@@ -184,7 +195,35 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                   <div className="mt-3">
                     <SimilarityMeter
                       similarity={m.cosineSimilarity}
-                      level={conceptSimilarityLevel(m.cosineSimilarity)}
+                      level={calibratedConceptLevel(m.cosineSimilarity, floors.floor(m.modelId))}
+                    />
+                  </div>
+                  <div className="mt-3">
+                    <CalibratedBar
+                      modelName={`${result.termA} → ${result.termB}`}
+                      value={m.cosineSimilarity}
+                      floor={floors.floor(m.modelId)}
+                      normalised={
+                        floors.floor(m.modelId) !== null
+                          ? normalisedPosition(m.cosineSimilarity, floors.floor(m.modelId)!)
+                          : null
+                      }
+                      marks={
+                        floors.topicalCeiling(m.modelId) !== null
+                          ? [
+                              {
+                                value: floors.topicalCeiling(m.modelId)!,
+                                label: "topical ceiling",
+                                termKey: "topicalCeiling",
+                                colour: "#0891b2",
+                                dashed: true,
+                              },
+                            ]
+                          : []
+                      }
+                      valueColour={
+                        calibratedConceptLevel(m.cosineSimilarity, floors.floor(m.modelId)).color
+                      }
                     />
                   </div>
                 </div>
@@ -458,6 +497,15 @@ function ConceptDistanceDeepDive({ result }: { result: ConceptDistanceResult }) 
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="term"
+        modelIds={result.models.map(m => m.modelId)}
+        measurements={result.models.map(m => ({ modelId: m.modelId, label: `${result.termA} ↔ ${result.termB}`, cosine: m.cosineSimilarity }))}
+        notes={[
+          "The similarity band above is the position of this pair on each model's floor-to-identity range, not the raw cosine. Two models reporting the same cosine can land in different bands when their floors differ, and that is the point.",
+          "The bar plots the pair from the floor rather than from zero. The hatched region below the floor is unreachable: no pair of real terms lands there.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }

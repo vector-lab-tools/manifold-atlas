@@ -100,6 +100,30 @@ function l2norm(v: number[]): number {
 }
 
 /**
+ * Cone half-angle for one stratum, in degrees, with the same
+ * sample-size correction the full profile uses. Broken out so a
+ * calibration can report the cone per register without recomputing the
+ * dimension statistics four times.
+ */
+export function coneHalfAngleOf(vectors: number[][]): number {
+  const n = vectors.length;
+  if (n < 2) return 90;
+  const d = vectors[0].length;
+
+  const meanDir = new Array(d).fill(0);
+  for (const v of vectors) {
+    const nrm = l2norm(v);
+    if (nrm < 1e-12) continue;
+    for (let i = 0; i < d; i++) meanDir[i] += v[i] / nrm;
+  }
+  for (let i = 0; i < d; i++) meanDir[i] /= n;
+
+  const rawSq = Math.min(1, l2norm(meanDir)) ** 2;
+  const corrected = Math.max(0, Math.min(1, (rawSq - 1 / n) / (1 - 1 / n)));
+  return (Math.acos(Math.sqrt(corrected)) * 180) / Math.PI;
+}
+
+/**
  * Participation ratio of the covariance eigenvalues,
  *
  *     PR = (sum of eigenvalues)^2 / (sum of squared eigenvalues)

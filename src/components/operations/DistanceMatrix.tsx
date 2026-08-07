@@ -6,6 +6,11 @@ import { Loader2, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { useCalibration } from "@/context/CalibrationContext";
+import { MetricTerm } from "@/components/shared/MetricTerm";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { BenchmarkLoader } from "@/components/shared/BenchmarkLoader";
 import {
@@ -34,6 +39,8 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
   const [result, setResult] = useState<DistanceMatrixResult | null>(null);
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  const floors = useFloors("term");
+  const { calibrations } = useCalibration();
   const isDark = settings.darkMode;
 
   const handleCompute = async () => {
@@ -55,7 +62,7 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
       const texts = distanceMatrixTextList(inputs);
       const modelVectors = await embedAll(texts);
       const enabledModels = getEnabledModels();
-      const computed = computeDistanceMatrix(inputs, modelVectors, enabledModels);
+      const computed = computeDistanceMatrix(inputs, modelVectors, enabledModels, calibrations);
       setResult(computed);
       onQueryTime((performance.now() - start) / 1000);
     } catch (e) {
@@ -120,6 +127,9 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
         </div>
       </div>
 
+      <CalibrationNotice register="term" missing={floors.missing} />
+
+
       {error != null && <ErrorDisplay error={error} onRetry={handleCompute} />}
 
       {/* Contested Geometry (cross-model disagreement) */}
@@ -131,6 +141,21 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
               Concept pairs where models disagree most. High variance means models position
               these concepts at different distances, the geometry is politically contested.
             </p>
+            {result.contestedCalibrated ? (
+              <p className="font-sans text-caption text-muted-foreground mt-1">
+                Ranked on each model&apos;s{" "}
+                <MetricTerm termKey="normalisedPosition">floor-to-identity position</MetricTerm>{" "}
+                rather than on raw cosine, so a difference between the models&apos; floors does
+                not read as a disagreement about the concepts. Cells show the position, with
+                the raw cosine beneath.
+              </p>
+            ) : (
+              <p className="font-sans text-caption text-warning-600 mt-1">
+                Ranked on raw cosine, because at least one model has no calibration. Some of
+                the spread below is the difference between the models&apos; floors rather than
+                between their geometries. Calibrate to separate the two.
+              </p>
+            )}
           </div>
           <div className="thin-rule mx-5" />
           <div className="px-5 py-4 overflow-x-auto">
@@ -151,7 +176,18 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
                     <td className="px-2 py-1.5 text-right tabular-nums text-warning-500 font-semibold">{pair.variance.toFixed(6)}</td>
                     {result.models.map(r => (
                       <td key={r.modelId} className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
-                        {pair.sims[r.modelName]?.toFixed(4)}
+                        {pair.calibrated && pair.positions[r.modelName] !== undefined ? (
+                          <>
+                            <span className="block">
+                              {(pair.positions[r.modelName] * 100).toFixed(1)}%
+                            </span>
+                            <span className="block text-[10px] opacity-60">
+                              {pair.sims[r.modelName]?.toFixed(4)}
+                            </span>
+                          </>
+                        ) : (
+                          pair.sims[r.modelName]?.toFixed(4)
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -312,6 +348,14 @@ function DistanceMatrixDeepDive({ result }: { result: DistanceMatrixResult }) {
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="term"
+        modelIds={result.models.map(m => m.modelId)}
+        notes={[
+          "The Contested Geometry ranking is computed on floor-to-identity positions when every model is calibrated. Ranking on raw cosine would let a difference between two models' floors appear on every pair in the list and read as a disagreement about the concepts.",
+          "The per-model heatmaps still show raw cosines, because a heatmap is read within one model and the floor is constant down its whole scale.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }

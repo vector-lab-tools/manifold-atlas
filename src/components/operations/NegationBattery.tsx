@@ -8,7 +8,7 @@ import { MetricTerm } from "@/components/shared/MetricTerm";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
-import { negationSimilarityLevel } from "@/lib/similarity-scale";
+import { negationSimilarityLevel, levelFromPosition } from "@/lib/similarity-scale";
 import { ResetButton } from "@/components/shared/ResetButton";
 import {
   NEGATION_BATTERIES,
@@ -22,6 +22,7 @@ import {
   removeUserBattery,
   type UserBatteries,
 } from "@/lib/operations/user-batteries";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/shared/DeepDivePanel";
 
 const BATTERIES = NEGATION_BATTERIES;
@@ -369,7 +370,11 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
             <div className="px-5 py-4">
               <SimilarityMeter
                 similarity={avgSimilarity}
-                level={negationSimilarityLevel(avgSimilarity, settings.negationThreshold)}
+                level={
+                  avgNormalised !== null
+                    ? levelFromPosition(avgNormalised)
+                    : negationSimilarityLevel(avgSimilarity, settings.negationThreshold)
+                }
               />
             </div>
           </div>
@@ -403,7 +408,10 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
                         <div className="text-caption text-muted-foreground mt-0.5">&rarr; {r.negated}</div>
                       </td>
                       {r.models.map(m => {
-                        const level = negationSimilarityLevel(m.similarity, settings.negationThreshold);
+                        const level =
+                          m.normalised !== null
+                            ? levelFromPosition(m.normalised)
+                            : negationSimilarityLevel(m.similarity, m.thresholdValue);
                         return (
                           <td key={m.modelId} className="text-center px-3 py-2.5">
                             <span
@@ -506,6 +514,14 @@ function NegationBatteryDeepDive({ results, threshold }: { results: BatteryResul
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="short"
+        modelIds={(results[0]?.models ?? []).map(m => m.modelId)}
+        notes={[
+          "Collapse rate counts tests over each model's own control-derived cutoff, so the rate is not a count against a shared constant.",
+          "The exceeds-controls count is the figure that survives the token-overlap objection: it counts tests where the negation beat every edit of the same size that left the claim standing.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }

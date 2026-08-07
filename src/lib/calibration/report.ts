@@ -7,14 +7,30 @@
  * the measurement rather than leaving it to be written by hand.
  */
 
-import type { ModelCalibration } from "./compute";
-import { describeRadius } from "./radius";
+import type { ModelCalibration, Register } from "./compute";
+import { floorFor, coneFor, REGISTER_LABELS } from "./compute";
 import type { NegationGaugeModelResult } from "@/lib/operations/negation-gauge";
 import { CONTROL_LABELS } from "@/lib/operations/negation-controls";
 
-/** The radius line: what kind of space this measurement was taken in. */
-export function radiusLine(cal: ModelCalibration): string {
-  return `${cal.modelName} (${cal.providerId}): ${describeRadius(cal.radius, cal.shortFloor.mean)}`;
+/**
+ * The radius line: what kind of space this measurement was taken in.
+ *
+ * The floor and cone quoted are the ones for the register the caller
+ * works in, because a line pairing a term-level result with a
+ * declarative floor would be the error the calibration layer exists to
+ * prevent.
+ */
+export function radiusLine(cal: ModelCalibration, register: Register = "short"): string {
+  const d = floorFor(cal, register);
+  const r = cal.radius;
+  return (
+    `${cal.modelName} (${cal.providerId}): ${r.nominalDim}d, ` +
+    `${REGISTER_LABELS[register]} floor ${d.mean.toFixed(4)} (sd ${d.sd.toFixed(4)}, n ${d.n}), ` +
+    `cone half-angle ${coneFor(cal, register).toFixed(1)}°, ` +
+    `usable range ${(1 - d.mean).toFixed(4)}, ` +
+    `topical ceiling ${cal.topicalCeiling.mean.toFixed(4)}, ` +
+    `effective dim ${r.effectiveDim.toFixed(0)} of ${r.effectiveDimCeiling.toFixed(0)} reachable`
+  );
 }
 
 /**

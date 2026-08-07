@@ -9,6 +9,9 @@
  */
 
 import { cosineSimilarity } from "@/lib/geometry/cosine";
+import type { ModelCalibration } from "@/lib/calibration/compute";
+import { floorFor } from "@/lib/calibration/compute";
+import { normalisedPosition } from "@/lib/calibration/baseline";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
 
 export interface DistanceMatrixInputs {
@@ -28,14 +31,29 @@ export interface DistanceMatrixModelResult {
 export interface ContestedGeometryPair {
   a: string;
   b: string;
-  /** Variance of the pair's cosine across models. */
+  /**
+   * Variance across models of the quantity actually compared. When every
+   * model is calibrated this is the variance of the floor-to-identity
+   * positions; otherwise it is the variance of the raw cosines. See
+   * `calibrated` before reading it.
+   */
   variance: number;
-  /** Per-model cosines. */
+  /** Per-model cosines, always raw. */
   sims: Record<string, number>;
-  /** Min and max across models, for quick diff reporting. */
+  /** Per-model floor-to-identity positions. Empty when uncalibrated. */
+  positions: Record<string, number>;
+  /** Min and max of the compared quantity across models. */
   min: number;
   max: number;
   range: number;
+  /** Range of the raw cosines, kept for reference. */
+  rawRange: number;
+  /**
+   * True when every contributing model had a calibration, so the
+   * ranking reflects disagreement about the concepts rather than
+   * differences between the models' floors.
+   */
+  calibrated: boolean;
 }
 
 export interface DistanceMatrixResult {
@@ -43,6 +61,12 @@ export interface DistanceMatrixResult {
   models: DistanceMatrixModelResult[];
   /** Populated when >= 2 models were enabled. Top-N sorted by variance desc. */
   contestedPairs: ContestedGeometryPair[];
+  /**
+   * False when at least one model lacked a calibration, so the contested
+   * ranking is computed on raw cosines and partly reflects differences
+   * between the models' floors rather than between their geometries.
+   */
+  contestedCalibrated: boolean;
 }
 
 export function distanceMatrixTextList(inputs: DistanceMatrixInputs): string[] {
@@ -52,7 +76,8 @@ export function distanceMatrixTextList(inputs: DistanceMatrixInputs): string[] {
 export function computeDistanceMatrix(
   inputs: DistanceMatrixInputs,
   modelVectors: Map<string, number[][]>,
-  enabledModels: Array<{ id: string; name: string; providerId: string }>
+  enabledModels: Array<{ id: string; name: string; providerId: string }>,
+  calibrations?: Map<string, ModelCalibration>
 ): DistanceMatrixResult {
   const concepts = inputs.concepts;
   if (concepts.length < 2) {
@@ -100,30 +125,60 @@ export function computeDistanceMatrix(
     });
 
   // Contested geometry: pairs where models disagree most.
+  //
+  // This ranking is where an uncalibrated cosine does the most damage.
+  // Two models whose floors differ by 0.10 will show a 0.10 spread on
+  // every pair in the list, and the ranking then reports the difference
+  // between the instruments as though it were a disagreement about the
+  // concepts. Where every model is calibrated the comparison is made on
+  // floor-to-identity positions instead, which removes that component.
+  // Distance Matrix embeds bare terms, so the term floor is the one used.
+  const floors = new Map<string, number>();
+  for (const r of models) {
+    const cal = calibrations?.get(r.modelId);
+    if (cal) floors.set(r.modelId, floorFor(cal, "term").mean);
+  }
+  const contestedCalibrated = models.length > 0 && floors.size === models.length;
+
   const contestedPairs: ContestedGeometryPair[] = [];
   if (models.length > 1) {
     const n = concepts.length;
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
         const sims: Record<string, number> = {};
-        const values: number[] = [];
+        const positions: Record<string, number> = {};
+        const raw: number[] = [];
+        const compared: number[] = [];
+
         for (const r of models) {
           const s = r.matrix[i][j];
           sims[r.modelName] = s;
-          values.push(s);
+          raw.push(s);
+          const f = floors.get(r.modelId);
+          if (f !== undefined) {
+            const pos = normalisedPosition(s, f);
+            positions[r.modelName] = pos;
+          }
+          compared.push(
+            contestedCalibrated ? normalisedPosition(s, floors.get(r.modelId)!) : s
+          );
         }
-        const mean = values.reduce((a, b) => a + b, 0) / values.length;
-        const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
-        const min = Math.min(...values);
-        const max = Math.max(...values);
+
+        const mean = compared.reduce((a, b) => a + b, 0) / compared.length;
+        const variance =
+          compared.reduce((a, b) => a + (b - mean) ** 2, 0) / compared.length;
+
         contestedPairs.push({
           a: concepts[i],
           b: concepts[j],
           variance,
           sims,
-          min,
-          max,
-          range: max - min,
+          positions,
+          min: Math.min(...compared),
+          max: Math.max(...compared),
+          range: Math.max(...compared) - Math.min(...compared),
+          rawRange: Math.max(...raw) - Math.min(...raw),
+          calibrated: contestedCalibrated,
         });
       }
     }
@@ -134,6 +189,7 @@ export function computeDistanceMatrix(
     concepts,
     models,
     contestedPairs: contestedPairs.slice(0, 20),
+    contestedCalibrated,
   };
 }
 
@@ -149,6 +205,9 @@ export function distanceMatrixHeadline(
     "most similar": `${top.mostSimilar.a} ↔ ${top.mostSimilar.b} (${top.mostSimilar.sim.toFixed(3)})`,
     "least similar": `${top.leastSimilar.a} ↔ ${top.leastSimilar.b} (${top.leastSimilar.sim.toFixed(3)})`,
     "avg cosine": Number(top.avgSimilarity.toFixed(4)),
+    "contested basis": result.contestedCalibrated
+      ? "floor-to-identity position"
+      : "raw cosine — uncalibrated, partly reflects differing floors",
     ...(result.contestedPairs.length > 0
       ? { "max contested pair": `${result.contestedPairs[0].a} ↔ ${result.contestedPairs[0].b} (range ${result.contestedPairs[0].range.toFixed(3)})` }
       : {}),

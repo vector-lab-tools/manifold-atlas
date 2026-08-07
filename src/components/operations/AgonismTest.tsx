@@ -5,10 +5,14 @@ import { Loader2, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { normalisedPosition } from "@/lib/calibration/baseline";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { ResetButton } from "@/components/shared/ResetButton";
-import { conceptSimilarityLevel } from "@/lib/similarity-scale";
+import { conceptSimilarityLevel, levelFromPosition } from "@/lib/similarity-scale";
 import {
   AGONISM_PAIRS,
   AGONISM_THEMES,
@@ -41,6 +45,7 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
   const [selectedTheme, setSelectedTheme] = useState<ThemeChoice>("All");
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  const floors = useFloors("short");
 
   const filteredPairs: OpposedPair[] = useCustom
     ? []
@@ -85,6 +90,25 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
   // Summary
   const totalTests = results.reduce((s, r) => s + r.models.length, 0);
   const preservedCount = results.reduce((s, r) => s + r.models.filter(m => m.agonismPreserved).length, 0);
+  // A mean of raw cosines drawn from models with different floors is
+  // not a quantity, so the headline band comes from the mean of the
+  // per-model floor-to-identity positions instead. Null when any
+  // contributing model is uncalibrated, in which case the view falls
+  // back to the fixed bands and says so.
+  const avgPosition = (() => {
+    const positions: number[] = [];
+    for (const r of results) {
+      for (const m of r.models) {
+        const f = floors.floor(m.modelId);
+        if (f === null) return null;
+        positions.push(normalisedPosition(m.similarity, f));
+      }
+    }
+    return positions.length > 0
+      ? positions.reduce((s, v) => s + v, 0) / positions.length
+      : null;
+  })();
+
   const avgSimilarity = results.length > 0
     ? results.reduce((s, r) => s + r.models.reduce((ss, m) => ss + m.similarity, 0) / r.models.length, 0) / results.length
     : 0;
@@ -182,6 +206,9 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
         </div>
       </div>
 
+      <CalibrationNotice register="short" missing={floors.missing} />
+
+
       {error != null && <ErrorDisplay error={error} onRetry={handleCompute} />}
 
       {results.length > 0 && (
@@ -233,7 +260,11 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
             <div className="px-5 py-4">
               <SimilarityMeter
                 similarity={avgSimilarity}
-                level={conceptSimilarityLevel(avgSimilarity)}
+                level={
+                  avgPosition !== null
+                    ? levelFromPosition(avgPosition)
+                    : conceptSimilarityLevel(avgSimilarity)
+                }
               />
             </div>
           </div>
@@ -372,6 +403,14 @@ function AgonismDeepDive({ results }: { results: AgonismResult[] }) {
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="short"
+        modelIds={(results[0]?.models ?? []).map(m => m.modelId)}
+        notes={[
+          "The headline band is the mean of the per-model floor-to-identity positions, not the band of the mean cosine. A mean of raw cosines drawn from models with different floors is not a quantity, and banding it would have been a category error.",
+          "Quotes are sentences, so this operation reads against the short-declarative floor rather than the term floor.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }

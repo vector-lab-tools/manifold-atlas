@@ -7,6 +7,9 @@ import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { RateLimitError } from "@/lib/embeddings/client";
 import { useRateLimitCountdown } from "@/components/shared/useRateLimitCountdown";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { ResetButton } from "@/components/shared/ResetButton";
@@ -58,6 +61,7 @@ export function SilenceDetector({ onQueryTime }: SilenceDetectorProps) {
   const [results, setResults] = useState<DensityResult[]>([]);
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  const floors = useFloors("term");
   const { countdown, isWaiting, startCountdown } = useRateLimitCountdown();
 
   const handleCompute = async () => {
@@ -229,6 +233,9 @@ export function SilenceDetector({ onQueryTime }: SilenceDetectorProps) {
           </div>
         </div>
       </div>
+
+      <CalibrationNotice register="term" missing={floors.missing} />
+
 
       {error != null && <ErrorDisplay error={error} onRetry={handleCompute} />}
 
@@ -413,6 +420,13 @@ function SilenceDeepDive({ results }: { results: DensityResult[] }) {
           </table>
         </div>
       </DeepDiveSection>
+      <CalibrationDeepDive
+        register="term"
+        modelIds={results.map(r => r.modelId)}
+        notes={[
+          "Density is a within-model comparison across domains, so the floor shifts every domain equally and does not change the ranking. It does change what a given density means: in a model with a narrow usable range, a domain scoring 0.05 above another is a larger difference than the same gap in a model with a wide one.",
+        ]}
+      />
     </DeepDivePanel>
   );
 }
