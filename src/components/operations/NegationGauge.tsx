@@ -1,16 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+import { useCalibration } from "@/context/CalibrationContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { MetricTerm, MetricStat } from "@/components/shared/MetricTerm";
+import { CalibratedBar, type BarMark } from "@/components/viz/CalibratedBar";
+import { calibratedNegationLevel } from "@/lib/similarity-scale";
+import { negationReportBlock } from "@/lib/calibration/report";
+import {
+  CONTROL_LABELS,
+  CONTROL_GLOSSARY_KEYS,
+} from "@/lib/operations/negation-controls";
+import type { NegationGaugeModelResult } from "@/lib/operations/negation-gauge";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { GaugeArc } from "@/components/viz/GaugeArc";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { QueryHistory } from "@/components/shared/QueryHistory";
 import { addHistoryEntry, type HistoryEntry } from "@/lib/history";
-import { negationSimilarityLevel } from "@/lib/similarity-scale";
+
 import { ResetButton } from "@/components/shared/ResetButton";
 import { generateNegation } from "@/lib/negation";
 import {
@@ -62,6 +72,8 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<NegationGaugeResult | null>(null);
   const { settings, getEnabledModels } = useSettings();
+  const { calibrations, uncalibratedModels, calibrate, running: calibrating } =
+    useCalibration();
   const embedAll = useEmbedAll();
 
   // Auto-generated negation suggestion, computed live from the
@@ -94,6 +106,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
         statement: effectiveStatement,
         threshold: settings.negationThreshold,
         negated: negatedForRun,
+        thresholdMode: settings.thresholdMode,
       };
       const texts = negationGaugeTextList(inputs);
       const original = texts[0];
@@ -102,7 +115,12 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
       const modelVectors = await embedAll(texts);
       const enabledModels = getEnabledModels();
 
-      const computed = computeNegationGauge(inputs, modelVectors, enabledModels);
+      const computed = computeNegationGauge(
+        inputs,
+        modelVectors,
+        enabledModels,
+        calibrations
+      );
       setResult(computed);
       onQueryTime((performance.now() - start) / 1000);
 
@@ -215,6 +233,30 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
         </div>
       </div>
 
+      {uncalibratedModels.length > 0 && (
+        <div className="card-editorial p-3 flex gap-2 items-start border-l-2 border-warning-500">
+          <AlertTriangle size={14} className="text-warning-500 mt-0.5 shrink-0" />
+          <div className="flex-1 space-y-1">
+            <p className="font-sans text-caption">
+              {uncalibratedModels.length === 1
+                ? `${uncalibratedModels[0].name} has no baseline.`
+                : `${uncalibratedModels.length} enabled models have no baseline.`}{" "}
+              Until a model is calibrated its cosines are reported against stipulated
+              constants rather than against its measured{" "}
+              <MetricTerm termKey="floor">floor</MetricTerm>, so the numbers below have no
+              origin to be read from.
+            </p>
+            <button
+              onClick={() => calibrate(uncalibratedModels.map(m => m.id))}
+              disabled={calibrating}
+              className="btn-editorial-secondary text-[11px] px-2 py-1 disabled:opacity-50"
+            >
+              {calibrating ? "Calibrating…" : "Calibrate now"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {error != null && <ErrorDisplay error={error} onRetry={() => handleCompute()} />}
 
       {result && (
@@ -247,15 +289,45 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                 </span>
               </div>
               <p className="font-sans text-body-sm text-muted-foreground mt-1">
-                Collapse threshold: cosine similarity &ge; {result.threshold} (configurable in Settings)
+                <MetricTerm termKey="thresholdMode">Collapse threshold</MetricTerm> mode:{" "}
+                <span className="font-semibold">{result.thresholdMode}</span>
+                {result.thresholdMode === "control-derived" &&
+                  ". Each model's cutoff is that probe's own highest same-size, non-reversing edit, so nothing is stipulated."}
+                {result.thresholdMode === "floor-relative" &&
+                  ". The cutoff is a fixed proportion of each model's measured floor-to-identity range."}
+                {result.thresholdMode === "fixed" &&
+                  `. The cutoff is the stipulated constant ${result.threshold}, retained only for reproducing earlier runs.`}
               </p>
+              {(() => {
+                const controlled = result.models.filter(m => m.exceedsControls !== null);
+                const exceeding = controlled.filter(m => m.exceedsControls).length;
+                if (controlled.length === 0) return null;
+                return (
+                  <p className="font-sans text-body-sm mt-1">
+                    <MetricTerm termKey="exceedsControls">
+                      Exceeds same-size controls
+                    </MetricTerm>
+                    :{" "}
+                    <span
+                      className={
+                        exceeding > 0 ? "font-bold text-error-600" : "font-bold text-success-600"
+                      }
+                    >
+                      {exceeding} of {controlled.length}
+                    </span>
+                    {exceeding > 0
+                      ? " — in these models the negation is closer to the original than any edit of the same size that leaves the claim standing."
+                      : " — the negation is no closer than a matched edit, so token overlap accounts for the result."}
+                  </p>
+                );
+              })()}
             </div>
           </div>
 
           {/* Per-model results */}
           <div className="space-y-3">
             {result.models.map(m => {
-              const verdict = negationVerdict(m.cosineSimilarity, result.threshold);
+              const verdict = negationVerdict(m.cosineSimilarity, m.threshold.value);
 
               return (
                 <div key={m.modelId} className="card-editorial overflow-hidden">
@@ -299,8 +371,30 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                     </p>
                     <SimilarityMeter
                       similarity={m.cosineSimilarity}
-                      level={negationSimilarityLevel(m.cosineSimilarity, result.threshold)}
+                      level={calibratedNegationLevel(
+                        m.cosineSimilarity,
+                        m.threshold,
+                        m.exceedsControls,
+                        m.floorMean
+                      )}
                     />
+                  </div>
+
+                  <div className="thin-rule mx-5" />
+
+                  {/* Calibrated scale and control family */}
+                  <div className="px-5 py-5">
+                    <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                      On this model&apos;s scale
+                    </h4>
+                    <p className="font-sans text-caption text-muted-foreground mb-3">
+                      The same cosine plotted against what this model can actually reach. The
+                      hatched region below the{" "}
+                      <MetricTerm termKey="floor">floor</MetricTerm> is unreachable: no pair of
+                      real texts lands there. The controls beneath perform edits of the same
+                      size as the negation without reversing the claim.
+                    </p>
+                    <ControlFamily m={m} negated={result.negated} />
                   </div>
 
                   <div className="thin-rule mx-5" />
@@ -328,21 +422,60 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                         <div className="font-sans text-body-sm font-bold tabular-nums mt-0.5">{m.cosineSimilarity.toFixed(4)}</div>
                         <div className="font-sans text-[9px] text-muted-foreground mt-0.5">dot product / (norm A &times; norm B)</div>
                       </div>
-                      <div className="bg-muted rounded-sm p-2.5">
-                        <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Cosine Distance</div>
-                        <div className="font-sans text-body-sm font-bold tabular-nums mt-0.5">{m.cosineDistance.toFixed(4)}</div>
-                        <div className="font-sans text-[9px] text-muted-foreground mt-0.5">1 &minus; similarity</div>
+
+                      {m.calibrated && m.normalised !== null ? (
+                        <MetricStat
+                          termKey="normalisedPosition"
+                          label="Position"
+                          value={`${(m.normalised * 100).toFixed(1)}%`}
+                          hint={`floor ${m.floorMean?.toFixed(4)} → identity`}
+                        />
+                      ) : (
+                        <MetricStat
+                          termKey="uncalibrated"
+                          label="Position"
+                          value="—"
+                          hint="model not calibrated"
+                          tone="warning"
+                        />
+                      )}
+
+                      {/* The old tile reported this angle against 180°, which no
+                          pair of sentences in an anisotropic space approaches.
+                          The denominator is the model's own angular range. */}
+                      <MetricStat
+                        termKey="angularRange"
+                        label="Angular separation"
+                        value={`${m.angularDistance.toFixed(1)}°`}
+                        hint={
+                          m.calibrated && m.angularCoverage !== null
+                            ? `${(m.angularCoverage * 100).toFixed(0)}% of this model's ${(
+                                m.angularDistance / Math.max(1e-9, m.angularCoverage)
+                              ).toFixed(0)}° range`
+                            : "no measured range; not of 180°"
+                        }
+                      />
+
+                      <MetricStat
+                        termKey="thresholdMode"
+                        label="Collapse threshold"
+                        value={m.threshold.value.toFixed(4)}
+                        hint={m.threshold.mode + (m.threshold.fellBack ? " (fallback)" : "")}
+                        tone={m.threshold.fellBack ? "warning" : "neutral"}
+                      />
+                    </div>
+
+                    <p className="font-sans text-[10px] text-muted-foreground mt-2">
+                      Derived from: {m.threshold.basis}
+                    </p>
+
+                    <div className="mt-3">
+                      <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                        Reporting block
                       </div>
-                      <div className="bg-muted rounded-sm p-2.5">
-                        <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Angular Separation</div>
-                        <div className="font-sans text-body-sm font-bold tabular-nums mt-0.5">{m.angularDistance.toFixed(1)}&deg;</div>
-                        <div className="font-sans text-[9px] text-muted-foreground mt-0.5">of 180&deg; maximum</div>
-                      </div>
-                      <div className="bg-muted rounded-sm p-2.5">
-                        <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Collapse Threshold</div>
-                        <div className="font-sans text-body-sm font-bold tabular-nums mt-0.5">{result.threshold}</div>
-                        <div className="font-sans text-[9px] text-muted-foreground mt-0.5">configurable in settings</div>
-                      </div>
+                      <pre className="font-mono text-[10px] bg-muted/60 rounded-sm p-2 overflow-x-auto whitespace-pre">
+                        {negationReportBlock(m, result.original, result.negated)}
+                      </pre>
                     </div>
                   </div>
                 </div>
@@ -377,6 +510,152 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
             </p>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The probe and its controls on one calibrated scale.
+ *
+ * The negation on its own is not a finding. It becomes one when it sits
+ * above an edit of the same size that does not reverse the claim, and
+ * that comparison is what this table shows. The inserted-modifier rows
+ * are the tightest control, because they insert a single token in the
+ * same position the negation does.
+ */
+function ControlFamily({
+  m,
+  negated,
+}: {
+  m: NegationGaugeModelResult;
+  negated: string;
+}) {
+  const marks: BarMark[] = [];
+  if (m.topicalCeiling !== null) {
+    marks.push({
+      value: m.topicalCeiling,
+      label: "topical ceiling",
+      termKey: "topicalCeiling",
+      colour: "#0891b2",
+      dashed: true,
+    });
+  }
+  const structural = m.controls.filter(
+    c => c.control.kind === "insertedModifier" || c.control.kind === "matchedEdit"
+  );
+  if (structural.length > 0) {
+    marks.push({
+      value: Math.max(...structural.map(c => c.cosine)),
+      label: "control threshold",
+      termKey: "matchedEdit",
+      colour: "#7c2d36",
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      <CalibratedBar
+        modelName={negated}
+        value={m.cosineSimilarity}
+        floor={m.floorMean}
+        normalised={m.normalised}
+        marks={marks}
+        valueColour={m.exceedsControls ? "#dc2626" : "#d97706"}
+      />
+
+      {m.controls.length === 0 ? (
+        <p className="font-sans text-caption text-warning-600">
+          No controls could be generated for this statement. The rule-based generator needs a
+          copula to locate the predicate, so a sentence without one yields the negation alone
+          and the threshold falls back to the floor.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full font-sans text-caption">
+            <thead>
+              <tr className="border-b border-parchment text-left">
+                <th className="px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
+                  Role
+                </th>
+                <th className="px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
+                  Text
+                </th>
+                <th className="px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold text-right">
+                  Edit
+                </th>
+                <th className="px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold text-right">
+                  Cosine
+                </th>
+                <th className="px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold text-right">
+                  Position
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-parchment">
+              <tr className="bg-burgundy/5">
+                <td className="px-2 py-1 font-semibold">
+                  <MetricTerm termKey="exceedsControls">Negation</MetricTerm>
+                </td>
+                <td className="px-2 py-1 font-body">{negated}</td>
+                <td className="px-2 py-1 text-right tabular-nums text-muted-foreground">—</td>
+                <td className="px-2 py-1 text-right tabular-nums font-semibold">
+                  {m.cosineSimilarity.toFixed(4)}
+                </td>
+                <td className="px-2 py-1 text-right tabular-nums">
+                  {m.normalised !== null ? `${(m.normalised * 100).toFixed(0)}%` : "—"}
+                </td>
+              </tr>
+              {m.controls.map((c, i) => (
+                <tr key={`${c.control.kind}-${i}`}>
+                  <td className="px-2 py-1">
+                    <MetricTerm termKey={CONTROL_GLOSSARY_KEYS[c.control.kind]}>
+                      {CONTROL_LABELS[c.control.kind]}
+                    </MetricTerm>
+                    {!c.control.confident && (
+                      <span
+                        title={c.control.note}
+                        className="ml-1 text-warning-600 cursor-help"
+                      >
+                        ?
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-2 py-1 font-body" title={c.control.note}>
+                    {c.control.text}
+                  </td>
+                  <td className="px-2 py-1 text-right tabular-nums text-muted-foreground">
+                    {c.control.editDistance}
+                  </td>
+                  <td
+                    className={
+                      "px-2 py-1 text-right tabular-nums " +
+                      (c.cosine > m.cosineSimilarity ? "text-success-600" : "")
+                    }
+                  >
+                    {c.cosine.toFixed(4)}
+                  </td>
+                  <td className="px-2 py-1 text-right tabular-nums">
+                    {c.normalised !== null ? `${(c.normalised * 100).toFixed(0)}%` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {m.exceedsControls !== null && (
+        <p
+          className={
+            "font-sans text-caption " +
+            (m.exceedsControls ? "text-error-600 font-semibold" : "text-muted-foreground")
+          }
+        >
+          {m.exceedsControls
+            ? "The negation is closer to the original than every edit of the same size that does not reverse the claim."
+            : "The negation is not closer than the matched controls, so the measurement is within what token overlap explains."}
+        </p>
       )}
     </div>
   );
@@ -422,7 +701,7 @@ function NegationGaugeDeepDive({ result }: { result: NegationGaugeResult }) {
           <DeepDiveStat
             label="Collapse rate"
             value={`${(collapseRate * 100).toFixed(0)}%`}
-            hint={`${collapsedCount} / ${n} ≥ ${result.threshold}`}
+            hint={`${collapsedCount} / ${n} over each model's own cutoff`}
             tone={collapseRate >= 0.5 ? "error" : collapseRate > 0 ? "warning" : "success"}
           />
           <DeepDiveStat label="Mean cosine" value={mean.toFixed(4)} hint={`± ${stdDev.toFixed(4)} σ`} />
@@ -448,6 +727,9 @@ function NegationGaugeDeepDive({ result }: { result: NegationGaugeResult }) {
                 <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Cosine</th>
                 <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Distance</th>
                 <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Angular (°)</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Floor</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Position</th>
+                <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Control</th>
                 <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Dims</th>
                 <th className="text-right px-2 py-1 text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Verdict</th>
               </tr>
@@ -459,6 +741,19 @@ function NegationGaugeDeepDive({ result }: { result: NegationGaugeResult }) {
                   <td className="px-2 py-1 text-right tabular-nums">{m.cosineSimilarity.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.cosineDistance.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.angularDistance.toFixed(1)}</td>
+                  <td className="px-2 py-1 text-right tabular-nums">
+                    {m.floorMean !== null ? m.floorMean.toFixed(4) : "—"}
+                  </td>
+                  <td className="px-2 py-1 text-right tabular-nums">
+                    {m.normalised !== null ? `${(m.normalised * 100).toFixed(0)}%` : "—"}
+                  </td>
+                  <td className="px-2 py-1 text-right tabular-nums">
+                    {m.exceedsControls === null
+                      ? "—"
+                      : m.exceedsControls
+                      ? "above"
+                      : "below"}
+                  </td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.dimensions}</td>
                   <td className="px-2 py-1 text-right">
                     {m.collapsed ? (

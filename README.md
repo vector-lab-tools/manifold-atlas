@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.8.1
+**Version:** 1.9.0
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -45,10 +45,11 @@ In Manifold Atlas, the **embedding models** are the core instrument. Every opera
 
 ## Operations at a Glance
 
-Manifold Atlas is organised as a tabbed workspace with sixteen operations. Each operation tests a specific claim of vector theory.
+Manifold Atlas is organised as a tabbed workspace with seventeen operations. Each operation tests a specific claim of vector theory, and Calibration establishes the scale the others are read against.
 
 | Operation | Core question | Theoretical anchor |
 |---|---|---|
+| Calibration | What kind of space is this measurement taken in, and how much room does it have? | The instrument must be calibrated before it can be read |
 | Concept Distance | How close are A and B in the manifold? | Cosine similarity as primary instrument |
 | Neighbourhood Map | What is the local structure around a concept? | Geometric ideology (density and sparsity) |
 | Negation Gauge | How much space does negation actually get? | The negation deficit |
@@ -68,6 +69,19 @@ Manifold Atlas is organised as a tabbed workspace with sixteen operations. Each 
 
 ## Features
 
+### Calibration
+A cosine has no meaning without the scale it sits on. Embedding vectors occupy a narrow cone rather than the whole sphere, so two unrelated texts already sit at a high cosine, and where that floor falls differs from model to model. Calibration embeds a 160-text corpus once per model, cached thereafter, and measures four things.
+
+**The floor.** Mean pairwise cosine over unrelated texts, reported separately for short declaratives (the register the Negation Gauge and Concept Distance use) and for longer prose (the register Semantic Sectioning and Text Vectorisation use). A floor measured on paragraphs is not the floor for a six-word claim, so the strata are kept apart.
+
+**The topical ceiling.** Same-subject pairs with no shared content words and no shared structure. Floor and ceiling together give the band inside which any real result has to fall.
+
+**The radius.** Not one number. The *cone half-angle* is the angular radius of the region the model uses, computed as the arc-cosine of the length of the mean unit vector and corrected for sample size, since the mean of n unit vectors has squared length 1/n even in a perfectly isotropic space. The *usable range* is 1 − floor, how much of the cosine scale is actually in play. The *angular range* is acos(floor), the largest separation any two texts can show, which replaces the fictional 0–180° denominator. The *effective dimension* is the participation ratio (Σλ)²/Σλ² of the covariance spectrum, computed from matrix traces rather than an eigendecomposition, and reported against the Marchenko-Pastur ceiling d/(1+d/m) that the corpus size imposes, so it reads as a measurement rather than an artefact. The *dominant coordinate share* flags rogue dimensions. The *vector norm* records whether the provider normalises, since where norms vary cosine is discarding magnitude the model produced.
+
+**Cross-model comparability.** Two models are only comparable on raw cosine when their floors agree. Where they do not, the panel says so and directs the comparison to the normalised position (cos − floor) / (1 − floor) instead.
+
+Every calibration number carries its definition on hover: what it is, how it is computed, and how to read a value. The definitions live in one glossary module, so the tooltip in one panel and the help text in another cannot drift apart.
+
 ### Concept Distance
 Measure the geometric relationship between any two concepts. Enter two terms and see their cosine similarity across all configured embedding models, with detailed metrics (angular separation, euclidean distance, vector norms, top contributing dimensions) and interpretive text explaining what the similarity level means.
 
@@ -75,10 +89,24 @@ Measure the geometric relationship between any two concepts. Enter two terms and
 Map the local structure of the manifold around a concept. Enter terms manually, load presets (Philosophy, Carpentry, Critical Theory, Democracy, etc.), or use **Manifold Scan** to auto-generate ~300 related terms and fire them all into the embedding space. Interactive 3D scatter plot with auto-rotation, cluster detection, connection mesh, and cross-domain analysis (border concepts, bridges, inter-manifold distance).
 
 ### Negation Gauge
-Negation works differently in the manifold than in logic. Where logic treats "A" and "not A" as categorical opposites, the geometry stores them close together, differing in only a few dimensions out of hundreds. The tool embeds both the original statement and its auto-generated negation, measures their cosine similarity, and shows how much space the manifold actually gives to negation. Includes a similarity meter, detailed metrics, and theoretical context on the negation deficit.
+Negation works differently in the manifold than in logic. Where logic treats "A" and "not A" as categorical opposites, the geometry stores them close together, differing in only a few dimensions out of hundreds. The tool embeds the original statement and its negation, measures their cosine similarity, and reports it against the model's measured floor rather than against a stipulated constant.
+
+A bare cosine between a claim and its negation cannot distinguish three situations: the model is reporting shared vocabulary, the model fails on opposition of any kind, or the model fails specifically on the syntactic negation operator. So each probe is run with a control family that holds the sentence fixed and varies only the kind of edit:
+
+| Role | Example | What it isolates |
+|---|---|---|
+| Negation | "this law is not just" | the probe |
+| Inserted modifier | "this law is broadly just" | one token inserted in the same position, no reversal |
+| Matched edit | "this law is old" | one token substituted, unrelated predicate |
+| Antonym | "this law is unjust" | opposition carried lexically, no negation operator |
+| Unrelated predicate | "this law is under review" | per-probe topical ceiling |
+
+The inserted-modifier control is the tightest, because it performs exactly the edit the negation performs. A negation sitting at or above it cannot be explained by token count, and that is the strong form of the claim: **the geometry treats a contradiction as closer than an edit of the same size that leaves the claim standing.**
+
+Control generation is rule-based and deterministic, and conservative by design. Predicates are only substituted where the predicate is a single word, because swapping the last word of a noun phrase yields strings like "the best form of quarterly", and an ungrammatical control measures what the model does with broken syntax rather than a same-size edit. Antonyms come from a lexicon only, never from prefix derivation, so no probe is offered "ungovernment" as an opposite. Where a control cannot be generated the panel says so instead of substituting a worse one.
 
 ### Negation Battery
-Run a battery of negation tests automatically against pre-built sets or custom statements. Ships with seven built-in batteries covering political, ethical, factual, epistemological, economic, aesthetic, and technology claims (10 statements each, 70 total). Users can save their own custom statements as named batteries that appear in the dropdown alongside the built-ins and are addressable by name from protocol steps. Produces a report card with collapse rate, average similarity, per-statement results table, and CSV export.
+Run a battery of negation tests automatically against pre-built sets or custom statements. Ships with seven built-in batteries covering political, ethical, factual, epistemological, economic, aesthetic, and technology claims (10 statements each, 70 total). Users can save their own custom statements as named batteries that appear in the dropdown alongside the built-ins and are addressable by name from protocol steps. Produces a report card with collapse rate, average similarity, mean floor-to-identity position, the count of tests where the negation beat every same-size control, a per-statement results table, and CSV export.
 
 ### Semantic Sectioning
 Interpolate between two anchor concepts in the embedding space to discover what lies between them. The tool walks from concept A to concept B in 20 steps, finding the nearest real concept at each point. The resulting sequence (e.g. solidarity -> cooperation -> agreement -> conformity -> compliance) reveals where one domain shades into another in the manifold's geometry.
@@ -198,6 +226,14 @@ Either way, no API key is needed and no data leaves your machine.
 
 **Why cache in IndexedDB?** Embedding calls are cheap per call but quickly add up when a single operation queries hundreds of concepts across multiple models. The IndexedDB cache is keyed deterministically by model and text, so identical queries return instantly and previous sessions remain inspectable.
 
+**Why calibrate before measuring?** Version 1.9 replaced the stipulated collapse threshold with a measured one, and the change is worth stating plainly because it alters every number the tool reports. Earlier versions marked a negation as collapsed above a fixed cosine of 0.92, with a second constant of 0.85 in the compute layer and a band structure at 0.95 / 0.85 / 0.70 / 0.50 / 0.30 underneath. Those are choices presented as measurements. They are also unreadable across models: where a model's unrelated-pair floor sits at 0.70, a band boundary at 0.30 names a region no pair of real texts ever occupies.
+
+The threshold now defaults to control-derived: a probe is collapsed when its negation sits at or above the highest same-size edit that does not reverse the claim. Nothing is stipulated, the cutoff is specific to the probe and the model, and the resulting statement survives the obvious objection. Floor-relative and fixed modes remain available, the second only so that runs made before this version can be reproduced.
+
+One approach that was tried and rejected: setting the cutoff at two standard deviations above the random-pair floor. With a floor near 0.15 and a spread near 0.06 that puts the cutoff around 0.27, and every sentence pair sharing a determiner clears it. The random-pair distribution is the right null for asking whether a value is above background, and the wrong null for negation. The right null is an edit of the same size without the reversal.
+
+**Why report the radius rather than a single floor?** Because "how big is this model's space" has several answers and they come apart. A model can have a high floor and a large effective dimension, or a low floor and variance concentrated in five coordinates. The cone half-angle, usable range, effective dimension against its sample ceiling, dominant-coordinate share, and norm behaviour are reported together, because a cosine is only readable against all of them.
+
 **Why no engineering metrics?** Existing vector-geometry tools are designed for engineers tuning a retrieval pipeline. They answer questions like "which embedding gives the best search relevance?" Manifold Atlas answers different questions: where does this model compress what it ought to distinguish? What does the geometry refuse to represent? These are critical-theoretical questions that require geometric evidence, not benchmark scores.
 
 **Why a browser-only tool?** The instrument is for research use, not for production. Running entirely in the browser with only the embedding APIs as external dependencies keeps the deployment surface minimal and the data footprint on the researcher's own machine. API keys never leave the browser. No tracking, no telemetry.
@@ -288,8 +324,10 @@ src/
     layout/          # Header, TabNav, StatusBar, SettingsPanel
     shared/          # QueryHistory, ResetButton, ErrorDisplay, ConceptPresets
     easter-eggs/     # Clippy, Hackerman, Geoffrey Hinton, Karl Marx
-  context/           # SettingsContext, EmbeddingCacheContext
+  context/           # SettingsContext, EmbeddingCacheContext, CalibrationContext
   lib/
+    calibration/     # corpus, baseline, radius, compute, store, threshold,
+                     # glossary, report
     embeddings/      # Client + provider modules (OpenAI, Voyage, Google, Cohere, Ollama)
     geometry/        # cosine, pca, umap-wrapper, clusters
     text/            # stopwords, tokenisation
@@ -297,7 +335,7 @@ src/
   types/             # embeddings, settings, type declarations
 ```
 
-Embedding vectors are cached in IndexedDB (keyed by model + text, deterministic). Settings persist in localStorage. No server-side database, no authentication, no external dependencies beyond the embedding APIs themselves.
+Embedding vectors are cached in IndexedDB (keyed by model + text, deterministic). Settings and calibration records persist in localStorage, the latter keyed by model and corpus version so a record computed against a superseded corpus is dropped rather than silently reused. No server-side database, no authentication, no external dependencies beyond the embedding APIs themselves.
 
 ## Tech Stack
 

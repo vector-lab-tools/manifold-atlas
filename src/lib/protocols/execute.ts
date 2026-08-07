@@ -7,6 +7,8 @@
  * here plus a corresponding textsForStep() case in inputs.ts.
  */
 
+import type { ModelCalibration } from "@/lib/calibration/compute";
+import type { ThresholdMode } from "@/lib/calibration/threshold";
 import type {
   ProtocolStep,
   ProtocolStepResult,
@@ -60,6 +62,15 @@ export interface ExecuteStepContext {
   stepIndex: number;
   stepVectors: Map<string, number[][]>;
   enabledModels: Array<{ id: string; name: string; providerId: string }>;
+  /**
+   * Per-model baselines. Omitted, the negation operations still run but
+   * report raw cosines with no measured scale and fall back to the
+   * stipulated cutoff, so a protocol run should pass these when they
+   * exist.
+   */
+  calibrations?: Map<string, ModelCalibration>;
+  /** How the collapse cutoff is derived. Defaults to control-derived. */
+  thresholdMode?: ThresholdMode;
 }
 
 /**
@@ -250,9 +261,10 @@ export function executeStep(
         const threshold =
           typeof step.inputs.threshold === "number" ? step.inputs.threshold : undefined;
         const result = computeNegationGauge(
-          { statement, negated, threshold },
+          { statement, negated, threshold, thresholdMode: ctx.thresholdMode },
           ctx.stepVectors,
-          ctx.enabledModels
+          ctx.enabledModels,
+          ctx.calibrations
         );
         const elapsedMs = performance.now() - started;
         return {
@@ -303,9 +315,10 @@ export function executeStep(
         const threshold =
           typeof step.inputs.threshold === "number" ? step.inputs.threshold : undefined;
         const result = computeNegationBattery(
-          { statements, threshold },
+          { statements, threshold, thresholdMode: ctx.thresholdMode },
           ctx.stepVectors,
-          ctx.enabledModels
+          ctx.enabledModels,
+          ctx.calibrations
         );
         const elapsedMs = performance.now() - started;
         const uniqueModelIds = new Set<string>();

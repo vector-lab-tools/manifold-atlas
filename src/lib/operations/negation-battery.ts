@@ -10,10 +10,23 @@
  */
 
 import { cosineSimilarity } from "@/lib/geometry/cosine";
-import { generateNegation } from "@/lib/negation";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
 import { DEFAULT_NEGATION_THRESHOLD } from "@/lib/operations/negation-gauge";
 import { resolveUserBattery } from "@/lib/operations/user-batteries";
+import {
+  buildProbeFamily,
+  probeFamilyTextList,
+  type ProbeFamily,
+} from "@/lib/operations/negation-controls";
+import type { ModelCalibration } from "@/lib/calibration/compute";
+import { floorFor } from "@/lib/calibration/compute";
+import { normalisedPosition } from "@/lib/calibration/baseline";
+import {
+  resolveThreshold,
+  structuralControls,
+  DEFAULT_THRESHOLD_MODE,
+  type ThresholdMode,
+} from "@/lib/calibration/threshold";
 
 export const NEGATION_BATTERIES: Record<string, string[]> = {
   "Political claims": [
@@ -111,6 +124,14 @@ export interface NegationBatteryInputs {
    */
   negations?: string[];
   threshold?: number;
+  /**
+   * Measure the control family alongside each negation. Adds roughly
+   * six texts per statement to the embedding cost, and is what makes
+   * the collapse rate mean anything: without controls the rate is a
+   * count of how many pairs cleared a stipulated constant.
+   */
+  withControls?: boolean;
+  thresholdMode?: ThresholdMode;
 }
 
 export interface NegationBatteryModelResult {
@@ -118,6 +139,16 @@ export interface NegationBatteryModelResult {
   modelName: string;
   similarity: number;
   collapsed: boolean;
+  /** Position on this model's floor-to-identity range. Null when uncalibrated. */
+  normalised: number | null;
+  /** Highest same-size non-reversing edit for this statement. Null without controls. */
+  controlCeiling: number | null;
+  /** Negation at least as close as every same-size control. Null without controls. */
+  exceedsControls: boolean | null;
+  /** The cutoff actually applied, after any fallback. */
+  thresholdValue: number;
+  /** How that cutoff was derived. */
+  thresholdBasis: string;
 }
 
 export interface NegationBatteryStatementResult {
@@ -128,6 +159,8 @@ export interface NegationBatteryStatementResult {
 
 export interface NegationBatteryResult {
   threshold: number;
+  thresholdMode: ThresholdMode;
+  withControls: boolean;
   statements: NegationBatteryStatementResult[];
   summary: {
     totalStatements: number;
@@ -135,6 +168,12 @@ export interface NegationBatteryResult {
     totalCollapsed: number;
     collapseRate: number;      // 0..1
     avgSimilarity: number;
+    /** Mean floor-to-identity position, over calibrated models only. */
+    avgNormalised: number | null;
+    /** Tests where the negation beat every same-size control. */
+    exceedingControls: number;
+    /** Tests where that comparison was available at all. */
+    controlledTests: number;
   };
 }
 
@@ -152,67 +191,145 @@ export function resolveNegationBatteryPreset(
 }
 
 /**
- * Flat text list for batched embedding:
- * [s0, neg(s0), s1, neg(s1), ...].
+ * Probe families for a battery, with the offset of each family in the
+ * flat text list. Both the collector and the executor derive their
+ * layout from this, so the two cannot drift apart.
+ *
+ * Families are variable length: a statement with no locatable copula
+ * yields fewer controls than one in subject-copula-predicate form, so
+ * the offsets cannot be computed from a fixed stride.
  */
-export function negationBatteryTextList(inputs: NegationBatteryInputs): string[] {
-  const negations = inputs.negations ?? inputs.statements.map(generateNegation);
+interface BatteryLayout {
+  families: ProbeFamily[];
+  offsets: number[];
+  texts: string[];
+}
+
+function batteryLayout(inputs: NegationBatteryInputs): BatteryLayout {
+  const withControls = inputs.withControls !== false;
+  const families: ProbeFamily[] = inputs.statements.map((s, i) =>
+    buildProbeFamily(s, { negation: inputs.negations?.[i] })
+  );
+
+  const offsets: number[] = [];
   const texts: string[] = [];
-  for (let i = 0; i < inputs.statements.length; i++) {
-    texts.push(inputs.statements[i], negations[i]);
+  for (const family of families) {
+    offsets.push(texts.length);
+    const slice = withControls
+      ? probeFamilyTextList(family)
+      : [family.statement, family.negation.text];
+    texts.push(...slice);
   }
-  return texts;
+  return { families, offsets, texts };
+}
+
+/** Flat text list for batched embedding. */
+export function negationBatteryTextList(inputs: NegationBatteryInputs): string[] {
+  return batteryLayout(inputs).texts;
 }
 
 export function computeNegationBattery(
   inputs: NegationBatteryInputs,
   modelVectors: Map<string, number[][]>,
-  enabledModels: Array<{ id: string; name: string; providerId: string }>
+  enabledModels: Array<{ id: string; name: string; providerId: string }>,
+  calibrations?: Map<string, ModelCalibration>
 ): NegationBatteryResult {
-  const negations = inputs.negations ?? inputs.statements.map(generateNegation);
-  const threshold = inputs.threshold ?? DEFAULT_NEGATION_THRESHOLD;
+  const fixedThreshold = inputs.threshold ?? DEFAULT_NEGATION_THRESHOLD;
+  const mode = inputs.thresholdMode ?? DEFAULT_THRESHOLD_MODE;
+  const withControls = inputs.withControls !== false;
+  const { families, offsets } = batteryLayout(inputs);
 
-  const statements: NegationBatteryStatementResult[] = inputs.statements.map((statement, i) => {
-    const negated = negations[i];
+  const statements: NegationBatteryStatementResult[] = families.map((family, i) => {
+    const base = offsets[i];
+    const activeControls = withControls ? family.controls : [];
 
     const models: NegationBatteryModelResult[] = enabledModels
       .filter(m => modelVectors.has(m.id))
       .map(m => {
         const vectors = modelVectors.get(m.id)!;
-        const sim = cosineSimilarity(vectors[i * 2], vectors[i * 2 + 1]);
+        const cal = calibrations?.get(m.id) ?? null;
+        const floor = cal ? floorFor(cal, "short") : null;
+
+        const sim = cosineSimilarity(vectors[base], vectors[base + 1]);
+
+        const measured = activeControls
+          .map((control, k) => {
+            const vec = vectors[base + 2 + k];
+            if (!vec) return null;
+            const cosine = cosineSimilarity(vectors[base], vec);
+            return {
+              control,
+              cosine,
+              normalised: floor ? normalisedPosition(cosine, floor.mean) : null,
+              z: null,
+            };
+          })
+          .filter((c): c is NonNullable<typeof c> => c !== null);
+
+        const threshold = resolveThreshold({
+          mode,
+          fixedValue: fixedThreshold,
+          calibration: cal,
+          register: "short",
+          controls: measured,
+        });
+
+        const structural = structuralControls(measured);
+        const controlCeiling =
+          structural.length > 0 ? Math.max(...structural.map(c => c.cosine)) : null;
+
         const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
         return {
           modelId: m.id,
           modelName: spec?.name || m.name || m.id,
           similarity: sim,
-          collapsed: sim >= threshold,
+          collapsed: sim >= threshold.value,
+          normalised: floor ? normalisedPosition(sim, floor.mean) : null,
+          controlCeiling,
+          exceedsControls: controlCeiling !== null ? sim >= controlCeiling : null,
+          thresholdValue: threshold.value,
+          thresholdBasis: threshold.basis,
         };
       });
 
-    return { statement, negated, models };
+    return { statement: family.statement, negated: family.negation.text, models };
   });
 
   // Summary stats
   let totalTests = 0;
   let totalCollapsed = 0;
-  let simSum = 0;
   let perStatementAvgSum = 0;
+  let normSum = 0;
+  let normCount = 0;
+  let exceedingControls = 0;
+  let controlledTests = 0;
+
   for (const row of statements) {
     if (row.models.length === 0) continue;
     totalTests += row.models.length;
     for (const m of row.models) {
       if (m.collapsed) totalCollapsed += 1;
-      simSum += m.similarity;
+      if (m.normalised !== null) {
+        normSum += m.normalised;
+        normCount += 1;
+      }
+      if (m.exceedsControls !== null) {
+        controlledTests += 1;
+        if (m.exceedsControls) exceedingControls += 1;
+      }
     }
     perStatementAvgSum +=
       row.models.reduce((s, m) => s + m.similarity, 0) / row.models.length;
   }
+
   const collapseRate = totalTests > 0 ? totalCollapsed / totalTests : 0;
   const avgSimilarity =
     statements.length > 0 ? perStatementAvgSum / statements.length : 0;
 
   return {
-    threshold,
+    threshold: fixedThreshold,
+    thresholdMode: mode,
+    withControls,
     statements,
     summary: {
       totalStatements: statements.length,
@@ -220,6 +337,9 @@ export function computeNegationBattery(
       totalCollapsed,
       collapseRate,
       avgSimilarity,
+      avgNormalised: normCount > 0 ? normSum / normCount : null,
+      exceedingControls,
+      controlledTests,
     },
   };
 }
@@ -227,11 +347,24 @@ export function computeNegationBattery(
 export function negationBatteryHeadline(
   result: NegationBatteryResult
 ): Record<string, number | string> {
-  return {
-    statements: result.summary.totalStatements,
-    "collapse rate": `${(result.summary.collapseRate * 100).toFixed(1)}%`,
-    "avg cosine": Number(result.summary.avgSimilarity.toFixed(4)),
-    "collapsed / total": `${result.summary.totalCollapsed} / ${result.summary.totalTests}`,
-    "threshold": result.threshold,
+  const s = result.summary;
+  const out: Record<string, number | string> = {
+    statements: s.totalStatements,
+    "collapse rate": `${(s.collapseRate * 100).toFixed(1)}%`,
+    "avg cosine": Number(s.avgSimilarity.toFixed(4)),
+    "collapsed / total": `${s.totalCollapsed} / ${s.totalTests}`,
+    "threshold mode": result.thresholdMode,
   };
+
+  if (s.avgNormalised !== null) {
+    out["avg position floor→identity"] = Number(s.avgNormalised.toFixed(4));
+  } else {
+    out["calibration"] = "none — cosines have no measured scale";
+  }
+
+  if (s.controlledTests > 0) {
+    out["exceeds same-size controls"] = `${s.exceedingControls} / ${s.controlledTests}`;
+  }
+
+  return out;
 }

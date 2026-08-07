@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { AppSettings, ProviderSettings } from "@/types/settings";
 import type { EmbeddingProviderId, EmbeddingModelSpec } from "@/types/embeddings";
+import type { ThresholdMode } from "@/lib/calibration/threshold";
 import { DEFAULT_SETTINGS, STORAGE_KEY } from "@/types/settings";
 import { EMBEDDING_PROVIDERS } from "@/types/embeddings";
 import { loadAllProviderModels } from "@/lib/provider-models";
@@ -12,6 +13,8 @@ interface SettingsContextType {
   updateProvider: (id: EmbeddingProviderId, updates: Partial<ProviderSettings>) => void;
   toggleDarkMode: () => void;
   setNegationThreshold: (threshold: number) => void;
+  setThresholdMode: (mode: ThresholdMode) => void;
+  setFloorRelativeK: (k: number) => void;
   setRankedModels: (ranked: string[]) => void;
   getEnabledModels: () => Array<EmbeddingModelSpec & { apiKey: string; baseUrl?: string }>;
   providerModels: Partial<Record<EmbeddingProviderId, EmbeddingModelSpec[]>>;
@@ -144,6 +147,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setSettings(prev => ({ ...prev, negationThreshold: threshold }));
   }, []);
 
+  const setThresholdMode = useCallback((mode: ThresholdMode) => {
+    setSettings(prev => ({ ...prev, thresholdMode: mode }));
+  }, []);
+
+  const setFloorRelativeK = useCallback((k: number) => {
+    setSettings(prev => ({ ...prev, floorRelativeK: k }));
+  }, []);
+
   const setRankedModels = useCallback((ranked: string[]) => {
     setSettings(prev => ({ ...prev, rankedModels: ranked }));
   }, []);
@@ -195,6 +206,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         updateProvider,
         toggleDarkMode,
         setNegationThreshold,
+        setThresholdMode,
+        setFloorRelativeK,
         setRankedModels,
         getEnabledModels,
         providerModels,

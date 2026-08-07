@@ -18,6 +18,7 @@ import { Header } from "@/components/layout/Header";
 import { TabNav, type TabId } from "@/components/layout/TabNav";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
+import { Calibration } from "@/components/operations/Calibration";
 import { ConceptDistance } from "@/components/operations/ConceptDistance";
 import { DistanceMatrix } from "@/components/operations/DistanceMatrix";
 import { NeighbourhoodMap } from "@/components/operations/NeighbourhoodMap";
@@ -46,6 +47,7 @@ function AppContent() {
       <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="flex-1 px-6 py-6 max-w-6xl mx-auto w-full">
+        {activeTab === "calibrate" && <Calibration onQueryTime={setLastQueryTime} />}
         {activeTab === "distance" && <ConceptDistance onQueryTime={setLastQueryTime} />}
         {activeTab === "matrix" && <DistanceMatrix onQueryTime={setLastQueryTime} />}
         {activeTab === "neighbourhood" && <NeighbourhoodMap onQueryTime={setLastQueryTime} />}

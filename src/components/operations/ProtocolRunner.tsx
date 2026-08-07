@@ -37,6 +37,7 @@ import { ResetButton } from "@/components/shared/ResetButton";
 import { loadAllProtocols } from "@/lib/protocols/parser";
 import { collectProtocolTexts, vectorsForStep } from "@/lib/protocols/inputs";
 import { executeStep } from "@/lib/protocols/execute";
+import { useCalibration } from "@/context/CalibrationContext";
 import {
   loadCustomProtocols,
   removeCustomProtocol,
@@ -120,7 +121,8 @@ export function ProtocolRunner({ onQueryTime, subTab, onSubTabChange }: Protocol
   const [editedInputs, setEditedInputs] = useState<Record<number, Record<string, unknown>>>({});
   const [editorOpen, setEditorOpen] = useState(false);
 
-  const { getEnabledModels } = useSettings();
+  const { getEnabledModels, settings } = useSettings();
+  const { calibrations } = useCalibration();
   const embedAll = useEmbedAll();
 
   // Load library on mount: built-in protocols merged with user-added
@@ -298,6 +300,8 @@ export function ProtocolRunner({ onQueryTime, subTab, onSubTabChange }: Protocol
           stepIndex: i,
           stepVectors,
           enabledModels,
+          calibrations,
+          thresholdMode: settings.thresholdMode,
         });
         stepResults.push(result);
       }

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Loader2, Crosshair, Download, Save, Trash2 } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+import { useCalibration } from "@/context/CalibrationContext";
+import { MetricTerm } from "@/components/shared/MetricTerm";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
@@ -38,6 +40,7 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
   const [results, setResults] = useState<BatteryResult[]>([]);
   const [userBatteries, setUserBatteries] = useState<UserBatteries>({});
   const { settings, getEnabledModels } = useSettings();
+  const { calibrations } = useCalibration();
   const embedAll = useEmbedAll();
 
   // Hydrate user batteries from localStorage on mount.
@@ -117,11 +120,20 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
     try {
       setProgress({ current: 0, total: statements.length });
 
-      const inputs = { statements, threshold: settings.negationThreshold };
+      const inputs = {
+        statements,
+        threshold: settings.negationThreshold,
+        thresholdMode: settings.thresholdMode,
+      };
       const texts = negationBatteryTextList(inputs);
       const modelVectors = await embedAll(texts);
       const enabledModels = getEnabledModels();
-      const computed = computeNegationBattery(inputs, modelVectors, enabledModels);
+      const computed = computeNegationBattery(
+        inputs,
+        modelVectors,
+        enabledModels,
+        calibrations
+      );
 
       setResults(computed.statements);
       setProgress({ current: statements.length, total: statements.length });
@@ -142,6 +154,20 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
   const avgSimilarity = results.length > 0
     ? results.reduce((sum, r) => sum + r.models.reduce((s, m) => s + m.similarity, 0) / r.models.length, 0) / results.length
     : 0;
+
+  // Control-relative counts. These are the figures that survive the
+  // objection that a high cosine between a claim and its negation is
+  // just token overlap, because the controls change the same number of
+  // tokens without reversing the claim.
+  const controlled = results.flatMap(r => r.models).filter(m => m.exceedsControls !== null);
+  const exceeding = controlled.filter(m => m.exceedsControls).length;
+  const normalisedValues = results
+    .flatMap(r => r.models)
+    .map(m => m.normalised)
+    .filter((v): v is number => v !== null);
+  const avgNormalised = normalisedValues.length > 0
+    ? normalisedValues.reduce((s, v) => s + v, 0) / normalisedValues.length
+    : null;
 
   const exportCSV = () => {
     const rows = ["statement,negated,model,cosine_similarity,collapsed"];
@@ -300,6 +326,39 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
                   <div className={`font-sans text-body-lg font-bold mt-0.5 ${totalCollapsed > 0 ? "text-error-500" : "text-success-600"}`}>
                     {totalCollapsed} / {totalTests}
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                <div className="bg-muted rounded-sm p-3">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+                    <MetricTerm termKey="normalisedPosition">Avg position</MetricTerm>
+                  </div>
+                  <div className="font-sans text-body-lg font-bold mt-0.5 tabular-nums">
+                    {avgNormalised !== null ? `${(avgNormalised * 100).toFixed(1)}%` : "—"}
+                  </div>
+                  <div className="font-sans text-[9px] text-muted-foreground mt-0.5">
+                    {avgNormalised !== null ? "floor → identity" : "no model calibrated"}
+                  </div>
+                </div>
+                <div className="bg-muted rounded-sm p-3 md:col-span-2">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+                    <MetricTerm termKey="exceedsControls">Exceeds same-size controls</MetricTerm>
+                  </div>
+                  <div className={`font-sans text-body-lg font-bold mt-0.5 tabular-nums ${exceeding > 0 ? "text-error-500" : "text-success-600"}`}>
+                    {controlled.length > 0 ? `${exceeding} / ${controlled.length}` : "—"}
+                  </div>
+                  <div className="font-sans text-[9px] text-muted-foreground mt-0.5">
+                    {controlled.length > 0
+                      ? "tests where the negation beat every edit of the same size that leaves the claim standing"
+                      : "no controls generated for these statements"}
+                  </div>
+                </div>
+                <div className="bg-muted rounded-sm p-3">
+                  <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+                    <MetricTerm termKey="thresholdMode">Threshold</MetricTerm>
+                  </div>
+                  <div className="font-sans text-body-sm font-bold mt-0.5">{settings.thresholdMode}</div>
                 </div>
               </div>
             </div>

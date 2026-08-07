@@ -1,5 +1,11 @@
 // Settings types for provider configuration
 import type { EmbeddingProviderId } from "./embeddings";
+import type { ThresholdMode } from "@/lib/calibration/threshold";
+import {
+  DEFAULT_THRESHOLD_MODE,
+  DEFAULT_FLOOR_RELATIVE_K,
+  LEGACY_FIXED_THRESHOLD,
+} from "@/lib/calibration/threshold";
 
 export interface ProviderSettings {
   enabled: boolean;
@@ -13,7 +19,19 @@ export interface AppSettings {
   providers: Record<EmbeddingProviderId, ProviderSettings>;
   rankedModels: string[]; // ordered model IDs: [0] = primary, [1] = secondary, etc. Empty = use all
   darkMode: boolean;
-  negationThreshold: number; // default 0.92
+  /**
+   * The stipulated collapse cutoff. Applies only when thresholdMode is
+   * "fixed", and exists so runs made before the calibration layer can be
+   * reproduced. See lib/calibration/threshold.ts.
+   */
+  negationThreshold: number;
+  /**
+   * How the collapse cutoff is derived. "control-derived" measures it
+   * from each probe's own matched controls and is the default.
+   */
+  thresholdMode: ThresholdMode;
+  /** Proportion of the floor-to-identity range used by floor-relative mode. */
+  floorRelativeK: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -59,7 +77,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     },
   },
   darkMode: false,
-  negationThreshold: 0.92,
+  negationThreshold: LEGACY_FIXED_THRESHOLD,
+  thresholdMode: DEFAULT_THRESHOLD_MODE,
+  floorRelativeK: DEFAULT_FLOOR_RELATIVE_K,
 };
 
 export const STORAGE_KEY = "manifold-atlas-settings";

@@ -18,31 +18,8 @@ export function Header({ activeTab }: HeaderProps) {
   return (
     <header className="border-b border-parchment-dark px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-4">
-        {/* Vector Lab family branding */}
-        <a
-          href="https://vector-lab-tools.github.io"
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Part of the Vector Lab"
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/vector-lab-logo-mark.svg"
-            alt=""
-            aria-hidden="true"
-            width={22}
-            height={22}
-            className="block opacity-70"
-          />
-          <span className="font-sans text-caption font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-            Vector Lab
-          </span>
-        </a>
-
-        <span className="h-6 w-px bg-parchment-dark" aria-hidden="true" />
-
-        {/* Tool branding */}
+        {/* Tool branding. The Vector Lab family mark stays in the About
+            panel and the footer; the header carries the tool alone. */}
         <div className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { X, Check, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+import { useCalibration } from "@/context/CalibrationContext";
+import { MetricTerm } from "@/components/shared/MetricTerm";
+import type { ThresholdMode } from "@/lib/calibration/threshold";
 import { useEmbeddingCache } from "@/context/EmbeddingCacheContext";
 import { EMBEDDING_PROVIDERS, type EmbeddingProviderId } from "@/types/embeddings";
 import { CopyableCommand } from "@/components/shared/CopyableCommand";
@@ -102,7 +105,16 @@ function OllamaSetupHelp() {
 }
 
 export function SettingsPanel() {
-  const { settings, settingsOpen, setSettingsOpen, updateProvider, providerModels } = useSettings();
+  const {
+    settings,
+    settingsOpen,
+    setSettingsOpen,
+    updateProvider,
+    providerModels,
+    setThresholdMode,
+    setNegationThreshold,
+  } = useSettings();
+  const { calibrations, uncalibratedModels } = useCalibration();
   const { cacheSize, clearCache } = useEmbeddingCache();
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
@@ -295,6 +307,94 @@ export function SettingsPanel() {
                 </div>
               );
             })}
+
+            {/* Collapse threshold */}
+            <div className="card-editorial p-4">
+              <h3 className="font-sans text-body-sm font-semibold mb-1">
+                <MetricTerm termKey="thresholdMode">Collapse threshold</MetricTerm>
+              </h3>
+              <p className="font-sans text-caption text-slate mb-3">
+                How the Negation Gauge and Negation Battery decide that a claim and its
+                negation have collapsed together.
+              </p>
+
+              <div className="space-y-2">
+                {(
+                  [
+                    [
+                      "control-derived",
+                      "Control-derived (recommended)",
+                      "The cutoff is that probe's own highest same-size edit that does not reverse the claim. Nothing is stipulated, and the comparison cannot be dismissed as token overlap.",
+                    ],
+                    [
+                      "floor-relative",
+                      "Floor-relative",
+                      "The cutoff sits at a fixed proportion of each model's measured floor-to-identity range. Adapts to the model, but the proportion is still a choice.",
+                    ],
+                    [
+                      "fixed",
+                      "Fixed constant",
+                      "A single stipulated number applied to every model. Retained so runs made before calibration can be reproduced.",
+                    ],
+                  ] as Array<[ThresholdMode, string, string]>
+                ).map(([mode, label, description]) => (
+                  <label
+                    key={mode}
+                    className={
+                      "flex gap-2 items-start p-2 rounded-sm cursor-pointer border " +
+                      (settings.thresholdMode === mode
+                        ? "border-burgundy bg-burgundy/5"
+                        : "border-transparent hover:bg-cream/60")
+                    }
+                  >
+                    <input
+                      type="radio"
+                      name="threshold-mode"
+                      checked={settings.thresholdMode === mode}
+                      onChange={() => setThresholdMode(mode)}
+                      className="mt-1 accent-burgundy"
+                    />
+                    <span className="flex-1">
+                      <span className="block font-sans text-body-sm font-medium">{label}</span>
+                      <span className="block font-sans text-caption text-slate mt-0.5">
+                        {description}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              {settings.thresholdMode === "fixed" && (
+                <div className="mt-3 flex items-center gap-2">
+                  <label className="font-sans text-caption text-muted-foreground">
+                    Constant
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={settings.negationThreshold}
+                    onChange={e => setNegationThreshold(Number(e.target.value))}
+                    className="input-editorial text-body-sm py-1 w-24"
+                  />
+                </div>
+              )}
+
+              {settings.thresholdMode !== "fixed" && uncalibratedModels.length > 0 && (
+                <p className="font-sans text-caption text-warning-600 mt-3">
+                  {uncalibratedModels.length} enabled model
+                  {uncalibratedModels.length !== 1 ? "s have" : " has"} no baseline, so
+                  results there fall back to the stipulated constant. Run a calibration from
+                  the Calibration tab.
+                </p>
+              )}
+              {calibrations.size > 0 && (
+                <p className="font-sans text-caption text-muted-foreground mt-2">
+                  {calibrations.size} model{calibrations.size !== 1 ? "s" : ""} calibrated.
+                </p>
+              )}
+            </div>
 
             {/* Cache management */}
             <div className="card-editorial p-4">
