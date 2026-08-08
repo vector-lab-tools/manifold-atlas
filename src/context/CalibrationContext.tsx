@@ -315,17 +315,27 @@ export function CalibrationProvider({ children }: { children: React.ReactNode })
           say(model.id, `Effective dimension ${cal.radius.effectiveDim.toFixed(0)} of ${cal.radius.effectiveDimCeiling.toFixed(0)} reachable at this sample size; top coordinate carries ${(cal.radius.topDimShare * 100).toFixed(1)}% of the variance.`);
           say(model.id, cal.radius.apiNormalised ? `Vectors returned unit-normalised.` : `Vectors not unit-normalised: mean norm ${cal.radius.meanNorm.toFixed(3)}.`);
 
+          const elapsed = (Date.now() - startedAt) / 1000;
+          // The log is a running commentary, so it should say when it
+          // has stopped running. A list that simply ends leaves the
+          // reader checking whether something is still in flight.
+          say(
+            model.id,
+            `Complete in ${elapsed.toFixed(1)}s. Radius measured for all three registers; ` +
+              `this model's scale is now in use everywhere in the application.`
+          );
           update(model.id, {
             status: "done",
             stage: "done",
             completed: texts.length,
-            seconds: (Date.now() - startedAt) / 1000,
+            seconds: elapsed,
           });
         } catch (e) {
           const message = e instanceof Error ? e.message : String(e);
           say(model.id, message);
           const hint = calibrationErrorHint(message);
           if (hint) say(model.id, hint);
+          say(model.id, `Stopped. No calibration has been saved for this model.`);
           update(model.id, {
             status: "error",
             stage: "error",

@@ -91,7 +91,14 @@ export function CalibrationModal() {
                   {p.status === "running" && (
                     <Loader2 size={13} className="animate-spin text-burgundy shrink-0" />
                   )}
-                  <span className="font-sans text-body-sm font-medium">{p.modelName}</span>
+                  <span
+                    className={cn(
+                      "font-sans text-body-sm font-medium",
+                      p.status === "done" && "text-success-600"
+                    )}
+                  >
+                    {p.modelName}
+                  </span>
                   <span className="font-sans text-caption text-muted-foreground">
                     {p.providerId}
                   </span>
@@ -99,7 +106,7 @@ export function CalibrationModal() {
                     {p.status === "error"
                       ? "failed"
                       : p.status === "done"
-                        ? `${p.seconds?.toFixed(1)}s`
+                        ? `complete · ${p.seconds?.toFixed(1)}s`
                         : `${STAGE_LABEL[p.stage]} · ${p.completed}/${p.total}`}
                   </span>
                 </div>
