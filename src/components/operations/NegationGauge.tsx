@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useCalibration } from "@/context/CalibrationContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
@@ -72,6 +72,11 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<NegationGaugeResult | null>(null);
+  // Which model cards have their supporting sections open. The distance
+  // and the verdict stay visible; everything that supports them is one
+  // click away, because six models stacked with five sections each is a
+  // page nobody reads.
+  const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set());
   const { settings, getEnabledModels } = useSettings();
   const { calibrations, uncalibratedModels, calibrate, running: calibrating } =
     useCalibration();
@@ -386,6 +391,35 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                     />
                   </div>
 
+                  <button
+                    onClick={() =>
+                      setExpandedModels(prev => {
+                        const next = new Set(prev);
+                        if (next.has(m.modelId)) next.delete(m.modelId);
+                        else next.add(m.modelId);
+                        return next;
+                      })
+                    }
+                    className="w-full px-5 py-2 border-t border-parchment flex items-center gap-1.5 text-muted-foreground hover:text-foreground hover:bg-cream/50 transition-colors font-sans text-caption"
+                    aria-expanded={expandedModels.has(m.modelId)}
+                  >
+                    {expandedModels.has(m.modelId) ? (
+                      <ChevronDown size={12} />
+                    ) : (
+                      <ChevronRight size={12} />
+                    )}
+                    <span className="uppercase tracking-wider font-semibold">
+                      More information
+                    </span>
+                    <span className="ml-2 font-normal">
+                      {expandedModels.has(m.modelId)
+                        ? "the measured scale, the controls, and the geometry"
+                        : "how this was measured, and against what"}
+                    </span>
+                  </button>
+
+                  {expandedModels.has(m.modelId) && (
+                    <>
                   <div className="thin-rule mx-5" />
 
                   {/* Calibrated scale and control family */}
@@ -484,6 +518,8 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                       </pre>
                     </div>
                   </div>
+                    </>
+                  )}
                 </div>
               );
             })}
