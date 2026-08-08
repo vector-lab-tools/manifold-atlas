@@ -117,8 +117,14 @@ export function ConeDiagram({ cal, register, value = null, compact = false }: Co
         {/* Apex. */}
         <circle cx={CX} cy={CY} r="2" className="fill-burgundy" />
 
-        <text x={CX + 5} y={CY - 5} className="fill-burgundy" fontSize="8.5" fontWeight="700">
+        {/* The half-angle is the headline number of the panel, and in
+            compact mode it is the only one, so it sits clear of the
+            burgundy fill rather than on top of it. */}
+        <text x={6} y={15} className="fill-foreground" fontSize="13" fontWeight="700">
           {half.toFixed(1)}°
+        </text>
+        <text x={6} y={25} className="fill-muted-foreground" fontSize="7.5">
+          radius
         </text>
         <text x={W - 4} y={H - 5} textAnchor="end" className="fill-muted-foreground" fontSize="7">
           dashed sphere = all directions

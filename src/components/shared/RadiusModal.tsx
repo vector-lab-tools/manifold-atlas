@@ -121,13 +121,19 @@ export function RadiusModal({ modelId, register, value = null, onClose }: Radius
           {panels.map(({ c, r }) => (
             <div key={`${c.modelId}-${r}`} className="space-y-1">
               {(shown.length > 1 || regsShown.length > 1) && (
-                <div className="font-sans text-body-sm font-medium truncate" title={c.modelName}>
-                  {shown.length > 1 && c.modelName}
-                  {shown.length > 1 && regsShown.length > 1 && " · "}
+                <div className="leading-tight">
+                  {shown.length > 1 && (
+                    <div
+                      className="font-sans text-body-sm font-medium truncate"
+                      title={c.modelName}
+                    >
+                      {c.modelName}
+                    </div>
+                  )}
                   {regsShown.length > 1 && (
-                    <span className="text-muted-foreground font-normal">
+                    <div className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground">
                       {REGISTER_LABELS[r]}
-                    </span>
+                    </div>
                   )}
                 </div>
               )}
