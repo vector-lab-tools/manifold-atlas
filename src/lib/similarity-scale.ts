@@ -20,7 +20,14 @@ import { normalisedPosition } from "@/lib/calibration/baseline";
 import type { ResolvedThreshold } from "@/lib/calibration/threshold";
 
 export interface SimilarityLevel {
+  /** The finding, on its own. Short enough to read at a glance. */
   label: string;
+  /**
+   * The reason, rendered small on its own line beneath the label. Kept
+   * separate so the verdict is not buried in the sentence that supports
+   * it; a reader scanning six models wants the verdict first.
+   */
+  detail?: string;
   color: string;
   bgColor: string;
   severity: "critical" | "high" | "moderate" | "low" | "none";
@@ -88,23 +95,28 @@ export function levelFromPosition(p: number): SimilarityLevel {
  */
 export function negationSimilarityLevel(similarity: number, threshold: number): SimilarityLevel {
   if (similarity >= threshold) return {
-    label: "Negation lost: the claim and its opposite sit together (unmeasured scale)",
+    label: "Negation lost",
+    detail: "the claim and its opposite sit together, on an unmeasured scale",
     ...CRITICAL, uncalibrated: true,
   };
   if (similarity >= threshold - 0.05) return {
-    label: "Barely registered: the opposite hardly moved (unmeasured scale)",
+    label: "Barely registered",
+    detail: "the opposite hardly moved, on an unmeasured scale",
     ...HIGH, uncalibrated: true,
   };
   if (similarity >= 0.7) return {
-    label: "Weakly registered: the claim and its opposite stay close (unmeasured scale)",
+    label: "Weakly registered",
+    detail: "the claim and its opposite stay close, on an unmeasured scale",
     ...MODERATE, uncalibrated: true,
   };
   if (similarity >= 0.5) return {
-    label: "Partly registered: some distance, far less than a reversal (unmeasured scale)",
+    label: "Partly registered",
+    detail: "some distance, far less than a reversal, on an unmeasured scale",
     ...LOW, uncalibrated: true,
   };
   return {
-    label: "Negation registered: claim and opposite held apart (unmeasured scale)",
+    label: "Negation registered",
+    detail: "claim and opposite held apart, on an unmeasured scale",
     ...NONE, uncalibrated: true,
   };
 }
@@ -129,37 +141,53 @@ export function calibratedNegationLevel(
 
   if (exceedsControls === true) {
     return {
-      label:
-        "Negation lost: the model puts \u201Cnot\u201D closer to the claim than swapping in an unrelated word",
+      label: "Negation lost",
+      detail:
+        "the model puts \u201Cnot\u201D closer to the claim than swapping in an unrelated word",
       ...CRITICAL,
     };
   }
 
   const margin = threshold.value - similarity;
   if (similarity >= threshold.value) {
-    return { label: "Negation lost: the claim and its opposite sit together", ...CRITICAL };
+    return {
+      label: "Negation lost",
+      detail: "the claim and its opposite sit together",
+      ...CRITICAL,
+    };
   }
   if (margin <= 0.02) {
-    return { label: "Barely registered: right on this model\u2019s cutoff", ...HIGH };
+    return {
+      label: "Barely registered",
+      detail: "right on this model\u2019s cutoff",
+      ...HIGH,
+    };
   }
 
   if (floorMean !== null) {
     const p = normalisedPosition(similarity, floorMean);
     if (p >= 0.7) return {
-      label: "Weakly registered: the opposite moved, but stayed close to the claim",
+      label: "Weakly registered",
+      detail: "the opposite moved, but stayed close to the claim",
       ...MODERATE,
     };
     if (p >= 0.4) return {
-      label: "Partly registered: some distance, far less than a reversal of meaning",
+      label: "Partly registered",
+      detail: "some distance, far less than a reversal of meaning",
       ...LOW,
     };
     return {
-      label: "Negation registered: the model holds the claim and its opposite apart",
+      label: "Negation registered",
+      detail: "the model holds the claim and its opposite apart",
       ...NONE,
     };
   }
 
-  return { label: "Negation registered: below this model\u2019s cutoff", ...NONE };
+  return {
+    label: "Negation registered",
+    detail: "below this model\u2019s cutoff",
+    ...NONE,
+  };
 }
 
 /**

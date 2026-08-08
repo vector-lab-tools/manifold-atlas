@@ -76,9 +76,22 @@ export function SimilarityMeter({
 
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-sans text-body-sm font-semibold" style={{ color: level.color }}>
-          {level.label}
+      <div className="flex items-start justify-between gap-2">
+        <span className="min-w-0">
+          <span
+            className="block font-sans text-body-sm font-semibold"
+            style={{ color: level.color }}
+          >
+            {level.label}
+          </span>
+          {/* The reason, small and on its own line. The verdict has to be
+              readable at a glance when six models are stacked; a reason
+              set at the same weight buries it. */}
+          {level.detail && (
+            <span className="block font-sans text-[10px] leading-snug text-muted-foreground mt-0.5">
+              {level.detail}
+            </span>
+          )}
         </span>
         <span className="flex items-baseline gap-2 shrink-0">
           {floor !== null && (
