@@ -159,7 +159,7 @@ export function calibratedNegationLevel(
     return {
       label: "Almost the same",
       detail:
-        "and closer than swapping in an unrelated word, so the \u201Cnot\u201D moved it less than an ordinary edit would",
+        "\u201CNot\u201D is counterintuitively closer to its opposite than swapping in an unrelated word",
       ...CRITICAL,
     };
   }
