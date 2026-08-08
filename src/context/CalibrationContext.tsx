@@ -25,6 +25,7 @@ import React, {
 import { useSettings } from "./SettingsContext";
 import { useEmbeddingCache } from "./EmbeddingCacheContext";
 import { fetchEmbeddings } from "@/lib/embeddings/client";
+import { cosineSimilarity } from "@/lib/geometry/cosine";
 import type { EmbeddingProviderId } from "@/types/embeddings";
 import {
   calibrationTextList,
@@ -43,6 +44,29 @@ import {
  * calibration run within every provider's limit.
  */
 const EMBED_CHUNK = 48;
+
+/**
+ * How many corpus texts to re-embed and check against what the run
+ * assembled, before any of it is turned into a measurement.
+ *
+ * The cache is keyed by text and cannot tell whether a stored vector was
+ * produced by the pipeline now in force. A pipeline stamp handles the
+ * changes we know about; this handles the ones we do not. Six texts is
+ * roughly 3% of the corpus and costs one extra request, which is
+ * nothing against the alternative of publishing a floor that moved
+ * because some of its vectors came from somewhere else.
+ */
+const VERIFY_SAMPLE = 6;
+/** Two vectors of the same text from the same model should be identical. */
+const VERIFY_TOLERANCE = 1e-4;
+
+/** Indices spread across the strata rather than clustered at the front. */
+function verifyIndices(total: number): number[] {
+  const step = Math.max(1, Math.floor(total / VERIFY_SAMPLE));
+  const out: number[] = [];
+  for (let i = 0; i < total && out.length < VERIFY_SAMPLE; i += step) out.push(i);
+  return out;
+}
 
 export type CalibrationStatus = "idle" | "running" | "done" | "error";
 
@@ -77,7 +101,7 @@ export interface CalibrationProgress {
   providerId: string;
   status: CalibrationStatus;
   /** What the run is doing right now, for the live readout. */
-  stage: "queued" | "cache" | "embedding" | "computing" | "done" | "error";
+  stage: "queued" | "cache" | "embedding" | "verifying" | "computing" | "done" | "error";
   /** Texts embedded so far, out of the corpus total. */
   completed: number;
   total: number;
@@ -210,7 +234,7 @@ export function CalibrationProvider({ children }: { children: React.ReactNode })
           say(model.id, `Corpus: ${texts.length} texts across four strata.`);
 
           let announcedFetch = false;
-          const vectors = await embedCorpus(model, texts, (completed, fromCache) => {
+          let vectors = await embedCorpus(model, texts, (completed, fromCache) => {
             if (fromCache !== undefined) {
               update(model.id, { fromCache });
               say(
@@ -227,8 +251,52 @@ export function CalibrationProvider({ children }: { children: React.ReactNode })
             update(model.id, { completed });
           });
 
+          // Verify before measuring. A cached vector that the current
+          // pipeline would not produce is indistinguishable from a good
+          // one until it is checked against a fresh fetch.
+          update(model.id, { stage: "verifying" });
+          const idx = verifyIndices(texts.length);
+          const probe = idx.map(i => texts[i]);
+          const fresh = await fetchEmbeddings(
+            model.providerId, model.id, probe, model.apiKey, model.baseUrl
+          );
+          const drift = idx.map((i, k) => 1 - cosineSimilarity(vectors[i], fresh.vectors[k]));
+          const worst = Math.max(...drift);
+
+          if (worst > VERIFY_TOLERANCE) {
+            say(
+              model.id,
+              `Verification failed: ${drift.filter(d => d > VERIFY_TOLERANCE).length} of ${idx.length} sampled vectors do not match a fresh embedding (worst cosine ${(1 - worst).toFixed(4)}).`
+            );
+            say(model.id, `Discarding this model's cached vectors and re-embedding the corpus.`);
+            await cache.clearModel(model.id);
+            update(model.id, { stage: "embedding", completed: 0, fromCache: 0 });
+            vectors = await embedCorpus(model, texts, completed =>
+              update(model.id, { completed })
+            );
+            const recheck = await fetchEmbeddings(
+              model.providerId, model.id, probe, model.apiKey, model.baseUrl
+            );
+            const worst2 = Math.max(
+              ...idx.map((i, k) => 1 - cosineSimilarity(vectors[i], recheck.vectors[k]))
+            );
+            if (worst2 > VERIFY_TOLERANCE) {
+              throw new Error(
+                `Vectors from this provider are not reproducible: the same texts embedded twice ` +
+                `differ by up to ${worst2.toExponential(2)} in cosine. A calibration taken from ` +
+                `them would not be a measurement. No record has been saved.`
+              );
+            }
+            say(model.id, `Re-embedded and verified.`);
+          } else {
+            say(
+              model.id,
+              `Verified ${idx.length} sampled vectors against fresh embeddings (max drift ${worst.toExponential(1)}).`
+            );
+          }
+
           update(model.id, { stage: "computing", completed: texts.length });
-          say(model.id, `Embedded. Computing pairwise cosines and the radius profile.`);
+          say(model.id, `Computing pairwise cosines and the radius profile.`);
 
           const cal = computeCalibration(
             { id: model.id, name: model.name, providerId: model.providerId },

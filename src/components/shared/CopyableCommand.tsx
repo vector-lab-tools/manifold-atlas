@@ -29,7 +29,7 @@ export function CopyableCommand({ command, className = "" }: CopyableCommandProp
   };
   return (
     <span className={`block my-1.5 flex items-start gap-1.5 ${className}`}>
-      <code className="flex-1 font-mono text-[11px] bg-muted/60 px-2 py-1 rounded select-all break-all">
+      <code className="flex-1 min-w-0 font-mono text-[11px] bg-muted/60 px-2 py-1 rounded select-all break-all">
         {command}
       </code>
       <button

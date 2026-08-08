@@ -16,8 +16,8 @@ export function Header({ activeTab }: HeaderProps) {
   const viewLabel = activeTab ? getGroupLabel(activeTab) : "";
 
   return (
-    <header className="border-b border-parchment-dark px-6 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-4">
+    <header className="border-b border-parchment-dark px-6 py-3 flex flex-wrap items-center justify-between gap-y-2">
+      <div className="flex items-center gap-4 min-w-0">
         {/* Tool branding. The Vector Lab family mark stays in the About
             panel and the footer; the header carries the tool alone. */}
         <div className="flex items-center gap-2.5">
@@ -44,7 +44,7 @@ export function Header({ activeTab }: HeaderProps) {
           </>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0 flex-wrap justify-end">
         <ProviderSelector />
         <AboutModal />
         <HelpDropdown />
@@ -59,8 +59,8 @@ export function Header({ activeTab }: HeaderProps) {
           onClick={() => setSettingsOpen(true)}
           className="btn-editorial-secondary px-3 py-2"
         >
-          <Settings size={16} className="mr-2" />
-          <span className="font-sans text-body-sm">Settings</span>
+          <Settings size={16} className="sm:mr-2" />
+          <span className="font-sans text-body-sm hidden sm:inline">Settings</span>
         </button>
       </div>
     </header>

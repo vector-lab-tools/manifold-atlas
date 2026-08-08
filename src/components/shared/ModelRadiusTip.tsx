@@ -37,12 +37,6 @@ interface ModelRadiusTipProps {
   register?: Register;
   children: ReactNode;
   className?: string;
-  /**
-   * A measurement from the calling operation. Drawn inside the cone in
-   * the full view, so the figure on screen can be seen against the space
-   * it was taken in rather than only against a number.
-   */
-  value?: { cosine: number; label: string } | null;
 }
 
 export function ModelRadiusTip({
@@ -50,7 +44,6 @@ export function ModelRadiusTip({
   register = "short",
   children,
   className,
-  value = null,
 }: ModelRadiusTipProps) {
   const { calibrations } = useCalibration();
   const [open, setOpen] = useState(false);
@@ -108,7 +101,6 @@ export function ModelRadiusTip({
         <RadiusModal
           modelId={modelId}
           register={register}
-          value={value}
           onClose={() => setModal(false)}
         />
       )}

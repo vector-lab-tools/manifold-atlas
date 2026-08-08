@@ -335,13 +335,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                   {/* Model header */}
                   <div className="px-5 pt-5 pb-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip
-                    modelId={m.modelId}
-                    register="short"
-                    value={{ cosine: m.cosineSimilarity, label: "negation" }}
-                  >
-                    {m.modelName}
-                  </ModelRadiusTip></span>
+                      <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={m.modelId} register="short">{m.modelName}</ModelRadiusTip></span>
                       <span className="font-sans text-caption text-muted-foreground">{m.providerId}</span>
                       <span className="font-sans text-caption text-muted-foreground">&middot; {m.dimensions.toLocaleString()} dimensions</span>
                     </div>

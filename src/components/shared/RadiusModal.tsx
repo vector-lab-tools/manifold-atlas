@@ -32,12 +32,18 @@ import { cn } from "@/lib/utils";
 interface RadiusModalProps {
   modelId: string;
   register: Register;
-  /** Optional measurement from the calling operation, drawn in the cone. */
-  value?: { cosine: number; label: string } | null;
   onClose: () => void;
 }
 
-export function RadiusModal({ modelId, register, value = null, onClose }: RadiusModalProps) {
+/**
+ * Deliberately takes no measurement from the calling operation. The
+ * radius is a property of the space, and a single query's cosine laid
+ * over it reads as though the two were the same kind of fact. In
+ * comparison mode it was worse: the value could only be drawn for the
+ * one model it came from, so five cones carried no line and one did,
+ * which looks like a finding about that model.
+ */
+export function RadiusModal({ modelId, register, onClose }: RadiusModalProps) {
   const { calibrations } = useCalibration();
   const [mode, setMode] = useState<"single" | "compare">("single");
   // The cone is not the same width for a term as for a paragraph in the
@@ -59,9 +65,9 @@ export function RadiusModal({ modelId, register, value = null, onClose }: Radius
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-[80]" onClick={onClose} />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] w-[860px] max-w-[94vw] max-h-[88vh] overflow-y-auto card-editorial shadow-editorial-lg animate-fade-in">
-        <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-4">
-          <div>
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] w-[min(860px,94vw)] max-h-[88vh] overflow-y-auto overflow-x-hidden card-editorial shadow-editorial-lg animate-fade-in">
+        <div className="px-6 pt-6 pb-4 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <h2 className="font-display text-display-md font-bold">
               {mode === "single" ? cal.modelName : "Radius comparison"}
             </h2>
@@ -112,38 +118,53 @@ export function RadiusModal({ modelId, register, value = null, onClose }: Radius
         </div>
         <div className="thin-rule mx-6" />
 
-        <div
-          className={cn(
-            "px-6 py-5 grid gap-x-6 gap-y-5",
-            panels.length === 1 ? "grid-cols-1 max-w-sm" : "grid-cols-2 lg:grid-cols-3"
-          )}
-        >
-          {panels.map(({ c, r }) => (
-            <div key={`${c.modelId}-${r}`} className="space-y-1">
-              {(shown.length > 1 || regsShown.length > 1) && (
-                <div className="leading-tight">
-                  {shown.length > 1 && (
-                    <div
-                      className="font-sans text-body-sm font-medium truncate"
-                      title={c.modelName}
-                    >
-                      {c.modelName}
-                    </div>
-                  )}
-                  {regsShown.length > 1 && (
-                    <div className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground">
-                      {REGISTER_LABELS[r]}
-                    </div>
-                  )}
+        {/* Grouped by model, with the registers as a row beneath each
+            name. A flat grid of eighteen panels reads as a wall; the
+            comparison people actually want is one model across its
+            registers, or one register down the models, and both are
+            easier to find when the model owns the row. */}
+        <div className="px-6 py-5 space-y-5">
+          {shown.map(c => (
+            <section key={c.modelId} className="space-y-2">
+              {shown.length > 1 && (
+                <div className="flex items-baseline gap-2 border-b border-parchment pb-1">
+                  <h3 className="font-display text-body-lg font-bold truncate" title={c.modelName}>
+                    {c.modelName}
+                  </h3>
+                  <span className="font-sans text-[10px] text-muted-foreground shrink-0">
+                    {c.providerId} · {c.radius.nominalDim}d
+                  </span>
+                  <span className="ml-auto font-sans text-[10px] text-muted-foreground tabular-nums shrink-0">
+                    {regsShown.length > 1
+                      ? regsShown.map(r => `${coneFor(c, r).toFixed(0)}°`).join(" / ")
+                      : `${coneFor(c, regsShown[0]).toFixed(1)}°`}
+                  </span>
                 </div>
               )}
-              <ConeDiagram
-                cal={c}
-                register={r}
-                value={c.modelId === modelId && r === register ? value : null}
-                compact={panels.length > 3}
-              />
-            </div>
+              <div
+                className={cn(
+                  "grid gap-x-5 gap-y-3",
+                  regsShown.length === 1
+                    ? "grid-cols-1 max-w-sm"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                )}
+              >
+                {regsShown.map(r => (
+                  <div key={`${c.modelId}-${r}`} className="space-y-0.5 min-w-0">
+                    {regsShown.length > 1 && (
+                      <div className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {REGISTER_LABELS[r]}
+                      </div>
+                    )}
+                    <ConeDiagram
+                      cal={c}
+                      register={r}
+                      compact={panels.length > 3}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
 
@@ -171,11 +192,6 @@ export function RadiusModal({ modelId, register, value = null, onClose }: Radius
                       <th className="py-1 pr-3 font-medium text-right">
                         <MetricTerm termKey="usableRange">range</MetricTerm>
                       </th>
-                      {value && (
-                        <th className="py-1 pr-3 font-medium text-right text-gold">
-                          {value.label}
-                        </th>
-                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-parchment">
@@ -192,13 +208,6 @@ export function RadiusModal({ modelId, register, value = null, onClose }: Radius
                         <td className="py-1 pr-3 text-right">
                           {usableRangeFor(c, reg === "all" ? register : reg).toFixed(4)}
                         </td>
-                        {value && (
-                          <td className="py-1 pr-3 text-right text-gold">
-                            {c.modelId === modelId
-                              ? `${(normalisedPosition(value.cosine, floorFor(c, reg === "all" ? register : reg).mean) * 100).toFixed(1)}%`
-                              : "—"}
-                          </td>
-                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -214,7 +223,7 @@ export function RadiusModal({ modelId, register, value = null, onClose }: Radius
         )}
 
         <div className="thin-rule mx-6" />
-        <div className="px-6 py-4 space-y-1.5">
+        <div className="px-6 py-4 space-y-1.5 min-w-0">
           {shown.map(c => (
             <CopyableCommand key={c.modelId} command={radiusLine(c, reg === "all" ? register : reg)} />
           ))}

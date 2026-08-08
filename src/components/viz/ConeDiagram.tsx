@@ -55,17 +55,14 @@ function rim(halfAngle: number) {
 export interface ConeDiagramProps {
   cal: ModelCalibration;
   register: Register;
-  /** Optional measured value, drawn as a separation inside the cone. */
-  value?: { cosine: number; label: string } | null;
   compact?: boolean;
 }
 
-export function ConeDiagram({ cal, register, value = null, compact = false }: ConeDiagramProps) {
+export function ConeDiagram({ cal, register, compact = false }: ConeDiagramProps) {
   const half = coneFor(cal, register);
   const floor = floorFor(cal, register).mean;
   const floorAngle = angleDegrees(floor);
   const ceilingAngle = angleDegrees(cal.topicalCeiling.mean);
-  const valueAngle = value ? angleDegrees(value.cosine) : null;
 
   const r = rim(half);
   const [ex, ey] = onSphere(half);
@@ -106,14 +103,6 @@ export function ConeDiagram({ cal, register, value = null, compact = false }: Co
         <line x1={CX} y1={CY} x2={onSphere(floorAngle / 2)[0]} y2={onSphere(floorAngle / 2)[1]} className="stroke-foreground/75" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
         <line x1={CX} y1={CY} x2={onSphere(-floorAngle / 2)[0]} y2={onSphere(-floorAngle / 2)[1]} className="stroke-foreground/75" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
 
-        {/* A measured pair, when one was supplied. */}
-        {valueAngle !== null && (
-          <>
-            <line x1={CX} y1={CY} x2={onSphere(valueAngle / 2)[0] } y2={onSphere(valueAngle / 2)[1]} className="stroke-gold" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
-            <line x1={CX} y1={CY} x2={onSphere(-valueAngle / 2)[0]} y2={onSphere(-valueAngle / 2)[1]} className="stroke-gold" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
-          </>
-        )}
-
         {/* Apex. */}
         <circle cx={CX} cy={CY} r="2" className="fill-burgundy" />
 
@@ -141,14 +130,6 @@ export function ConeDiagram({ cal, register, value = null, compact = false }: Co
           <dd className="text-right">
             {ceilingAngle.toFixed(1)}° &middot; cos {cal.topicalCeiling.mean.toFixed(3)}
           </dd>
-          {value && valueAngle !== null && (
-            <>
-              <dt className="text-gold font-semibold truncate">{value.label}</dt>
-              <dd className="text-right text-gold font-semibold">
-                {valueAngle.toFixed(1)}° &middot; cos {value.cosine.toFixed(3)}
-              </dd>
-            </>
-          )}
           <dt className="text-muted-foreground">Surface unreached</dt>
           <dd className="text-right">
             {(((1 - (1 - Math.cos(rad(half))) / 2) * 100)).toFixed(0)}%

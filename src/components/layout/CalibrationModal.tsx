@@ -24,6 +24,7 @@ const STAGE_LABEL: Record<string, string> = {
   queued: "queued",
   cache: "checking cache",
   embedding: "embedding corpus",
+  verifying: "verifying vectors",
   computing: "measuring radius",
   done: "done",
   error: "failed",
