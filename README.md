@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.15.0
+**Version:** 1.15.1
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -86,9 +86,11 @@ A cosine has no meaning without the scale it sits on. Embedding vectors occupy a
 
 **The cone, drawn.** A cone icon beside every model name opens the radius as a picture: the cone the model sweeps, the cap it reaches, and the dashed sphere of all directions it does not. Toggles show any single register or all three side by side, and any one model or every calibrated model at once, so the claim that two models reporting the same cosine are not reporting the same thing can be seen rather than argued.
 
+**Separations are drawn as dimension lines.** The bar between two texts carries its value between two arrowheads, and its length is the gap as a share of the reachable range rather than of the nominal zero-to-one scale. It is double-headed because a cosine is symmetric: a single head would imply a direction from claim to negation that the measurement does not have.
+
 **The unreachable region folds away.** Clicking the verdict bar removes the part of the scale the model cannot reach and stretches the reachable range across the full width. Two views of the same figure, because the two things worth seeing pull against each other: unfolded shows how much of the nominal scale is unusable, which for a high-floor model is most of it, and folded shows where the value sits within what the model can actually express. The folded state is stated on the control rather than implied, since a bar that silently changed its own x-axis would be a worse version of the fault the meter was rewritten to fix.
 
-**Nothing is drawn on an unmeasured scale.** Every meter, bar and bridge in the application takes the model's floor and draws from it rather than from zero, with the unreachable region hatched. The fixed adjectives that used to sit under the meter (Distinctive, Somewhat similar, Indistinguishable, pinned to thirds of the raw scale) are gone: they contradicted the calibrated verdict printed directly above them, calling a cosine "somewhat similar" while the verdict said it was barely above unrelated text. The labels are now the model's own anchors.
+**Nothing is drawn on an unmeasured scale.** Every meter, bar and bridge in the application takes the model's floor and draws from it rather than from zero, with the unreachable region hatched, and the floor, the topical ceiling and the position as a percentage of range printed on the axis rather than hidden behind a hover. The fixed adjectives that used to sit under the meter (Distinctive, Somewhat similar, Indistinguishable, pinned to thirds of the raw scale) are gone: they contradicted the calibrated verdict printed directly above them, calling a cosine "somewhat similar" while the verdict said it was barely above unrelated text. The labels are now the model's own anchors.
 
 **Calibration reports itself as it runs.** A run opens a live panel from wherever it was triggered and prints each model's measurements as they land, then leaves them on screen with a copyable reporting line. Failures are named there too, with an actionable hint: a rejected API key now says so instead of looking like a button that did nothing.
 
