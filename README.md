@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.15.3
+**Version:** 1.16.0
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -86,7 +86,7 @@ A cosine has no meaning without the scale it sits on. Embedding vectors occupy a
 
 **The cone, drawn.** A cone icon beside every model name opens the radius as a picture: the cone the model sweeps, the cap it reaches, and the dashed sphere of all directions it does not. Toggles show any single register or all three side by side, and any one model or every calibrated model at once, so the claim that two models reporting the same cosine are not reporting the same thing can be seen rather than argued.
 
-**The verdict says whether the negation survived.** Not "weak distinction" or "the negation stays high on this model's scale", which name a position on a scale and leave the reader to work out what it means. The gauge answers the question it was asked, and the verdict stands alone: **Negation lost**, **Barely registered**, **Weakly registered**, **Partly registered**, **Negation registered**. The reason sits beneath it in small type, so six models stacked can be scanned by verdict without a supporting clause burying each one. The strongest verdict carries the basis that survives the token-overlap objection: "the model puts 'not' closer to the claim than swapping in an unrelated word".
+**The verdict says how far apart, not what the model understood.** Negation verdicts read **Almost the same**, **Borderline**, **Barely different**, **Somewhat different**, **Clearly different**, with the reason beneath in small type. They describe distance, which is what was measured. An earlier version said "negation registered" and "negation lost", which imputes an act of recognition: it claims the model noticed the reversal, where all that was observed is proximity. Two sentences can sit far apart for reasons unconnected to the reversal, and a model that separates them has not thereby understood that one denies the other. The negation-specific claim sits in the reason line, because exactly one comparison licenses it: the negation sitting closer to the claim than an edit of the same size that leaves the claim standing. That is about "not" specifically; a position on a scale is not. This follows the decision already taken for the Agonism Test, whose labels were changed from "opposition preserved / collapsed" to observation-only wording for the same reason.
 
 **Separations are drawn as dimension lines.** The bar between two texts carries its value between two arrowheads, and its length is the gap as a share of the reachable range rather than of the nominal zero-to-one scale. It is double-headed because a cosine is symmetric: a single head would imply a direction from claim to negation that the measurement does not have.
 

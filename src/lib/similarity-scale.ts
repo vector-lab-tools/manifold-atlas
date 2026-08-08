@@ -88,35 +88,51 @@ export function levelFromPosition(p: number): SimilarityLevel {
 }
 
 /**
- * For negation gauge: high similarity between a claim and its
- * negation is ALWAYS a problem. The scale reflects this.
+ * Negation verdicts.
+ *
+ * The labels say how far apart the model puts the two sentences, and
+ * nothing more. An earlier version said "negation registered" and
+ * "negation lost", which imputes an act of recognition: it claims the
+ * model noticed the negation, where all that was measured is proximity.
+ * Two sentences can sit far apart for reasons that have nothing to do
+ * with the reversal, and a model that separates them has not thereby
+ * understood that one denies the other.
+ *
+ * The negation-specific claim lives in the reason line instead, because
+ * only one comparison licenses it: the negation sitting closer to the
+ * claim than an edit of the same size that leaves the claim standing.
+ * That is about "not" specifically. The position on the scale is not.
+ *
+ * This follows the same decision made for the Agonism Test, whose
+ * labels were changed from "opposition preserved / collapsed" to
+ * observation-only wording for the same reason.
  *
  * Retained for uncalibrated rendering. Prefer calibratedNegationLevel.
  */
 export function negationSimilarityLevel(similarity: number, threshold: number): SimilarityLevel {
   if (similarity >= threshold) return {
-    label: "Negation lost",
+    label: "Almost the same",
     detail: "the claim and its opposite sit together, on an unmeasured scale",
     ...CRITICAL, uncalibrated: true,
   };
   if (similarity >= threshold - 0.05) return {
-    label: "Barely registered",
-    detail: "the opposite hardly moved, on an unmeasured scale",
+    label: "Borderline",
+    detail: "right on the cutoff, on an unmeasured scale",
     ...HIGH, uncalibrated: true,
   };
   if (similarity >= 0.7) return {
-    label: "Weakly registered",
-    detail: "the claim and its opposite stay close, on an unmeasured scale",
+    label: "Barely different",
+    detail: "the opposite sits close to the claim, on an unmeasured scale",
     ...MODERATE, uncalibrated: true,
   };
   if (similarity >= 0.5) return {
-    label: "Partly registered",
-    detail: "some distance, far less than a reversal, on an unmeasured scale",
+    label: "Somewhat different",
+    detail: "on an unmeasured scale",
     ...LOW, uncalibrated: true,
   };
   return {
-    label: "Negation registered",
-    detail: "claim and opposite held apart, on an unmeasured scale",
+    label: "Clearly different",
+    detail: "claim and opposite well apart, on an unmeasured scale",
     ...NONE, uncalibrated: true,
   };
 }
@@ -141,50 +157,52 @@ export function calibratedNegationLevel(
 
   if (exceedsControls === true) {
     return {
-      label: "Negation lost",
+      label: "Almost the same",
       detail:
-        "the model puts \u201Cnot\u201D closer to the claim than swapping in an unrelated word",
+        "and closer than swapping in an unrelated word, so the \u201Cnot\u201D moved it less than an ordinary edit would",
       ...CRITICAL,
     };
   }
-
-  const margin = threshold.value - similarity;
   if (similarity >= threshold.value) {
     return {
-      label: "Negation lost",
-      detail: "the claim and its opposite sit together",
+      label: "Almost the same",
+      detail: "above the point where this model starts telling texts apart",
       ...CRITICAL,
     };
   }
-  if (margin <= 0.02) {
+  if (threshold.value - similarity <= 0.02) {
     return {
-      label: "Barely registered",
-      detail: "right on this model\u2019s cutoff",
+      label: "Borderline",
+      detail: "right on this model\u2019s cutoff, so a small change of wording could flip it",
       ...HIGH,
     };
   }
 
   if (floorMean !== null) {
     const p = normalisedPosition(similarity, floorMean);
-    if (p >= 0.7) return {
-      label: "Weakly registered",
-      detail: "the opposite moved, but stayed close to the claim",
-      ...MODERATE,
-    };
-    if (p >= 0.4) return {
-      label: "Partly registered",
-      detail: "some distance, far less than a reversal of meaning",
-      ...LOW,
-    };
+    if (p >= 0.7) {
+      return {
+        label: "Barely different",
+        detail: "the opposite sits close to the claim on this model\u2019s scale",
+        ...MODERATE,
+      };
+    }
+    if (p >= 0.4) {
+      return {
+        label: "Somewhat different",
+        detail: "about midway between the claim and unrelated text",
+        ...LOW,
+      };
+    }
     return {
-      label: "Negation registered",
-      detail: "the model holds the claim and its opposite apart",
+      label: "Clearly different",
+      detail: "the claim and its opposite are well apart on this model\u2019s scale",
       ...NONE,
     };
   }
 
   return {
-    label: "Negation registered",
+    label: "Clearly different",
     detail: "below this model\u2019s cutoff",
     ...NONE,
   };

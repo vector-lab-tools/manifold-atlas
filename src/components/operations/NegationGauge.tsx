@@ -35,24 +35,24 @@ const DEFAULT_STATEMENT = "This policy is fair";
 
 function negationVerdict(sim: number, threshold: number): { severity: string; explanation: string } {
   if (sim >= 0.98) return {
-    severity: "Negation lost",
-    explanation: "The claim and its opposite are at almost the same place. Adding \u201Cnot\u201D has barely moved anything. As far as this model\u2019s geometry is concerned, the two sentences say the same thing.",
+    severity: "Almost the same",
+    explanation: "The claim and its opposite are at almost the same place. Adding \u201Cnot\u201D has barely moved anything. Note what this does and does not say: the two sentences occupy nearly the same position, which is a fact about distance. It does not follow that the model has failed to understand the reversal, only that its geometry does not express one.",
   };
   if (sim >= threshold) return {
-    severity: "Negation lost",
-    explanation: "Adding \u201Cnot\u201D moved the sentence a little, but not past the point where this model starts telling things apart. Most of the position is unchanged. In logic a negation reverses the meaning; here it is a small nudge, and the model does not register a reversal.",
+    severity: "Almost the same",
+    explanation: "Adding \u201Cnot\u201D moved the sentence a little, but not past the point where this model starts telling texts apart. Most of the position is unchanged. In logic a negation reverses the meaning; here it is a small nudge.",
   };
   if (sim >= threshold - 0.07) return {
-    severity: "Barely registered",
-    explanation: "There is a gap between the claim and its opposite, but a thin one, sitting right at the point where this model starts telling things apart. A small change of wording could close it.",
+    severity: "Borderline",
+    explanation: "There is a gap between the claim and its opposite, but a thin one, sitting right at the point where this model starts telling texts apart. A small change of wording could move it either way.",
   };
   if (sim >= 0.5) return {
-    severity: "Partly registered",
-    explanation: "The model does put the claim and its opposite in different places, but not far apart. It is treating them as versions of each other rather than as opposites.",
+    severity: "Somewhat different",
+    explanation: "The model puts the claim and its opposite in different places, but not far apart, and closer to each other than to unrelated text.",
   };
   return {
-    severity: "Negation registered",
-    explanation: "The model holds the claim and its opposite apart. That is the least it has to do for the distinction to be usable, though distance in this space is still not the same thing as logical negation: it measures what tends to occur together, not what is true.",
+    severity: "Clearly different",
+    explanation: "The model puts the claim and its opposite well apart. That is the least it has to do for the distinction to be usable, but distance is not the same thing as logical negation: it measures what tends to occur together, not what is true, so a wide gap is not evidence that the model has grasped the reversal.",
   };
 }
 
