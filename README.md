@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.17.0
+**Version:** 1.17.1
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -239,6 +239,16 @@ To use Hugging Face: sign up at [huggingface.co](https://huggingface.co/) (free)
 **Safari note.** The browser-direct Ollama path works in Chrome, Firefox, Edge, Arc, and Brave. Safari currently blocks HTTPS pages from calling `http://localhost` regardless of CORS, so use one of the Chromium-family browsers (or Firefox) when running the deployed Atlas against a local Ollama. Local dev (`npm run dev` on `localhost:3000`) works in Safari too.
 
 Either way, no API key is needed and no data leaves your machine.
+
+## What the Verdicts Say, and What They Do Not
+
+Every operation uses the same five phrases for how far apart two texts sit: **Almost the same, Barely different, Somewhat different, Clearly different, Far apart**, read as positions on the model's measured scale with the reason printed beneath.
+
+They describe distance, and only distance. That is the instrument's central commitment and it has had to be enforced three times. Earlier versions said "negation registered", "opposition preserved" and "the manifold has completed the real abstraction". Each imputes an act to the model, or hands down a theoretical conclusion, on the strength of a number that shows neither. Two sentences can sit far apart for reasons unconnected to the negation between them, and a model that separates them has not thereby understood that one denies the other. Two descriptions sitting close together is evidence a reader may take as real abstraction; it is not itself real abstraction.
+
+One claim is stronger than a position on a scale, and it is the only one stated outright: a negation sitting closer to the claim than an edit of the same size that leaves the claim standing. That comparison is about "not" specifically, which is why it survives the objection that the result is only token overlap, and why it appears as the reason line rather than as the verdict.
+
+The drift is always in one direction, because a verdict that tells you what to think reads as more useful than one that tells you what was measured. Any new operation should be checked against this before it ships.
 
 ## Design Rationale
 
