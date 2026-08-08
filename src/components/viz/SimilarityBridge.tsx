@@ -41,6 +41,13 @@ export function SimilarityBridge({
       : 1 - Math.max(0, Math.min(1, normalisedPosition(similarity, floor)));
   const dashCount = Math.max(3, Math.round(Math.max(20, Math.min(80, distance * 200)) / 3));
   const dashes = "—".repeat(dashCount);
+  // A dimension line, not a connector. The heads point outward to the
+  // two things being measured, which is what says the drawn gap is the
+  // separation itself rather than a link between them. Double-headed
+  // because the relation is symmetric: a single head would imply a
+  // direction from A to B that a cosine does not have.
+  const leftRun = `←${dashes}`;
+  const rightRun = `${dashes}→`;
   // A ratio is read as departure from parity, not as position on a
   // similarity scale, so it gets a neutral colour unless it is skewed.
   const color = notACosine
@@ -60,8 +67,9 @@ export function SimilarityBridge({
         <span
           className="mx-1.5 text-[11px] tabular-nums tracking-tighter overflow-hidden whitespace-nowrap"
           style={{ color }}
+          aria-hidden="true"
         >
-          {dashes}
+          {leftRun}
         </span>
         <span
           className="font-sans text-[15px] font-bold tabular-nums flex-shrink-0"
@@ -72,8 +80,9 @@ export function SimilarityBridge({
         <span
           className="mx-1.5 text-[11px] tabular-nums tracking-tighter overflow-hidden whitespace-nowrap"
           style={{ color }}
+          aria-hidden="true"
         >
-          {dashes}
+          {rightRun}
         </span>
         <span className="font-sans text-[13px] font-semibold text-foreground uppercase tracking-wide whitespace-nowrap">
           {nameB}

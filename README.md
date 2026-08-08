@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.14.2
+**Version:** 1.15.0
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -85,6 +85,8 @@ A cosine has no meaning without the scale it sits on. Embedding vectors occupy a
 **Vectors are verified before they become a measurement.** Cache entries carry the version of the pipeline that produced them, and an entry from an older pipeline is treated as absent rather than trusted. Before any calibration is computed, six texts spread across the strata are re-embedded and checked against what the run assembled; if any differs, the model's cached vectors are discarded and the corpus is re-embedded, and if the second attempt also differs the run fails rather than saving a record. This exists because a set of cache entries was found that the then-current pipeline did not reproduce, at cosine 0.90 to 0.98 rather than 1.0 against a fresh embedding, which moved a reported floor by a third of its own standard deviation. The origin was never identified, which is exactly why detection rather than prevention is the fix.
 
 **The cone, drawn.** A cone icon beside every model name opens the radius as a picture: the cone the model sweeps, the cap it reaches, and the dashed sphere of all directions it does not. Toggles show any single register or all three side by side, and any one model or every calibrated model at once, so the claim that two models reporting the same cosine are not reporting the same thing can be seen rather than argued.
+
+**The unreachable region folds away.** Clicking the verdict bar removes the part of the scale the model cannot reach and stretches the reachable range across the full width. Two views of the same figure, because the two things worth seeing pull against each other: unfolded shows how much of the nominal scale is unusable, which for a high-floor model is most of it, and folded shows where the value sits within what the model can actually express. The folded state is stated on the control rather than implied, since a bar that silently changed its own x-axis would be a worse version of the fault the meter was rewritten to fix.
 
 **Nothing is drawn on an unmeasured scale.** Every meter, bar and bridge in the application takes the model's floor and draws from it rather than from zero, with the unreachable region hatched. The fixed adjectives that used to sit under the meter (Distinctive, Somewhat similar, Indistinguishable, pinned to thirds of the raw scale) are gone: they contradicted the calibrated verdict printed directly above them, calling a cosine "somewhat similar" while the verdict said it was barely above unrelated text. The labels are now the model's own anchors.
 
