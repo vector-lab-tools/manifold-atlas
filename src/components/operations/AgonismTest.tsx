@@ -260,6 +260,8 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
             <div className="thin-rule mx-5" />
             <div className="px-5 py-4">
               <SimilarityMeter
+                floor={floors.floor(results[0]?.models[0]?.modelId ?? "")}
+                ceiling={floors.topicalCeiling(results[0]?.models[0]?.modelId ?? "")}
                 similarity={avgSimilarity}
                 level={
                   avgPosition !== null
@@ -313,6 +315,7 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
                       // ("Opposition preserved" / "Opposition collapsed")
                       // collapsed that decision in advance; replaced with
                       // observation-only labels per critique 14 May 2026.
+                      floor={floors.floor(m.modelId)}
                       subtitle={m.agonismPreserved ? "Distinct lexical fields detected" : "Lexical-field overlap detected"}
                     />
                   </div>

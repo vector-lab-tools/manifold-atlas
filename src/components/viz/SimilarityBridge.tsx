@@ -1,24 +1,55 @@
 "use client";
 
+import { similarityColor } from "@/lib/similarity-scale";
+import { normalisedPosition } from "@/lib/calibration/baseline";
+
 interface SimilarityBridgeProps {
   nameA: string;
   nameB: string;
   similarity: number;
   subtitle?: string;
+  /**
+   * Measured floor. Both the colour and the length of the gap are read
+   * against it: a raw cosine of 0.60 is a wide gap in a model whose
+   * floor is 0.12 and no gap at all in one whose floor is 0.57, so
+   * drawing both the same length would state the opposite of the case.
+   */
+  floor?: number | null;
+  /**
+   * Set when the value is not a cosine at all, such as the Silence
+   * Detector's density ratio, which centres on 1.0 rather than running
+   * from a floor to identity. Colouring a ratio on the similarity ramp
+   * paints every normal reading red.
+   */
+  notACosine?: boolean;
 }
 
-function bridgeColor(similarity: number): string {
-  if (similarity >= 0.85) return "#ef4444";
-  if (similarity >= 0.7) return "#f97316";
-  if (similarity >= 0.5) return "#eab308";
-  return "#22c55e";
-}
-
-export function SimilarityBridge({ nameA, nameB, similarity, subtitle }: SimilarityBridgeProps) {
-  const distance = 1 - similarity;
+export function SimilarityBridge({
+  nameA,
+  nameB,
+  similarity,
+  subtitle,
+  floor = null,
+  notACosine = false,
+}: SimilarityBridgeProps) {
+  // Distance as a share of the reachable range, so the drawn gap means
+  // the same thing in every model.
+  const distance = notACosine
+    ? Math.min(1, Math.abs(1 - similarity) * 4)
+    : floor === null
+      ? 1 - similarity
+      : 1 - Math.max(0, Math.min(1, normalisedPosition(similarity, floor)));
   const dashCount = Math.max(3, Math.round(Math.max(20, Math.min(80, distance * 200)) / 3));
   const dashes = "—".repeat(dashCount);
-  const color = bridgeColor(similarity);
+  // A ratio is read as departure from parity, not as position on a
+  // similarity scale, so it gets a neutral colour unless it is skewed.
+  const color = notACosine
+    ? Math.abs(1 - similarity) < 0.05
+      ? "#65a30d"
+      : Math.abs(1 - similarity) < 0.2
+        ? "#d97706"
+        : "#dc2626"
+    : similarityColor(similarity, floor);
 
   return (
     <div>

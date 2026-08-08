@@ -141,6 +141,10 @@ export interface NegationBatteryModelResult {
   collapsed: boolean;
   /** Position on this model's floor-to-identity range. Null when uncalibrated. */
   normalised: number | null;
+  /** The model's measured floor for this register. Null if uncalibrated. */
+  floorMean: number | null;
+  /** The model's measured topical ceiling. Null if uncalibrated. */
+  topicalCeiling: number | null;
   /** Highest same-size non-reversing edit for this statement. Null without controls. */
   controlCeiling: number | null;
   /** Negation at least as close as every same-size control. Null without controls. */
@@ -261,6 +265,8 @@ export function computeNegationBattery(
               control,
               cosine,
               normalised: floor ? normalisedPosition(cosine, floor.mean) : null,
+              floorMean: floor ? floor.mean : null,
+              topicalCeiling: cal ? cal.topicalCeiling.mean : null,
               z: null,
             };
           })
@@ -285,6 +291,8 @@ export function computeNegationBattery(
           similarity: sim,
           collapsed: sim >= threshold.value,
           normalised: floor ? normalisedPosition(sim, floor.mean) : null,
+          floorMean: floor ? floor.mean : null,
+          topicalCeiling: cal ? cal.topicalCeiling.mean : null,
           controlCeiling,
           exceedsControls: controlCeiling !== null ? sim >= controlCeiling : null,
           thresholdValue: threshold.value,

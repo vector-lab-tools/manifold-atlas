@@ -262,6 +262,7 @@ export function SilenceDetector({ onQueryTime }: SilenceDetectorProps) {
               nameA={r.domainA.name}
               nameB={r.domainB.name}
               similarity={r.densityRatio}
+              notACosine
               subtitle={r.densityRatio > 1.05 ? `${r.domainA.name} is denser (less resolution)` : r.densityRatio < 0.95 ? `${r.domainB.name} is denser (less resolution)` : "Similar density"}
             />
 

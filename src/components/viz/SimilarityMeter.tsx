@@ -1,41 +1,98 @@
 "use client";
 
+/**
+ * Verdict bar for a single similarity.
+ *
+ * This used to be drawn on the raw 0-to-1 cosine scale with three fixed
+ * adjectives beneath it: Distinctive, Somewhat similar, Indistinguishable.
+ * That put the midpoint of the bar at 0.5 and called it "somewhat
+ * similar" in every model, which contradicted the calibrated verdict
+ * printed directly above it. A cosine of 0.466 sits mid-bar on the raw
+ * scale while being, in a model whose floor is 0.381, barely above
+ * unrelated text.
+ *
+ * The bar now uses the same x-axis as CalibratedBar underneath it, so
+ * the two line up, and the labels are the model's measured anchors
+ * rather than adjectives: where unrelated text sits, where merely
+ * topical relatedness sits, and identity. The colour ramp starts at the
+ * floor, because nothing below it is reachable and colouring that
+ * region green implies a separation the space cannot produce.
+ */
+
 import type { SimilarityLevel } from "@/lib/similarity-scale";
+import { MetricTerm } from "@/components/shared/MetricTerm";
 
 interface SimilarityMeterProps {
   similarity: number;
   level: SimilarityLevel;
+  /** Measured unrelated-pair floor for this model and register. */
+  floor?: number | null;
+  /** Measured topical ceiling, drawn as the "merely related" mark. */
+  ceiling?: number | null;
 }
 
-export function SimilarityMeter({ similarity, level }: SimilarityMeterProps) {
-  const markerPct = Math.max(2, Math.min(98, similarity * 100));
+export function SimilarityMeter({
+  similarity,
+  level,
+  floor = null,
+  ceiling = null,
+}: SimilarityMeterProps) {
+  const pct = (v: number) => Math.max(0, Math.min(100, v * 100));
+  const markerPct = Math.max(1.5, Math.min(98.5, pct(similarity)));
+  const floorPct = floor === null ? 0 : pct(floor);
+  const ceilingPct = ceiling === null ? null : pct(ceiling);
+
+  // Calibrated: the ramp occupies only the reachable part of the axis.
+  // Uncalibrated: the old full-width ramp, labelled as unmeasured.
+  const ramp =
+    "linear-gradient(to right, #15803d 0%, #65a30d 30%, #d97706 50%, #ea580c 70%, #dc2626 85%, #991b1b 100%)";
 
   return (
     <div className="space-y-1.5">
-      {/* Level label */}
       <div className="flex items-center justify-between">
         <span className="font-sans text-body-sm font-semibold" style={{ color: level.color }}>
           {level.label}
         </span>
-        <span className="font-sans text-body-sm font-bold tabular-nums" style={{ color: level.color }}>
+        <span
+          className="font-sans text-body-sm font-bold tabular-nums"
+          style={{ color: level.color }}
+        >
           {similarity.toFixed(4)}
         </span>
       </div>
 
-      {/* Gradient bar with marker */}
       <div className="relative pt-2 pb-1">
-        <div
-          className="h-3 rounded-full"
-          style={{
-            background: "linear-gradient(to right, #15803d 0%, #65a30d 30%, #d97706 50%, #ea580c 70%, #dc2626 85%, #991b1b 100%)",
-          }}
-        />
-        {/* Marker: triangle pointer + vertical line */}
+        <div className="h-3 rounded-full overflow-hidden relative bg-parchment">
+          {/* Unreachable region: no two real texts land below the floor. */}
+          {floor !== null && floorPct > 0 && (
+            <div
+              className="absolute inset-y-0 left-0"
+              style={{
+                width: `${floorPct}%`,
+                backgroundImage:
+                  "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 4px)",
+                opacity: 0.28,
+              }}
+            />
+          )}
+          {/* Colour ramp across the part of the scale the model can use. */}
+          <div
+            className="absolute inset-y-0"
+            style={{ left: `${floorPct}%`, right: 0, background: ramp }}
+          />
+          {/* Topical ceiling: the mark a figure has to clear to mean anything. */}
+          {ceilingPct !== null && (
+            <div
+              className="absolute inset-y-0 w-px bg-background/80"
+              style={{ left: `${ceilingPct}%` }}
+            />
+          )}
+        </div>
+
         <div
           className="absolute top-0 flex flex-col items-center"
           style={{ left: `${markerPct}%`, transform: "translateX(-50%)" }}
         >
-          {/* Down-pointing triangle */}
           <div
             className="w-0 h-0"
             style={{
@@ -44,17 +101,44 @@ export function SimilarityMeter({ similarity, level }: SimilarityMeterProps) {
               borderTop: "7px solid hsl(var(--foreground))",
             }}
           />
-          {/* Vertical line through the bar */}
           <div className="w-[2px] h-[14px] bg-foreground rounded-full" />
         </div>
       </div>
 
-      {/* Scale labels */}
-      <div className="flex justify-between font-sans text-[9px] text-muted-foreground">
-        <span>Distinctive</span>
-        <span>Somewhat similar</span>
-        <span>Indistinguishable</span>
-      </div>
+      {/* Anchors, positioned where they actually fall rather than at thirds. */}
+      {floor !== null ? (
+        <div className="relative h-3 font-sans text-[9px] text-muted-foreground">
+          <span className="absolute left-0">unreachable</span>
+          <span
+            className="absolute -translate-x-1/2 whitespace-nowrap"
+            style={{ left: `${Math.min(88, Math.max(12, floorPct))}%` }}
+          >
+            <MetricTerm termKey="floor" placement="top">
+              floor
+            </MetricTerm>
+          </span>
+          {ceilingPct !== null && Math.abs(ceilingPct - floorPct) > 9 && (
+            <span
+              className="absolute -translate-x-1/2 whitespace-nowrap"
+              style={{ left: `${Math.min(92, Math.max(20, ceilingPct))}%` }}
+            >
+              <MetricTerm termKey="topicalCeiling" placement="top">
+                same subject
+              </MetricTerm>
+            </span>
+          )}
+          <span className="absolute right-0">identical</span>
+        </div>
+      ) : (
+        <div className="flex justify-between font-sans text-[9px] text-muted-foreground">
+          <span className="text-warning-600">
+            <MetricTerm termKey="uncalibrated" placement="top">
+              unmeasured scale
+            </MetricTerm>
+          </span>
+          <span>identical</span>
+        </div>
+      )}
     </div>
   );
 }

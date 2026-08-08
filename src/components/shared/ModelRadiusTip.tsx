@@ -16,7 +16,10 @@
  */
 
 import { useState, useRef, type ReactNode } from "react";
+import { Cone } from "lucide-react";
 import { useCalibration } from "@/context/CalibrationContext";
+import { RadiusModal } from "@/components/shared/RadiusModal";
+import { ConeDiagram } from "@/components/viz/ConeDiagram";
 import {
   floorFor,
   coneFor,
@@ -34,6 +37,12 @@ interface ModelRadiusTipProps {
   register?: Register;
   children: ReactNode;
   className?: string;
+  /**
+   * A measurement from the calling operation. Drawn inside the cone in
+   * the full view, so the figure on screen can be seen against the space
+   * it was taken in rather than only against a number.
+   */
+  value?: { cosine: number; label: string } | null;
 }
 
 export function ModelRadiusTip({
@@ -41,9 +50,11 @@ export function ModelRadiusTip({
   register = "short",
   children,
   className,
+  value = null,
 }: ModelRadiusTipProps) {
   const { calibrations } = useCalibration();
   const [open, setOpen] = useState(false);
+  const [modal, setModal] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const show = () => {
@@ -82,6 +93,26 @@ export function ModelRadiusTip({
         {children}
       </span>
 
+      {cal && (
+        <button
+          onClick={() => setModal(true)}
+          className="ml-1 align-middle text-muted-foreground hover:text-burgundy transition-colors"
+          title={`Draw ${cal.modelName}'s cone, and compare it with the other calibrated models`}
+          aria-label="Show the model's cone diagram"
+        >
+          <Cone size={12} />
+        </button>
+      )}
+
+      {modal && cal && (
+        <RadiusModal
+          modelId={modelId}
+          register={register}
+          value={value}
+          onClose={() => setModal(false)}
+        />
+      )}
+
       {open && (
         <span
           role="tooltip"
@@ -111,6 +142,9 @@ function Measured({ cal, register }: { cal: ModelCalibration; register: Register
     <>
       <span className="block font-display text-body-sm font-bold">
         {cal.modelName} — radius {cone.toFixed(1)}°
+      </span>
+      <span className="block mt-1.5">
+        <ConeDiagram cal={cal} register={register} compact />
       </span>
       <span className="block font-sans text-[11px] leading-relaxed mt-1 text-foreground/90">
         This model uses a cone of about {cone.toFixed(1)}° for {REGISTER_LABELS[register]}, not

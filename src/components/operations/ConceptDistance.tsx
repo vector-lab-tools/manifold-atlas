@@ -185,18 +185,30 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                 {/* Bridge display */}
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-sans text-body-sm font-medium"><ModelRadiusTip modelId={m.modelId} register="term">{m.modelName}</ModelRadiusTip></span>
+                    <span className="font-sans text-body-sm font-medium"><ModelRadiusTip
+                    modelId={m.modelId}
+                    register="term"
+                    value={{
+                      cosine: m.cosineSimilarity,
+                      label: `${result.termA} → ${result.termB}`,
+                    }}
+                  >
+                    {m.modelName}
+                  </ModelRadiusTip></span>
                     <span className="font-sans text-caption text-muted-foreground">{m.providerId}</span>
                   </div>
                   <SimilarityBridge
                     nameA={result.termA}
                     nameB={result.termB}
                     similarity={m.cosineSimilarity}
+                    floor={floors.floor(m.modelId)}
                   />
                   <div className="mt-3">
                     <SimilarityMeter
                       similarity={m.cosineSimilarity}
                       level={calibratedConceptLevel(m.cosineSimilarity, floors.floor(m.modelId))}
+                      floor={floors.floor(m.modelId)}
+                      ceiling={floors.topicalCeiling(m.modelId)}
                     />
                   </div>
                   <div className="mt-3">

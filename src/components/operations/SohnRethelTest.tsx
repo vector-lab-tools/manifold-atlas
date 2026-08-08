@@ -6,6 +6,12 @@ import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
+
+import { normalisedPosition } from "@/lib/calibration/baseline";
+import { levelFromPosition } from "@/lib/similarity-scale";
 import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
@@ -54,6 +60,8 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
   const [useCustom, setUseCustom] = useState(false);
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  // Use-value and exchange-value pairs are bare terms and short phrases.
+  const floors = useFloors("term");
 
   const handleCompute = async () => {
     let pairs: AbstractionPair[];
@@ -166,6 +174,9 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
         </div>
       </div>
 
+      <CalibrationNotice register="term" missing={floors.missing} />
+
+
       {error != null && <ErrorDisplay error={error} onRetry={handleCompute} />}
 
       {results.length > 0 && (
@@ -181,14 +192,37 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
             </div>
             <div className="thin-rule mx-5" />
             <div className="px-5 py-4">
-              <SimilarityMeter
-                similarity={avgSimilarity}
-                level={{
-                  ...abstractionLevel(avgSimilarity),
-                  bgColor: "transparent",
-                  severity: avgSimilarity >= 0.7 ? "high" : avgSimilarity >= 0.5 ? "moderate" : "low",
-                }}
-              />
+{(() => {
+                const positions: number[] = [];
+                for (const r of results) {
+                  for (const m of r.models) {
+                    const f = floors.floor(m.modelId);
+                    if (f !== null) positions.push(normalisedPosition(m.similarity, f));
+                  }
+                }
+                const avgPos =
+                  positions.length > 0 && positions.length === results.reduce((n, r) => n + r.models.length, 0)
+                    ? positions.reduce((a, b) => a + b, 0) / positions.length
+                    : null;
+                const firstModel = results[0]?.models[0]?.modelId ?? "";
+                return (
+                  <SimilarityMeter
+                    similarity={avgSimilarity}
+                    floor={floors.floor(firstModel)}
+                    ceiling={floors.topicalCeiling(firstModel)}
+                    level={
+                      avgPos !== null
+                        ? { ...levelFromPosition(avgPos), bgColor: "transparent" }
+                        : {
+                            ...abstractionLevel(avgSimilarity),
+                            bgColor: "transparent",
+                            severity:
+                              avgSimilarity >= 0.7 ? "high" : avgSimilarity >= 0.5 ? "moderate" : "low",
+                          }
+                    }
+                  />
+                );
+              })()}
             </div>
           </div>
 
@@ -223,6 +257,7 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
                         nameA="Use-value"
                         nameB="Exchange-value"
                         similarity={m.similarity}
+                        floor={floors.floor(m.modelId)}
                         subtitle={level.label}
                       />
                     </div>
@@ -248,6 +283,19 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
             </p>
           </div>
         </div>
+      )}
+      {results.length > 0 && (
+        <DeepDivePanel tagline="calibration · the scale behind the abstraction figures">
+          <CalibrationDeepDive
+            register="term"
+            modelIds={(results[0]?.models ?? []).map(m => m.modelId)}
+            notes={[
+              "Use-value and exchange-value are bare terms, so this operation reads against the term floor rather than the declarative one.",
+              "The claim being tested is that the geometry collapses a distinction the analysis holds apart. A high raw cosine looks like evidence for that until the floor is known: in a model whose term floor is 0.53 a cosine of 0.60 is barely off the floor, and the collapse it appears to show is the anisotropy of the space rather than anything about value.",
+              "The headline band is the mean of the per-model positions where every model is calibrated, not the band of the mean cosine, since a mean of raw cosines drawn from models with different floors is not a quantity.",
+            ]}
+          />
+        </DeepDivePanel>
       )}
     </div>
   );

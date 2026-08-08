@@ -370,6 +370,8 @@ export function NegationBattery({ onQueryTime }: NegationBatteryProps) {
             {/* Average similarity meter */}
             <div className="px-5 py-4">
               <SimilarityMeter
+                floor={results[0]?.models[0]?.floorMean ?? null}
+                ceiling={results[0]?.models[0]?.topicalCeiling ?? null}
                 similarity={avgSimilarity}
                 level={
                   avgNormalised !== null

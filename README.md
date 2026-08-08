@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.12.0
+**Version:** 1.13.0
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -81,6 +81,10 @@ A cosine has no meaning without the scale it sits on. Embedding vectors occupy a
 **Cross-model comparability.** Two models are only comparable on raw cosine when their floors agree. Where they do not, the panel says so and directs the comparison to the normalised position (cos − floor) / (1 − floor) instead.
 
 **The radius, wherever a model is named.** Hovering any model name gives that model's radius: the half-angle of the cone it actually uses for the register in play, the floor, the topical ceiling drawn on a 0–1 bar so the unreachable part of the scale is visible, how to read a cosine against those two anchors, the radius for all three registers, and the effective dimension. Where a model has not been measured the card says so and offers to measure it. This is the direct answer to the objection that a cosine says nothing when two models are compared, and it is available at the point the number is read rather than on a separate tab.
+
+**The cone, drawn.** A cone icon beside every model name opens the radius as a picture: the cone the model sweeps, the cap it reaches, and the dashed sphere of all directions it does not. Toggles show any single register or all three side by side, and any one model or every calibrated model at once, so the claim that two models reporting the same cosine are not reporting the same thing can be seen rather than argued.
+
+**Nothing is drawn on an unmeasured scale.** Every meter, bar and bridge in the application takes the model's floor and draws from it rather than from zero, with the unreachable region hatched. The fixed adjectives that used to sit under the meter (Distinctive, Somewhat similar, Indistinguishable, pinned to thirds of the raw scale) are gone: they contradicted the calibrated verdict printed directly above them, calling a cosine "somewhat similar" while the verdict said it was barely above unrelated text. The labels are now the model's own anchors.
 
 **Calibration reports itself as it runs.** A run opens a live panel from wherever it was triggered and prints each model's measurements as they land, then leaves them on screen with a copyable reporting line. Failures are named there too, with an actionable hint: a rejected API key now says so instead of looking like a button that did nothing.
 

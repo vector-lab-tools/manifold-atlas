@@ -124,6 +124,8 @@ export function SemanticSectioning({ onQueryTime }: SemanticSectioningProps) {
               nameA={r.anchorA}
               nameB={r.anchorB}
               similarity={r.anchorSimilarity}
+            
+              floor={floors.floor(r.modelId)}
             />
           </div>
 

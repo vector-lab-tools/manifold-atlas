@@ -16,7 +16,6 @@ import {
 import type { NegationGaugeModelResult } from "@/lib/operations/negation-gauge";
 import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { GaugeArc } from "@/components/viz/GaugeArc";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { QueryHistory } from "@/components/shared/QueryHistory";
@@ -336,7 +335,13 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                   {/* Model header */}
                   <div className="px-5 pt-5 pb-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={m.modelId} register="short">{m.modelName}</ModelRadiusTip></span>
+                      <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip
+                    modelId={m.modelId}
+                    register="short"
+                    value={{ cosine: m.cosineSimilarity, label: "negation" }}
+                  >
+                    {m.modelName}
+                  </ModelRadiusTip></span>
                       <span className="font-sans text-caption text-muted-foreground">{m.providerId}</span>
                       <span className="font-sans text-caption text-muted-foreground">&middot; {m.dimensions.toLocaleString()} dimensions</span>
                     </div>
@@ -351,12 +356,15 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                     </h4>
                     <p className="font-sans text-caption text-muted-foreground mb-3">
                       How far apart are the claim and its negation in this model&apos;s embedding space?
-                      The number is their cosine similarity: 1.0 means identical, 0.0 means orthogonal.
+                      The number is their cosine similarity, and the gap drawn between them is its
+                      share of what this model can actually reach rather than of the nominal
+                      zero-to-one scale.
                     </p>
                     <SimilarityBridge
                       nameA={result.original}
                       nameB={result.negated}
                       similarity={m.cosineSimilarity}
+                      floor={m.floorMean}
                     />
                   </div>
 
@@ -379,6 +387,8 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                         m.exceedsControls,
                         m.floorMean
                       )}
+                      floor={m.floorMean}
+                      ceiling={m.topicalCeiling}
                     />
                   </div>
 
