@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.15.1
+**Version:** 1.15.2
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -85,6 +85,8 @@ A cosine has no meaning without the scale it sits on. Embedding vectors occupy a
 **Vectors are verified before they become a measurement.** Cache entries carry the version of the pipeline that produced them, and an entry from an older pipeline is treated as absent rather than trusted. Before any calibration is computed, six texts spread across the strata are re-embedded and checked against what the run assembled; if any differs, the model's cached vectors are discarded and the corpus is re-embedded, and if the second attempt also differs the run fails rather than saving a record. This exists because a set of cache entries was found that the then-current pipeline did not reproduce, at cosine 0.90 to 0.98 rather than 1.0 against a fresh embedding, which moved a reported floor by a third of its own standard deviation. The origin was never identified, which is exactly why detection rather than prevention is the fix.
 
 **The cone, drawn.** A cone icon beside every model name opens the radius as a picture: the cone the model sweeps, the cap it reaches, and the dashed sphere of all directions it does not. Toggles show any single register or all three side by side, and any one model or every calibrated model at once, so the claim that two models reporting the same cosine are not reporting the same thing can be seen rather than argued.
+
+**The verdict says whether the negation survived.** Not "weak distinction" or "the negation stays high on this model's scale", which name a position on a scale and leave the reader to work out what it means. The gauge answers the question it was asked: negation lost, barely registered, partly registered, or negation registered, with the reason in the same plain terms. The strongest of them names its own basis, since it is the one that survives the token-overlap objection: negation lost, the model puts "not" closer to the claim than swapping in an unrelated word.
 
 **Separations are drawn as dimension lines.** The bar between two texts carries its value between two arrowheads, and its length is the gap as a share of the reachable range rather than of the nominal zero-to-one scale. It is double-headed because a cosine is symmetric: a single head would imply a direction from claim to negation that the measurement does not have.
 

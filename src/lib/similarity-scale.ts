@@ -88,23 +88,23 @@ export function levelFromPosition(p: number): SimilarityLevel {
  */
 export function negationSimilarityLevel(similarity: number, threshold: number): SimilarityLevel {
   if (similarity >= threshold) return {
-    label: "Collapsed: the geometry barely registers the negation",
+    label: "Negation lost: the claim and its opposite sit together (unmeasured scale)",
     ...CRITICAL, uncalibrated: true,
   };
   if (similarity >= threshold - 0.05) return {
-    label: "Near-collapse: the negation nudges the position but little more",
+    label: "Barely registered: the opposite hardly moved (unmeasured scale)",
     ...HIGH, uncalibrated: true,
   };
   if (similarity >= 0.7) return {
-    label: "Weak distinction: the claim and its negation remain close neighbours",
+    label: "Weakly registered: the claim and its opposite stay close (unmeasured scale)",
     ...MODERATE, uncalibrated: true,
   };
   if (similarity >= 0.5) return {
-    label: "Partial distinction: some separation, but far less than logic would require",
+    label: "Partly registered: some distance, far less than a reversal (unmeasured scale)",
     ...LOW, uncalibrated: true,
   };
   return {
-    label: "Adequate separation: claim and negation occupy distinct regions",
+    label: "Negation registered: claim and opposite held apart (unmeasured scale)",
     ...NONE, uncalibrated: true,
   };
 }
@@ -130,33 +130,36 @@ export function calibratedNegationLevel(
   if (exceedsControls === true) {
     return {
       label:
-        "Collapsed: the negation is closer than every same-size edit that does not reverse the claim",
+        "Negation lost: the model puts \u201Cnot\u201D closer to the claim than swapping in an unrelated word",
       ...CRITICAL,
     };
   }
 
   const margin = threshold.value - similarity;
   if (similarity >= threshold.value) {
-    return { label: "Collapsed: at or above the control threshold", ...CRITICAL };
+    return { label: "Negation lost: the claim and its opposite sit together", ...CRITICAL };
   }
   if (margin <= 0.02) {
-    return { label: "Borderline: within 0.02 of the control threshold", ...HIGH };
+    return { label: "Barely registered: right on this model\u2019s cutoff", ...HIGH };
   }
 
   if (floorMean !== null) {
     const p = normalisedPosition(similarity, floorMean);
     if (p >= 0.7) return {
-      label: "Weak distinction: the negation stays high on this model's scale",
+      label: "Weakly registered: the opposite moved, but stayed close to the claim",
       ...MODERATE,
     };
     if (p >= 0.4) return {
-      label: "Partial distinction: less separation than logic would require",
+      label: "Partly registered: some distance, far less than a reversal of meaning",
       ...LOW,
     };
-    return { label: "Adequate separation on this model's scale", ...NONE };
+    return {
+      label: "Negation registered: the model holds the claim and its opposite apart",
+      ...NONE,
+    };
   }
 
-  return { label: "Below the control threshold", ...NONE };
+  return { label: "Negation registered: below this model\u2019s cutoff", ...NONE };
 }
 
 /**

@@ -35,24 +35,24 @@ const DEFAULT_STATEMENT = "This policy is fair";
 
 function negationVerdict(sim: number, threshold: number): { severity: string; explanation: string } {
   if (sim >= 0.98) return {
-    severity: "Total collapse",
-    explanation: "The claim and its negation sit at virtually the same point in the geometry. Adding 'not' has barely moved the coordinate at all. The manifold is treating these as the same concept.",
+    severity: "Negation lost",
+    explanation: "The claim and its opposite are at almost the same place. Adding \u201Cnot\u201D has barely moved anything. As far as this model\u2019s geometry is concerned, the two sentences say the same thing.",
   };
   if (sim >= threshold) return {
-    severity: "Collapsed",
-    explanation: "The negation has nudged the position slightly, but only in a few dimensions out of hundreds. The vast majority of the coordinate remains identical. In logic, negation flips the meaning entirely. Here, it produces a small perturbation that is almost invisible against the background of shared geometry.",
+    severity: "Negation lost",
+    explanation: "Adding \u201Cnot\u201D moved the sentence a little, but not past the point where this model starts telling things apart. Most of the position is unchanged. In logic a negation reverses the meaning; here it is a small nudge, and the model does not register a reversal.",
   };
   if (sim >= threshold - 0.07) return {
-    severity: "Borderline",
-    explanation: "There is a narrow gap between the claim and its negation, but the margin is thin. The negation has shifted the position in a small subspace while leaving most dimensions unchanged. A slight change of context could close even this gap.",
+    severity: "Barely registered",
+    explanation: "There is a gap between the claim and its opposite, but a thin one, sitting right at the point where this model starts telling things apart. A small change of wording could close it.",
   };
   if (sim >= 0.5) return {
-    severity: "Partial separation",
-    explanation: "The manifold does register a difference between the claim and its negation, and places them in partially distinct regions. But the separation is far less than what logical negation demands. The geometry treats 'A' and 'not A' as related variants rather than as opposites.",
+    severity: "Partly registered",
+    explanation: "The model does put the claim and its opposite in different places, but not far apart. It is treating them as versions of each other rather than as opposites.",
   };
   return {
-    severity: "Adequate separation",
-    explanation: "The claim and its negation occupy distinct regions of the geometry. This is the minimum condition for the distinction to be operationally meaningful, though geometric distance is never the same as logical negation. Proximity measures association, not truth-value.",
+    severity: "Negation registered",
+    explanation: "The model holds the claim and its opposite apart. That is the least it has to do for the distinction to be usable, though distance in this space is still not the same thing as logical negation: it measures what tends to occur together, not what is true.",
   };
 }
 
@@ -189,7 +189,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block font-sans text-caption text-muted-foreground uppercase tracking-wider mb-1">
-                A — statement
+                A: statement
               </label>
               <input
                 type="text"
@@ -203,9 +203,9 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
             <div>
               <label
                 className="block font-sans text-caption text-muted-foreground uppercase tracking-wider mb-1 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline"
-                title="Optional. Leave blank to auto-generate the negation by inserting 'not' after the first auxiliary verb (the placeholder shows the auto-suggestion). Override it when you want to test a specific antithetical phrasing — e.g. 'This is injustice' rather than 'This is not justice' — or when the statement is in a language the auto-generator doesn't handle."
+                title="Optional. Leave blank to auto-generate the negation by inserting 'not' after the first auxiliary verb (the placeholder shows the auto-suggestion). Override it when you want to test a specific antithetical phrasing, for example 'This is injustice' rather than 'This is not justice', or when the statement is in a language the auto-generator doesn't handle."
               >
-                Not A — negation (optional override)
+                Not A: negation (optional override)
               </label>
               <input
                 type="text"
@@ -317,8 +317,8 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                       {exceeding} of {controlled.length}
                     </span>
                     {exceeding > 0
-                      ? " — in these models the negation is closer to the original than any edit of the same size that leaves the claim standing."
-                      : " — the negation is no closer than a matched edit, so token overlap accounts for the result."}
+                      ? ", so in these models the negation is closer to the original than any edit of the same size that leaves the claim standing."
+                      : ", and the negation is no closer than a matched edit, so token overlap accounts for the result."}
                   </p>
                 );
               })()}
@@ -691,7 +691,7 @@ function NegationGaugeDeepDive({ result }: { result: NegationGaugeResult }) {
 
   const reading =
     collapseRate === 1
-      ? "Every model collapses on this claim. The negation deficit is structural — every embedding model in the run treats the claim and its negation as near-identical points. This is the deficit doing its work."
+      ? "Every model in the run treats this claim and its negation as near-identical points, so the result does not depend on which model was chosen."
       : collapseRate === 0
       ? "No model collapses on this claim. The geometry preserves the distinction between the claim and its negation across every embedding. Either the claim has unusually salient negation cues, or the models in this run all happen to encode this kind of statement structurally."
       : `${collapsedCount} of ${n} models collapse. The finding is partial. Models that preserve the distinction tend to be those with greater dimensionality or those trained on more diverse corpora; the divergence is itself evidence about which models allocate manifold space to negation and which compress it away.`;
