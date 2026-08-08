@@ -16,6 +16,9 @@ import { useRateLimitCountdown } from "@/components/shared/useRateLimitCountdown
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { ResetButton } from "@/components/shared/ResetButton";
 import { BenchmarkLoader } from "@/components/shared/BenchmarkLoader";
 import { PlotlyPlot } from "@/components/viz/PlotlyPlot";
@@ -23,6 +26,7 @@ import { projectPCA3D, spreadPoints3D } from "@/lib/geometry/pca";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
 import {
   computeTopology,
+  scaledDistance,
   componentsAtThreshold,
   edgesAtThreshold,
   type TopologyResult,
@@ -685,6 +689,9 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
   const [conceptTopics, setConceptTopics] = useState<Map<string, { presetIdx: number; label: string }>>(new Map());
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  // The filtration runs on cosine distance between concept terms, so it
+  // inherits the term floor directly.
+  const floors = useFloors("term");
   const isDark = settings.darkMode;
   const { countdown, isWaiting, startCountdown } = useRateLimitCountdown();
 
@@ -744,7 +751,7 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
         .map(m => {
           const vectors = modelVectors.get(m.id)!;
           const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
-          return computeTopology(concepts, vectors, m.id, spec?.name || m.id);
+          return computeTopology(concepts, vectors, m.id, spec?.name || m.id, floors.usableRange(m.id));
         });
 
       setResults(newResults);
@@ -844,6 +851,9 @@ export function TopologicalVoids({ onQueryTime }: TopologicalVoidsProps) {
           </div>
         </div>
       </div>
+
+      <CalibrationNotice register="term" missing={floors.missing} />
+
 
       {error != null && <ErrorDisplay error={error} onRetry={() => handleCompute()} />}
 
@@ -1216,6 +1226,132 @@ function TopologyResultCard({ result, isDark, conceptTopics }: { result: Topolog
 
       {deepDive && (
         <div className="px-5 pb-5 border-t border-parchment space-y-5 pt-4">
+          {/* Filtration scale. Every distance in this card is a cosine
+              distance, so the axis the barcode is drawn on is bounded by
+              the model's usable range rather than by 1.0. */}
+          <div className="bg-muted rounded-sm p-3 space-y-1.5">
+            <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold">
+              Filtration scale
+            </div>
+            {result.usableRange !== null ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-sans text-body-sm tabular-nums">
+                  <div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                      Reachable range
+                    </div>
+                    <div className="font-bold">{result.usableRange.toFixed(4)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                      Largest observed
+                    </div>
+                    <div className="font-bold">{result.maxObservedDistance.toFixed(4)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                      Range used
+                    </div>
+                    <div className="font-bold">
+                      {((result.maxObservedDistance / result.usableRange) * 100).toFixed(0)}%
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                      Cursor, scaled
+                    </div>
+                    <div className="font-bold">
+                      {((effectiveThreshold / result.usableRange) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+                <p className="font-sans text-caption text-muted-foreground">
+                  Cosine distance inherits anisotropy directly. Unrelated terms in this model sit
+                  at a cosine of {(1 - result.usableRange).toFixed(4)}, so no two concepts are ever
+                  further apart than {result.usableRange.toFixed(4)} and the barcode occupies only
+                  that much of an axis drawn to 1.0. Birth and death values from a different model
+                  are on a different axis and are not the same quantity. The scaled column in the
+                  table below divides by the reachable range, which is comparable across models.
+                </p>
+              </>
+            ) : (
+              <p className="font-sans text-caption text-warning-600">
+                This model has no calibration, so the reachable range of the filtration is
+                unknown. Birth and death values below are raw cosine distances on an axis whose
+                length has not been measured, and cannot be compared with another model&apos;s.
+              </p>
+            )}
+          </div>
+
+          {/* Persistence table with scaled columns. */}
+          <div>
+            <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">
+              Features, raw and scaled
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full font-sans text-caption tabular-nums">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b border-parchment">
+                    <th className="py-1 pr-3 font-medium">Dim</th>
+                    <th className="py-1 pr-3 font-medium text-right">birth</th>
+                    <th className="py-1 pr-3 font-medium text-right">death</th>
+                    <th className="py-1 pr-3 font-medium text-right">persistence</th>
+                    <th className="py-1 pr-3 font-medium text-right">birth %</th>
+                    <th className="py-1 pr-3 font-medium text-right">death %</th>
+                    <th className="py-1 pr-3 font-medium text-right">persistence %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-parchment">
+                  {[...result.features]
+                    .sort((a, b) =>
+                      (b.persistence === Infinity ? 1e9 : b.persistence) -
+                      (a.persistence === Infinity ? 1e9 : a.persistence)
+                    )
+                    .slice(0, 20)
+                    .map((f, i) => {
+                      const pct = (v: number) => {
+                        const sc = scaledDistance(v, result.usableRange);
+                        return sc === null ? "—" : `${(sc * 100).toFixed(1)}%`;
+                      };
+                      return (
+                        <tr key={i}>
+                          <td className="py-1 pr-3">H{f.dimension}</td>
+                          <td className="py-1 pr-3 text-right">{f.birth.toFixed(4)}</td>
+                          <td className="py-1 pr-3 text-right">
+                            {f.death === Infinity ? "∞" : f.death.toFixed(4)}
+                          </td>
+                          <td className="py-1 pr-3 text-right">
+                            {f.persistence === Infinity ? "∞" : f.persistence.toFixed(4)}
+                          </td>
+                          <td className="py-1 pr-3 text-right">{pct(f.birth)}</td>
+                          <td className="py-1 pr-3 text-right">
+                            {f.death === Infinity ? "∞" : pct(f.death)}
+                          </td>
+                          <td className="py-1 pr-3 text-right">
+                            {f.persistence === Infinity ? "∞" : pct(f.persistence)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            <p className="font-sans text-[10px] text-muted-foreground mt-1.5">
+              Top 20 by persistence. Percentages are the fraction of the model&apos;s reachable
+              distance range.
+            </p>
+          </div>
+
+          <CalibrationDeepDive
+            register="term"
+            modelIds={[result.modelId]}
+            notes={[
+              "Persistent homology reports distances rather than similarities, but cosine distance is one minus cosine similarity, so it carries anisotropy across unchanged. A high floor does not distort the topology; it compresses the axis the topology is drawn on.",
+              "The shape of the barcode is unaffected by the rescaling, since dividing every distance by the same constant preserves the order of births and deaths and the relative persistence of features. What changes is whether a persistence of 0.04 counts as large, and that answer differs by model.",
+              "Betti curves from models with different floors should be plotted against the scaled axis, not the raw one, or the model with the higher floor will appear to have all its structure crowded into the left of the plot.",
+            ]}
+          />
+
           {/* Most persistent features */}
           {mostPersistentH0 && (
             <div className="bg-muted rounded-sm p-3">

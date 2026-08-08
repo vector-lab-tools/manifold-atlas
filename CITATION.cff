@@ -6,7 +6,7 @@ abstract: >-
   large language models organise meaning geometrically. It uses embedding
   APIs from multiple providers to collect coordinates from the manifold,
   then computes distances, clusters, projections, and topological features
-  that make the geometry of meaning legible to critical analysis. Part of
+  that open the geometry of meaning to critical analysis. Part of
   the Vector Lab family of research instruments.
 type: software
 authors:
@@ -17,7 +17,7 @@ authors:
 repository-code: "https://github.com/vector-lab-tools/manifold-atlas"
 url: "https://vector-lab-tools.github.io"
 license: MIT
-version: "1.10.0"
+version: "1.11.0"
 date-released: "2026-08-08"
 keywords:
   - vector theory
@@ -28,3 +28,23 @@ keywords:
   - negation deficit
   - digital methods
   - critical AI studies
+references:
+  - type: article
+    title: >-
+      Vector Theory: Epistemology, Political Economy, and Probabilistic
+      Computation
+    authors:
+      - family-names: Berry
+        given-names: David M.
+        affiliation: University of Sussex
+        orcid: "https://orcid.org/0000-0001-5106-4407"
+    journal: "Philosophy & Technology"
+    volume: 39
+    issue: 3
+    number: 149
+    year: 2026
+    doi: "10.1007/s13347-026-01162-w"
+    url: "https://doi.org/10.1007/s13347-026-01162-w"
+    notes: >-
+      The theoretical basis for this instrument. Read this first: every
+      operation in Manifold Atlas tests a claim made in this article.

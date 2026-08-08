@@ -27,6 +27,10 @@ import { Loader2, ChevronDown, ChevronRight, Download, Gauge } from "lucide-reac
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { useCalibration } from "@/context/CalibrationContext";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { ResetButton } from "@/components/shared/ResetButton";
 import {
   GRAMMARS,
@@ -98,6 +102,9 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
 
   const { getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  // X and Y are bare phrases, so the term register applies.
+  const floors = useFloors("term");
+  const { calibrations } = useCalibration();
 
   // Reset register if the selected grammar doesn't have the current
   // one (happens when grammars are switched and their register sets
@@ -138,7 +145,8 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
       const computed = computeGrammarOfVectors(
         { ...inputs, instances: resolvedInstances },
         modelVectors,
-        enabledModels
+        enabledModels,
+        calibrations
       );
       setResult(computed);
       // Default: open every row so the user can scan the full per-model
@@ -378,6 +386,9 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
         </div>
       </div>
 
+      <CalibrationNotice register="term" missing={floors.missing} />
+
+
       {error != null && <ErrorDisplay error={error} onRetry={handleRun} />}
 
       {result && (
@@ -417,12 +428,29 @@ export function GrammarOfVectors({ onQueryTime }: GrammarOfVectorsProps) {
                 value={result.summary.avgSimilarity.toFixed(4)}
                 tip={`Mean cosine similarity between X and Y across all tests, ± ${result.summary.stdDevSimilarity.toFixed(4)} standard deviation. The construction's rhetorical frame claims X and Y are opposed; the closer this value sits to 1.0, the smaller the lexical-field separation the geometry registers between the two fragments.`}
               />
-              <SummaryBox
-                label="Threshold"
-                value={String(result.threshold)}
-                hint="above = lexical-field overlap · below = distinct lexical fields"
-                tip="Cosine threshold separating distinct-lexical-fields (below) from lexical-field overlap (above). The synthetic-dialectic reading — that the rhetorical performance of antithesis runs on a near-neighbour geometric move — is the interpretation the user brings to a run whose overlap rate is high. Use the Deep Dive's threshold sweep to see how sensitive the rate is to this choice; typically stable across 0.5–0.7."
-              />
+{(() => {
+                const applied = result.pairs[0]?.models ?? [];
+                const derived = applied.filter(m => m.thresholdMode === "ceiling-derived");
+                const values = [...new Set(applied.map(m => m.threshold.toFixed(3)))];
+                return (
+                  <SummaryBox
+                    label="Threshold"
+                    value={values.length === 1 ? values[0] : `${values.length} per model`}
+                    hint={
+                      applied.length > 0 && derived.length === applied.length
+                        ? "each model's measured topical ceiling"
+                        : derived.length > 0
+                          ? `${derived.length}/${applied.length} measured, rest stipulated`
+                          : "stipulated — no calibration available"
+                    }
+                    tip={
+                      derived.length > 0
+                        ? "The cutoff is each model's measured topical ceiling: where two texts on the same subject, sharing no structure and asserting nothing in common, actually land. If the X and Y of an asserted antithesis sit no further apart than that, the geometry has registered the shared subject matter and nothing of the opposition. This replaces the stipulated 0.55, and it is not the same number for every model."
+                        : "Stipulated cutoff of 0.55, applied because no model in this run has a calibration. It is a choice, not a measurement, and the preservation rate above inherits that. Calibrate to derive the cutoff from each model's measured topical ceiling instead."
+                    }
+                  />
+                );
+              })()}
               {result.summary.mostDeceptive && (
                 <SummaryBox
                   label="Highest cosine pair"
@@ -787,6 +815,17 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
 
   return (
     <div className="px-5 pb-5 pt-1 border-t border-parchment space-y-6">
+      <CalibrationDeepDive
+        register="term"
+        modelIds={(pairs[0]?.models ?? []).map(m => m.modelId)}
+        notes={[
+          "The cutoff is no longer a constant. Where a model is calibrated it is that model's measured topical ceiling, so the preservation rate is a count against something measured rather than against 0.55.",
+          "The topical ceiling is the right null for this construction. \u201CNot X but Y\u201D asserts that X and Y are opposed; two merely topically related texts are neither opposed nor identified, they are simply about the same thing. A pair sitting at or above that ceiling has had its shared subject matter registered and its asserted opposition not registered at all.",
+          "This is the Negation Gauge's move transposed. There the null is a matched edit of the same size that does not reverse the claim, which can be generated from the input. Here X and Y are arbitrary phrases supplied by the user, so no matched edit can be built, and the topical ceiling is the strongest measured null available without asking for control pairs of their own.",
+          "The threshold sweep below is still worth reading. It shows whether the finding survives moving the cutoff, which matters whether the cutoff was measured or stipulated.",
+        ]}
+      />
+
       {/* Per-model aggregates */}
       <section>
         <h4
@@ -849,7 +888,7 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
       <section>
         <h4
           className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2 cursor-help decoration-dotted underline underline-offset-2 decoration-muted-foreground/40 underline inline-block"
-          title="Preservation rate at a range of cosine thresholds. Checks how sensitive the overall finding is to the 0.55 default. If preservation flips dramatically around the threshold, the finding is threshold-dependent; if it stays broadly stable across 0.5–0.7, the finding is robust. A flat profile in the 0.6–0.8 band is the signature of genuine syn-dialectic: the similarities are not marginal, they are consistently high."
+          title="Preservation rate at a range of cosine thresholds. Checks how sensitive the overall finding is to where the cutoff falls, whether that is a model's measured topical ceiling or the legacy 0.55. If preservation flips dramatically around the threshold, the finding is threshold-dependent; if it stays broadly stable across 0.5–0.7, the finding is robust. A flat profile in the 0.6–0.8 band is the signature of genuine syn-dialectic: the similarities are not marginal, they are consistently high."
         >
           Threshold sweep
         </h4>

@@ -23,6 +23,9 @@
  */
 
 import { cosineSimilarity } from "@/lib/geometry/cosine";
+import type { ModelCalibration } from "@/lib/calibration/compute";
+import { floorFor } from "@/lib/calibration/compute";
+import { normalisedPosition } from "@/lib/calibration/baseline";
 import { EMBEDDING_MODELS } from "@/types/embeddings";
 
 // Geometric helpers kept local so the module has no React deps.
@@ -136,6 +139,16 @@ export interface GrammarPairModelResult {
   dimensions: number;
   /** True if cosine < threshold — opposition is preserved. */
   oppositionPreserved: boolean;
+  /** The cutoff actually applied to this model, after any fallback. */
+  threshold: number;
+  /** Which mode produced it. */
+  thresholdMode: GrammarThresholdMode;
+  /** One line naming what the cutoff was derived from. */
+  thresholdBasis: string;
+  /** This pair on the model's floor-to-identity scale. Null if uncalibrated. */
+  normalised: number | null;
+  /** The model's measured topical ceiling for terms. Null if uncalibrated. */
+  topicalCeiling: number | null;
 }
 
 export interface GrammarPairResult {
@@ -650,7 +663,41 @@ export const GRAMMARS: Record<string, Grammar> = {
 };
 
 export const DEFAULT_GRAMMAR_ID = "not-x-but-y";
+/**
+ * The historical stipulated cutoff, kept only so earlier runs can be
+ * reproduced. It is a choice dressed as a measurement, exactly like the
+ * 0.92 the Negation Gauge used to carry, and it is superseded by the
+ * ceiling-derived cutoff below wherever a calibration exists.
+ */
 export const DEFAULT_GRAMMAR_THRESHOLD = 0.55;
+
+/**
+ * Where the grammar cutoff comes from.
+ *
+ *   fixed            the stipulated 0.55.
+ *
+ *   ceiling-derived  the model's measured topical ceiling: where two
+ *                    texts on the same subject, sharing no structure and
+ *                    asserting nothing in common, actually land.
+ *
+ * The second is the right null for this construction. "Not X but Y"
+ * asserts that X and Y are opposed. Two merely topically related texts
+ * are not opposed and not identified; they are simply about the same
+ * thing. If the X and Y of an asserted antithesis sit no further apart
+ * than that, the geometry has registered the shared subject matter and
+ * nothing of the opposition. If they sit further apart, it has
+ * registered something more.
+ *
+ * This is the same move the Negation Gauge makes with its matched-edit
+ * controls, transposed to a construction whose controls cannot be
+ * generated from the input: X and Y are arbitrary phrases supplied by
+ * the user, so there is no matched edit to build. The topical ceiling is
+ * the strongest measured null available without asking the user for
+ * control pairs of their own.
+ */
+export type GrammarThresholdMode = "fixed" | "ceiling-derived";
+
+export const DEFAULT_GRAMMAR_THRESHOLD_MODE: GrammarThresholdMode = "ceiling-derived";
 
 // ---------------------------------------------------------------------------
 // Resolver / helpers
@@ -717,7 +764,9 @@ export function grammarOfVectorsTextList(inputs: GrammarOfVectorsInputs): string
 export function computeGrammarOfVectors(
   inputs: GrammarOfVectorsInputs,
   modelVectors: Map<string, number[][]>,
-  enabledModels: Array<{ id: string; name: string; providerId: string }>
+  enabledModels: Array<{ id: string; name: string; providerId: string }>,
+  calibrations?: Map<string, ModelCalibration>,
+  thresholdMode: GrammarThresholdMode = DEFAULT_GRAMMAR_THRESHOLD_MODE
 ): GrammarOfVectorsResult {
   const resolved = resolveGrammarInstances(inputs);
   if (!resolved) {
@@ -740,6 +789,13 @@ export function computeGrammarOfVectors(
         const clamped = Math.max(-1, Math.min(1, sim));
         const angular = (Math.acos(clamped) * 180) / Math.PI;
         const spec = EMBEDDING_MODELS.find(s => s.id === m.id);
+
+        // X and Y are bare phrases, so the term register applies.
+        const cal = calibrations?.get(m.id) ?? null;
+        const ceiling = cal ? cal.topicalCeiling.mean : null;
+        const useCeiling = thresholdMode === "ceiling-derived" && ceiling !== null;
+        const applied = useCeiling ? ceiling! : threshold;
+
         return {
           modelId: m.id,
           modelName: spec?.name || m.name || m.id,
@@ -750,7 +806,16 @@ export function computeGrammarOfVectors(
           normX: vectorNorm(xVec),
           normY: vectorNorm(yVec),
           dimensions: xVec.length,
-          oppositionPreserved: sim < threshold,
+          oppositionPreserved: sim < applied,
+          threshold: applied,
+          thresholdMode: useCeiling ? "ceiling-derived" : "fixed",
+          thresholdBasis: useCeiling
+            ? `measured topical ceiling for this model, ${ceiling!.toFixed(4)}: where two texts on the same subject with no shared structure land`
+            : cal
+              ? `stipulated ${threshold} (ceiling-derived mode not requested)`
+              : `stipulated ${threshold} — no calibration for this model, so no measured ceiling was available`,
+          normalised: cal ? normalisedPosition(sim, floorFor(cal, "term").mean) : null,
+          topicalCeiling: ceiling,
         };
       });
 

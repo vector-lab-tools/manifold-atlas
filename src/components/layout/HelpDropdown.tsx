@@ -35,11 +35,11 @@ const HELP_SECTIONS: HelpSection[] = [
   },
   {
     title: "What is Cosine Similarity?",
-    content: "Cosine similarity measures the angle between two vectors, ignoring their magnitude. It ranges from -1 (opposite directions) through 0 (orthogonal, no relationship) to 1 (identical direction). In practice, most embedding similarities fall between 0.3 and 1.0. A similarity of 0.9 between two concepts means the manifold treats them as very close neighbours. This is the primary instrument of Manifold Atlas: every operation ultimately measures cosine similarity and interprets what it means.",
+    content: "Cosine similarity measures the angle between two vectors, ignoring their magnitude. It ranges in principle from -1 (opposite directions) through 0 (orthogonal) to 1 (identical direction). In practice that range is never available. Embedding vectors occupy a narrow cone rather than the whole sphere, so two entirely unrelated texts already sit at a high cosine, and where that floor falls differs from model to model. This means a bare cosine of 0.9 says nothing on its own: it is close to identity in a model whose floor is 0.1 and barely off the floor in a model whose floor is 0.85. Run the Calibration tab to measure each model's floor, and every figure in the application is then reported as a position on that model's own scale rather than as a raw number. Cosine similarity is the primary instrument of Manifold Atlas, and calibration is what makes its readings mean anything.",
   },
   {
     title: "What is Vector Logic?",
-    link: { label: "Vector Theory", url: "https://stunlaw.blogspot.com/2026/02/vector-theory.html" },
+    link: { label: "Vector Theory (Philosophy & Technology, 2026)", url: "https://doi.org/10.1007/s13347-026-01162-w" },
     content: "Vector logic names the move from symbolic logic (A is not B) to geometric reasoning (A is near B). Where symbolic logic works through categorical exclusion — propositions are either true or false, categories admit no overlap — vector logic works through proximity, direction, and arithmetic in embedding space. Meaning is encoded as position; similarity replaces identity; angular distance replaces contradiction; addition and subtraction of vectors replaces deductive inference. This is the operative logic of contemporary AI systems: they do not reason through deduction or categorical distinction but through cosine similarity and linear combination in a learned manifold. Vector logic is the regime of the vector society, the counterpart to Foucault's disciplinary logic and Deleuze's control logic. Several operations in Manifold Atlas probe it directly. The Vector Logic operation tests its narrowest form — whether analogical inference (king minus man plus woman equals queen) can be performed as arithmetic on embedding vectors. The Negation Gauge tests its deficit around negation. The Hegemony Compass tests its ideological orientations. Together the instrument lets you see vector logic at work across multiple dimensions of the claim.",
   },
   {
@@ -178,7 +178,7 @@ export function HelpDropdown() {
 
             <div className="p-4 border-t border-parchment flex items-center justify-between flex-shrink-0">
               <p className="font-sans text-caption text-muted-foreground">
-                Based on <a href="https://stunlaw.blogspot.com/2026/02/vector-theory.html" target="_blank" rel="noopener noreferrer" className="text-burgundy underline">Vector Theory</a> by David M. Berry.
+                Based on Berry, D.M. (2026) &lsquo;<a href="https://doi.org/10.1007/s13347-026-01162-w" target="_blank" rel="noopener noreferrer" className="text-burgundy underline">Vector Theory: Epistemology, Political Economy, and Probabilistic Computation</a>&rsquo;, <em>Philosophy &amp; Technology</em>, 39(3), 149.
               </p>
               <button
                 onClick={() => { setReadingListOpen(true); setOpen(false); }}

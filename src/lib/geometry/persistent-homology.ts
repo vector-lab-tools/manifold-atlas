@@ -41,6 +41,36 @@ export interface TopologyResult {
   bettiCurve: BettiPoint[];
   distMatrix: number[][];
   filtrationEdges: FiltrationEdge[];
+  /**
+   * The model's usable range for this register: 1 minus the measured
+   * floor. Null when the model is uncalibrated.
+   *
+   * Every distance in this result is a cosine distance, and cosine
+   * distance inherits anisotropy directly. If unrelated terms sit at a
+   * cosine of 0.67, no two concepts in the filtration are ever further
+   * apart than 0.33, and the whole barcode is squeezed into the first
+   * third of an axis drawn to 1.0. Two models with different floors then
+   * produce barcodes at different magnifications, and comparing their
+   * birth and death values as though they were the same quantity is the
+   * same error as comparing their raw cosines.
+   *
+   * Dividing a distance by this range gives the fraction of the
+   * reachable scale, which is comparable across models.
+   */
+  usableRange: number | null;
+  /**
+   * Largest distance actually observed in the filtration. Compare with
+   * usableRange: they should be close, and a large gap means the concept
+   * set does not span the space the model has available.
+   */
+  maxObservedDistance: number;
+}
+
+/** A distance as a fraction of the model's reachable range. */
+export function scaledDistance(distance: number, usableRange: number | null): number | null {
+  if (usableRange === null || usableRange <= 1e-9) return null;
+  if (!Number.isFinite(distance)) return null;
+  return distance / usableRange;
 }
 
 // ---- Union-Find ----
@@ -331,6 +361,7 @@ export function computeTopology(
   vectors: number[][],
   modelId: string,
   modelName: string,
+  usableRange: number | null = null,
 ): TopologyResult {
   const distMatrix = cosineDistanceMatrix(vectors);
   const filtration = buildFiltration(distMatrix);
@@ -350,6 +381,8 @@ export function computeTopology(
     bettiCurve,
     distMatrix,
     filtrationEdges: filtration,
+    usableRange,
+    maxObservedDistance: maxDist,
   };
 }
 

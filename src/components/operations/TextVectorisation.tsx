@@ -12,6 +12,10 @@ import { encode, decode } from "gpt-tokenizer";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { useFloors } from "@/components/shared/useFloors";
+import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
+import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
+import { DeepDivePanel } from "@/components/shared/DeepDivePanel";
 import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { projectPCA3D, spreadPoints3D } from "@/lib/geometry/pca";
 import { ResetButton } from "@/components/shared/ResetButton";
@@ -102,6 +106,9 @@ export function TextVectorisation({ onQueryTime }: TextVectorisationProps) {
   const [wordCount, setWordCount] = useState<{ unique: number; total: number; truncated: boolean } | null>(null);
   const { settings, getEnabledModels } = useSettings();
   const embedAll = useEmbedAll();
+  // This operation embeds the text's unique words one at a time, not the
+  // text itself, so the register is terms rather than prose.
+  const floors = useFloors("term");
   const isDark = settings.darkMode;
 
   // Live word count preview
@@ -287,11 +294,28 @@ export function TextVectorisation({ onQueryTime }: TextVectorisationProps) {
         </div>
       </div>
 
+      <CalibrationNotice register="term" missing={floors.missing} />
+
+
       {error != null && <ErrorDisplay error={error} onRetry={handleCompute} />}
 
       {results.map(r => (
         <TextWalkPlayer key={r.modelId} result={r} isDark={isDark} />
       ))}
+
+      {results.length > 0 && (
+        <DeepDivePanel tagline="calibration · the scale behind the neighbour similarities">
+          <CalibrationDeepDive
+            register="term"
+            modelIds={results.map(r => r.modelId)}
+            notes={[
+              "This operation embeds the text's unique words one at a time, so it is read against the term floor. The prose floor would be the wrong one here despite the input being prose: what gets embedded is never the paragraph.",
+              "The nearest-neighbour similarity shown at each step is a raw cosine. In a model with a high term floor, every word in the text has a nearest neighbour that looks close, because nothing in the space is far from anything else. The floor below is what tells you whether a step's neighbour is genuinely near.",
+              "The mean top-1 similarity in the summary is a within-model figure and is not comparable across models whose floors differ.",
+            ]}
+          />
+        </DeepDivePanel>
+      )}
     </div>
   );
 }

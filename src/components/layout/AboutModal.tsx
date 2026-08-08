@@ -76,6 +76,21 @@ export function AboutModal() {
                 <span className="text-muted-foreground">Design system</span>
                 <span className="font-medium">CCS-WB Editorial</span>
 
+                <span className="text-muted-foreground">Theoretical basis</span>
+                <span className="font-medium">
+                  <a
+                    href="https://doi.org/10.1007/s13347-026-01162-w"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-burgundy underline underline-offset-2"
+                  >
+                    Berry (2026), &lsquo;Vector Theory&rsquo;
+                  </a>
+                  <span className="block text-muted-foreground font-normal">
+                    Philosophy &amp; Technology 39(3), 149
+                  </span>
+                </span>
+
                 <span className="text-muted-foreground">Licence</span>
                 <span className="font-medium">MIT</span>
               </div>

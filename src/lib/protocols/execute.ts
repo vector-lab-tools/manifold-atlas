@@ -387,7 +387,12 @@ export function executeStep(
 
       case "grammar": {
         const inputs = resolveGrammarInputsForExec(step.inputs);
-        const result = computeGrammarOfVectors(inputs, ctx.stepVectors, ctx.enabledModels);
+        const result = computeGrammarOfVectors(
+          inputs,
+          ctx.stepVectors,
+          ctx.enabledModels,
+          ctx.calibrations
+        );
         const elapsedMs = performance.now() - started;
         const uniqueModelIds = new Set<string>();
         for (const row of result.pairs) {

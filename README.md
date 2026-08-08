@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.10.0
+**Version:** 1.11.0
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -25,7 +25,7 @@ The tool operationalises [Vector Theory](https://stunlaw.blogspot.com/2026/02/ve
 
 Manifold Atlas emerges from the convergence of three research programmes.
 
-**Vector theory.** Berry (2026) *Vector Theory* argues that the vectorial turn introduces a new computational regime in which definition is replaced by position, truth by orientation, argument by interpolation, and contradiction by cosine proximity. The embedding layer performs a real abstraction at the level of meaning itself: heterogeneous language is converted into homogeneous geometric coordinates within a proprietary manifold. Manifold Atlas is the research instrument for this framework.
+**Vector theory.** Berry (2026), 'Vector Theory: Epistemology, Political Economy, and Probabilistic Computation', *Philosophy & Technology* 39(3), 149, argues that the vectorial turn introduces a new computational regime in which definition is replaced by position, truth by orientation, argument by interpolation, and contradiction by cosine proximity. The embedding layer performs a real abstraction at the level of meaning itself: heterogeneous language is converted into homogeneous geometric coordinates within a proprietary manifold. Manifold Atlas is the research instrument for this framework.
 
 **The negation deficit and geometric ideology.** A sustained claim across the Stunlaw blog series is that the manifold's geometry encodes ideology topologically (in density, sparsity, and trajectory) rather than discursively. Negation is not a logical operator in the manifold; it is a small rotation in a few dimensions. Agonism collapses into proximity. These are empirical claims and they need an empirical instrument to test them. The Negation Gauge, Negation Battery, Hegemony Compass, Silence Detector, and Agonism Test each operationalise a specific claim of the theory.
 
@@ -246,6 +246,10 @@ Agonism Test showed a mean cosine across all models and pairs. A mean of raw cos
 
 **Why a term stratum?** Because most of those operations embed bare nouns rather than sentences. Measuring their floor on declaratives would have repeated, one level up, exactly the mistake the calibration layer was built to fix. On a synthetic space with three registers deliberately placed in cones of 35, 55 and 70 degrees, the record recovers all three floors to within 0.002 and all three cone angles to within 0.2 degrees; the floors span 0.56, so a single number would have been wrong for two registers out of three.
 
+**Why does Persistent Homology need calibration when it reports distances, not similarities?** Because cosine distance is one minus cosine similarity, so it inherits anisotropy unchanged. A high floor does not distort the topology; it compresses the axis the topology is drawn on. On two synthetic models with the same concept structure but floors of 0.03 and 0.94, the top H0 feature had a raw persistence of 0.9055 and 0.0544 respectively, a seventeen-fold difference produced entirely by the models' cones. Scaled by the usable range, the same feature reads 93.3% and 93.1%. The shape of the barcode was never in question; the axis was. Scaling by a constant cannot reorder births or deaths, so nothing about the topology changes, only whether a persistence of 0.04 counts as large.
+
+**Why is the Grammar of Vectors cutoff the topical ceiling?** "Not X but Y" asserts that X and Y are opposed. The old 0.55 was a stipulated constant of exactly the kind the Negation Gauge shed. But X and Y are arbitrary phrases supplied by the user, so no matched edit can be generated the way it can for a negation, and the control-derived mode has nothing to build from. The topical ceiling is the strongest measured null available without asking the user for control pairs of their own: it is where two texts on the same subject, sharing no structure and asserting nothing in common, actually land. A pair sitting at or above it has had its shared subject matter registered and its asserted opposition not registered at all.
+
 **Why no engineering metrics?** Existing vector-geometry tools are designed for engineers tuning a retrieval pipeline. They answer questions like "which embedding gives the best search relevance?" Manifold Atlas answers different questions: where does this model compress what it ought to distinguish? What does the geometry refuse to represent? These are critical-theoretical questions that require geometric evidence, not benchmark scores.
 
 **Why a browser-only tool?** The instrument is for research use, not for production. Running entirely in the browser with only the embedding APIs as external dependencies keeps the deployment surface minimal and the data footprint on the researcher's own machine. API keys never leave the browser. No tracking, no telemetry.
@@ -364,7 +368,7 @@ Embedding vectors are cached in IndexedDB (keyed by model + text, deterministic)
 
 ## Theoretical Context
 
-Manifold Atlas is a research instrument for the vector theory programme developed by David M. Berry. Vector theory argues that the vectorial turn introduces a new computational regime in which definition is replaced by position, truth by orientation, argument by interpolation, and contradiction by cosine proximity. The embedding layer performs a real abstraction at the level of meaning itself: heterogeneous language is converted into homogeneous geometric coordinates within a proprietary manifold.
+Manifold Atlas is a research instrument for the vector theory programme developed by David M. Berry, set out in full in 'Vector Theory: Epistemology, Political Economy, and Probabilistic Computation' (*Philosophy & Technology* 39(3), 149, 2026), which is the reference to read first. Vector theory argues that the vectorial turn introduces a new computational regime in which definition is replaced by position, truth by orientation, argument by interpolation, and contradiction by cosine proximity. The embedding layer performs a real abstraction at the level of meaning itself: heterogeneous language is converted into homogeneous geometric coordinates within a proprietary manifold.
 
 Each operation in the Operations at a Glance table above tests a specific claim of this framework. The embedding API is the telescope, the manifold the object of study, and cosine similarity the primary instrument. The framework, not the numbers, is what makes a given cosine similarity a finding rather than a curiosity: findings are geometric evidence for geometric ideology, the negation deficit, agonism collapse, hegemonic defaults, the taxonomy of silence, the proprietary medium, and the unthinkable of the machine.
 
@@ -383,6 +387,8 @@ Each operation in the Operations at a Glance table above tests a specific claim 
 - [x] Per-model attribution on every multi-model output (Concept Distance, Distance Matrix, Negation Gauge, Negation Battery, Vector Logic, Semantic Sectioning, Hegemony Compass, Agonism Test, Real Abstraction)
 - [x] Sticky bottom status bar so the Header and TabNav scroll away on long deep-dive panels
 - [x] Collapsible Deep Dive panel on every operation (all sixteen — Concept Distance, Distance Matrix, Negation Gauge, Negation Battery, Vector Logic, Semantic Sectioning, Agonism Test, Real Abstraction, Silence Detector, Neighbourhood Map, Vector Drift, Vector Walk, plus the four already shipped: Grammar of Vectors, Text Vectorisation, Persistent Homology, Hegemony Compass)
+- [x] Calibration: per-model, per-register floors, radius profile, control-derived thresholds, full record in every Deep Dive
+- [x] Every operation calibrated — no stipulated cosine constant remains anywhere in the instrument
 - [ ] Cross-provider agreement score for every operation (structural vs contingent findings)
 - [ ] Export harness for reproducible figures with provenance metadata
 - [ ] Layer-aware extension (comparative inspection between layers of the same model)
@@ -390,6 +396,7 @@ Each operation in the Operations at a Glance table above tests a specific claim 
 
 ## Related Work
 
+- Berry, D. M. (2026) 'Vector Theory: Epistemology, Political Economy, and Probabilistic Computation', *Philosophy & Technology*, 39(3), 149. https://doi.org/10.1007/s13347-026-01162-w
 - Berry, D. M. (2026) 'Vector Theory', *Stunlaw*. Available at: https://stunlaw.blogspot.com/2026/02/vector-theory.html
 - Berry, D. M. (2026) 'What is Vector Space?', *Stunlaw*. Available at: https://stunlaw.blogspot.com/2026/03/what-is-vector-space.html
 - Berry, D. M. (2026) 'The Vector Medium', *Stunlaw*.
