@@ -40,12 +40,48 @@ const PRELOADED_PAIRS: AbstractionPair[] = [
   { useValue: "Teaching your child to ride a bicycle", exchangeValue: "a recreational skill transfer", domain: "Parenting" },
 ];
 
-function abstractionLevel(similarity: number): { label: string; color: string } {
-  if (similarity >= 0.85) return { label: "Fully abstracted: the manifold has completed the real abstraction", color: "#dc2626" };
-  if (similarity >= 0.7) return { label: "Heavily abstracted: use-value is dissolving into exchange-value", color: "#ea580c" };
-  if (similarity >= 0.5) return { label: "Partially abstracted: some qualitative residue survives", color: "#d97706" };
-  if (similarity >= 0.3) return { label: "Weakly abstracted: use-value retains geometric distance", color: "#65a30d" };
-  return { label: "Resisting abstraction: the qualitative description remains geometrically distinct", color: "#16a34a" };
+/**
+ * How far apart the model puts the use-value and exchange-value
+ * descriptions of the same thing.
+ *
+ * The labels describe distance and nothing else. An earlier version
+ * said "Fully abstracted: the manifold has completed the real
+ * abstraction", which delivers the theoretical conclusion as though it
+ * were the measurement. Two descriptions sitting close together is
+ * evidence a reader may take as real abstraction; it is not itself real
+ * abstraction, and the instrument should not decide that in advance.
+ * The Sohn-Rethel reading belongs in the interpretation, where it can
+ * be argued with.
+ *
+ * Same decision as the Agonism Test's move to observation-only labels
+ * and the Negation Gauge's move away from "registered / lost".
+ */
+function abstractionLevel(similarity: number): { label: string; detail: string; color: string } {
+  if (similarity >= 0.85) return {
+    label: "Almost the same",
+    detail: "the qualitative and the quantitative description sit at nearly the same point",
+    color: "#dc2626",
+  };
+  if (similarity >= 0.7) return {
+    label: "Barely different",
+    detail: "the qualitative description sits close to the exchange-value wording",
+    color: "#ea580c",
+  };
+  if (similarity >= 0.5) return {
+    label: "Somewhat different",
+    detail: "some geometric distance survives between the two descriptions",
+    color: "#d97706",
+  };
+  if (similarity >= 0.3) return {
+    label: "Clearly different",
+    detail: "the qualitative description holds a position of its own",
+    color: "#65a30d",
+  };
+  return {
+    label: "Far apart",
+    detail: "the two descriptions are barely more alike than unrelated text",
+    color: "#16a34a",
+  };
 }
 
 interface SohnRethelTestProps {
@@ -260,6 +296,9 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
                         floor={floors.floor(m.modelId)}
                         subtitle={level.label}
                       />
+                      <p className="text-center font-sans text-[10px] text-muted-foreground mt-0.5">
+                        {level.detail}
+                      </p>
                     </div>
                   );
                 })}

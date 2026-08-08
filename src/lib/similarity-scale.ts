@@ -47,12 +47,36 @@ const NONE_STRONG = { color: "#15803d", bgColor: "rgba(21,128,61,0.08)", severit
  * is noteworthy but not necessarily problematic.
  */
 export function conceptSimilarityLevel(similarity: number): SimilarityLevel {
-  if (similarity >= 0.95) return { label: "Indistinguishable", ...CRITICAL, uncalibrated: true };
-  if (similarity >= 0.85) return { label: "Very Similar", ...HIGH, uncalibrated: true };
-  if (similarity >= 0.7) return { label: "Somewhat Similar", ...MODERATE, uncalibrated: true };
-  if (similarity >= 0.5) return { label: "Moderate Distinction", ...LOW, uncalibrated: true };
-  if (similarity >= 0.3) return { label: "High Distinction", ...NONE, uncalibrated: true };
-  return { label: "Distinctive Concepts", ...NONE_STRONG, uncalibrated: true };
+  if (similarity >= 0.95) return {
+    label: "Almost the same",
+    detail: "on an unmeasured scale",
+    ...CRITICAL, uncalibrated: true,
+  };
+  if (similarity >= 0.85) return {
+    label: "Barely different",
+    detail: "on an unmeasured scale",
+    ...HIGH, uncalibrated: true,
+  };
+  if (similarity >= 0.7) return {
+    label: "Somewhat different",
+    detail: "on an unmeasured scale",
+    ...MODERATE, uncalibrated: true,
+  };
+  if (similarity >= 0.5) return {
+    label: "Clearly different",
+    detail: "on an unmeasured scale",
+    ...LOW, uncalibrated: true,
+  };
+  if (similarity >= 0.3) return {
+    label: "Far apart",
+    detail: "on an unmeasured scale",
+    ...NONE, uncalibrated: true,
+  };
+  return {
+    label: "Far apart",
+    detail: "near the bottom of an unmeasured scale",
+    ...NONE_STRONG, uncalibrated: true,
+  };
 }
 
 /**
@@ -79,12 +103,31 @@ export function calibratedConceptLevel(
  * band the result here.
  */
 export function levelFromPosition(p: number): SimilarityLevel {
-  if (p >= 0.95) return { label: "Indistinguishable", ...CRITICAL };
-  if (p >= 0.85) return { label: "Very close on this model's scale", ...HIGH };
-  if (p >= 0.7) return { label: "Close on this model's scale", ...MODERATE };
-  if (p >= 0.5) return { label: "Midway between floor and identity", ...LOW };
-  if (p >= 0.3) return { label: "Well separated", ...NONE };
-  return { label: "Near the floor: barely above unrelated text", ...NONE_STRONG };
+  if (p >= 0.95) return {
+    label: "Almost the same",
+    detail: "the two sit at nearly the same point on this model\u2019s scale",
+    ...CRITICAL,
+  };
+  if (p >= 0.85) return {
+    label: "Barely different",
+    detail: "near the top of what this model can express",
+    ...HIGH,
+  };
+  if (p >= 0.6) return {
+    label: "Somewhat different",
+    detail: "closer to each other than to unrelated text",
+    ...MODERATE,
+  };
+  if (p >= 0.3) return {
+    label: "Clearly different",
+    detail: "well apart on this model\u2019s scale",
+    ...LOW,
+  };
+  return {
+    label: "Far apart",
+    detail: "barely above where unrelated text sits",
+    ...NONE_STRONG,
+  };
 }
 
 /**

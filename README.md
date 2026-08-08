@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.16.2
+**Version:** 1.17.0
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -85,6 +85,8 @@ A cosine has no meaning without the scale it sits on. Embedding vectors occupy a
 **Vectors are verified before they become a measurement.** Cache entries carry the version of the pipeline that produced them, and an entry from an older pipeline is treated as absent rather than trusted. Before any calibration is computed, six texts spread across the strata are re-embedded and checked against what the run assembled; if any differs, the model's cached vectors are discarded and the corpus is re-embedded, and if the second attempt also differs the run fails rather than saving a record. This exists because a set of cache entries was found that the then-current pipeline did not reproduce, at cosine 0.90 to 0.98 rather than 1.0 against a fresh embedding, which moved a reported floor by a third of its own standard deviation. The origin was never identified, which is exactly why detection rather than prevention is the fix.
 
 **The cone, drawn.** A cone icon beside every model name opens the radius as a picture: the cone the model sweeps, the cap it reaches, and the dashed sphere of all directions it does not. Toggles show any single register or all three side by side, and any one model or every calibrated model at once, so the claim that two models reporting the same cosine are not reporting the same thing can be seen rather than argued.
+
+**One vocabulary across every operation.** Almost the same, Barely different, Somewhat different, Clearly different, Far apart, with the reason beneath in small type. Concept Distance used to say "Somewhat Similar" and "Moderate Distinction" in the same ladder; Real Abstraction said "Fully abstracted: the manifold has completed the real abstraction", which hands down the theoretical conclusion as though it were the measurement. Two descriptions sitting close together is evidence a reader may take as real abstraction. It is not itself real abstraction, and the instrument should not settle that in advance. The theoretical reading belongs in the interpretation, where it can be argued with.
 
 **The verdict says how far apart, not what the model understood.** Negation verdicts read **Almost the same**, **Borderline**, **Barely different**, **Somewhat different**, **Clearly different**, with the reason beneath in small type. They describe distance, which is what was measured. An earlier version said "negation registered" and "negation lost", which imputes an act of recognition: it claims the model noticed the reversal, where all that was observed is proximity. Two sentences can sit far apart for reasons unconnected to the reversal, and a model that separates them has not thereby understood that one denies the other. The negation-specific claim sits in the reason line, because exactly one comparison licenses it: "“Not” is counterintuitively closer to its opposite than swapping in an unrelated word". That is about "not" specifically; a position on a scale is not. This follows the decision already taken for the Agonism Test, whose labels were changed from "opposition preserved / collapsed" to observation-only wording for the same reason.
 
