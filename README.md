@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.17.1
+**Version:** 1.17.2
 **Date:** 14 May 2026
 **Licence:** MIT
 
@@ -19,7 +19,7 @@ Manifold Atlas is a vector-native research tool for studying how large language 
 
 ![Manifold Atlas - Neighbourhood Map](docs/screenshot-neighbourhood.png)
 
-The tool operationalises [Vector Theory](https://stunlaw.blogspot.com/2026/02/vector-theory.html) theorised by David M. Berry. This includes the embedding API as telescope, the manifold as the object of study, and cosine similarity as the primary instrument. Without the framework, the numbers are curiosities. With it, they are evidence for geometric ideology, the negation deficit, and the proprietary encoding of human language.
+The tool operationalises [vector theory](https://doi.org/10.1007/s13347-026-01162-w) as set out by David M. Berry. This includes the embedding API as telescope, the manifold as the object of study, and cosine similarity as the primary instrument. Without the framework, the numbers are curiosities. With it, they are evidence for geometric ideology, the negation deficit, and the proprietary encoding of human language.
 
 ## Scholarly Context
 
@@ -425,7 +425,6 @@ Each operation in the Operations at a Glance table above tests a specific claim 
 ## Related Work
 
 - Berry, D. M. (2026) 'Vector Theory: Epistemology, Political Economy, and Probabilistic Computation', *Philosophy & Technology*, 39(3), 149. https://doi.org/10.1007/s13347-026-01162-w
-- Berry, D. M. (2026) 'Vector Theory', *Stunlaw*. Available at: https://stunlaw.blogspot.com/2026/02/vector-theory.html
 - Berry, D. M. (2026) 'What is Vector Space?', *Stunlaw*. Available at: https://stunlaw.blogspot.com/2026/03/what-is-vector-space.html
 - Berry, D. M. (2026) 'The Vector Medium', *Stunlaw*.
 - Berry, D. M. (2026) *Artificial Intelligence and Critical Theory*. MUP.

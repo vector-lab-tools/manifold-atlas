@@ -104,7 +104,7 @@ export function AboutModal() {
                 Manifold Atlas is a vector-native research tool for studying how large language
                 models organise meaning geometrically. It operationalises{" "}
                 <a
-                  href="https://stunlaw.blogspot.com/2026/02/vector-theory.html"
+                  href="https://doi.org/10.1007/s13347-026-01162-w"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-burgundy underline underline-offset-2"
@@ -192,7 +192,7 @@ export function AboutModal() {
                 GitHub
               </a>
               <a
-                href="https://stunlaw.blogspot.com/2026/02/vector-theory.html"
+                href="https://doi.org/10.1007/s13347-026-01162-w"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-burgundy underline underline-offset-2 hover:text-burgundy-900"
