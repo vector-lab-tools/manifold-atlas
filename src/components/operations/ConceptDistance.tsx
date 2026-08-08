@@ -202,34 +202,6 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                       ceiling={floors.topicalCeiling(m.modelId)}
                     />
                   </div>
-                  <div className="mt-3">
-                    <CalibratedBar
-                      modelName={`${result.termA} → ${result.termB}`}
-                      value={m.cosineSimilarity}
-                      floor={floors.floor(m.modelId)}
-                      normalised={
-                        floors.floor(m.modelId) !== null
-                          ? normalisedPosition(m.cosineSimilarity, floors.floor(m.modelId)!)
-                          : null
-                      }
-                      marks={
-                        floors.topicalCeiling(m.modelId) !== null
-                          ? [
-                              {
-                                value: floors.topicalCeiling(m.modelId)!,
-                                label: "topical ceiling",
-                                termKey: "topicalCeiling",
-                                colour: "#0891b2",
-                                dashed: true,
-                              },
-                            ]
-                          : []
-                      }
-                      valueColour={
-                        calibratedConceptLevel(m.cosineSimilarity, floors.floor(m.modelId)).color
-                      }
-                    />
-                  </div>
                 </div>
 
                 {/* Expand/collapse */}
@@ -244,6 +216,43 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
 
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-parchment space-y-4">
+                    {/* The same figure again, this time with the anchors
+                        named and numbered. In the headline it sat directly
+                        under the meter and read as a second, competing
+                        verdict rather than as the workings behind the
+                        first. */}
+                    <div className="pt-3">
+                      <h5 className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">
+                        Placement on this model&apos;s scale
+                      </h5>
+                      <CalibratedBar
+                        modelName={`${result.termA} → ${result.termB}`}
+                        value={m.cosineSimilarity}
+                        floor={floors.floor(m.modelId)}
+                        normalised={
+                          floors.floor(m.modelId) !== null
+                            ? normalisedPosition(m.cosineSimilarity, floors.floor(m.modelId)!)
+                            : null
+                        }
+                        marks={
+                          floors.topicalCeiling(m.modelId) !== null
+                            ? [
+                                {
+                                  value: floors.topicalCeiling(m.modelId)!,
+                                  label: "topical ceiling",
+                                  termKey: "topicalCeiling",
+                                  colour: "#0891b2",
+                                  dashed: true,
+                                },
+                              ]
+                            : []
+                        }
+                        valueColour={
+                          calibratedConceptLevel(m.cosineSimilarity, floors.floor(m.modelId)).color
+                        }
+                      />
+                    </div>
+
                     {/* Interpretation */}
                     <p className="font-body text-body-sm text-slate italic pt-3">
                       {interp.detail}
