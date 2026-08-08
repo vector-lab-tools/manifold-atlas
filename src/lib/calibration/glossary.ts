@@ -48,7 +48,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
       "Writing each unit vector as a rotation away from the mean direction, the average of those angles is the half-angle of the cone the embeddings occupy. It is computed as the arc-cosine of the length of the mean of the unit vectors. This is the model's radius in the sense the term is usually meant: how much angular room the space has.",
     formula: "acos( ‖ mean of the unit vectors ‖ )",
     reads:
-      "90° would be an isotropic space using the full sphere. 60° is a moderately tight cone. Below 45° the model is working in a narrow wedge, and cosine differences there are compressed.",
+      "90° would be an isotropic space using the full sphere. 60° is a moderately tight cone. Below 45° the model is working in a narrow wedge, and cosine differences there are compressed. Treat it as a first-order figure: it describes the space as a symmetric cap around one mean direction, which real embedding spaces only approximate. The effective dimension and the top-coordinate share are what show how far the description is off.",
   },
 
   meanDirectionNorm: {

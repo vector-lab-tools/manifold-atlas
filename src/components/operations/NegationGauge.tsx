@@ -14,6 +14,7 @@ import {
   CONTROL_GLOSSARY_KEYS,
 } from "@/lib/operations/negation-controls";
 import type { NegationGaugeModelResult } from "@/lib/operations/negation-gauge";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { GaugeArc } from "@/components/viz/GaugeArc";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
@@ -335,7 +336,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                   {/* Model header */}
                   <div className="px-5 pt-5 pb-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-sans text-body-sm font-semibold">{m.modelName}</span>
+                      <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={m.modelId} register="short">{m.modelName}</ModelRadiusTip></span>
                       <span className="font-sans text-caption text-muted-foreground">{m.providerId}</span>
                       <span className="font-sans text-caption text-muted-foreground">&middot; {m.dimensions.toLocaleString()} dimensions</span>
                     </div>
@@ -738,7 +739,7 @@ function NegationGaugeDeepDive({ result }: { result: NegationGaugeResult }) {
             <tbody className="divide-y divide-parchment">
               {models.map(m => (
                 <tr key={m.modelId}>
-                  <td className="px-2 py-1 font-medium">{m.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={m.modelId} register="short">{m.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.cosineSimilarity.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.cosineDistance.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.angularDistance.toFixed(1)}</td>

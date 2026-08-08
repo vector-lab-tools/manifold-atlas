@@ -14,6 +14,7 @@ import { Loader2, RotateCw, Trash2, Play, AlertTriangle, Check } from "lucide-re
 import { useCalibration } from "@/context/CalibrationContext";
 import { useSettings } from "@/context/SettingsContext";
 import { MetricTerm, MetricStat } from "@/components/shared/MetricTerm";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { DeepDivePanel, DeepDiveSection } from "@/components/shared/DeepDivePanel";
 import { CopyableCommand } from "@/components/shared/CopyableCommand";
 import {
@@ -110,7 +111,7 @@ export function Calibration({ onQueryTime }: CalibrationProps) {
           <div className="space-y-1.5">
             {progress.map(p => (
               <div key={p.modelId} className="flex items-center gap-2">
-                <span className="font-sans text-caption w-48 truncate">{p.modelName}</span>
+                <span className="font-sans text-caption w-48 truncate"><ModelRadiusTip modelId={p.modelId} register="short">{p.modelName}</ModelRadiusTip></span>
                 <div className="flex-1 h-1.5 bg-parchment rounded-full overflow-hidden">
                   <div
                     className={cn(
@@ -250,7 +251,7 @@ function RadiusCard({
     <div className="card-editorial p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-display text-body font-bold truncate">{cal.modelName}</h3>
+          <h3 className="font-display text-body font-bold truncate"><ModelRadiusTip modelId={cal.modelId} register="short">{cal.modelName}</ModelRadiusTip></h3>
           <p className="font-sans text-caption text-muted-foreground">
             {cal.providerId} · {r.nominalDim} dimensions · calibrated{" "}
             {new Date(cal.computedAt).toLocaleDateString()}

@@ -6,6 +6,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { RateLimitError } from "@/lib/embeddings/client";
 import { useRateLimitCountdown } from "@/components/shared/useRateLimitCountdown";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { useFloors } from "@/components/shared/useFloors";
 import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
@@ -242,7 +243,7 @@ export function SilenceDetector({ onQueryTime }: SilenceDetectorProps) {
       {results.map(r => (
         <div key={r.modelId} className="card-editorial overflow-hidden">
           <div className="px-5 pt-5 pb-3">
-            <span className="font-sans text-body-sm font-semibold">{r.modelName}</span>
+            <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={r.modelId} register="term">{r.modelName}</ModelRadiusTip></span>
           </div>
 
           <div className="thin-rule mx-5" />
@@ -410,7 +411,7 @@ function SilenceDeepDive({ results }: { results: DensityResult[] }) {
             <tbody className="divide-y divide-parchment">
               {results.map(r => (
                 <tr key={r.modelId}>
-                  <td className="px-2 py-1 font-medium">{r.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={r.modelId} register="term">{r.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{r.domainA.avgPairwiseSim.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{r.domainB.avgPairwiseSim.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{r.densityRatio.toFixed(3)}</td>

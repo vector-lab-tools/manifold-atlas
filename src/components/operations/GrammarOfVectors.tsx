@@ -26,6 +26,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, ChevronDown, ChevronRight, Download, Gauge } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { useFloors } from "@/components/shared/useFloors";
 import { useCalibration } from "@/context/CalibrationContext";
@@ -684,7 +685,7 @@ function ExpandableRow({
                 <tbody className="divide-y divide-parchment">
                   {pair.models.map(m => (
                     <tr key={m.modelId}>
-                      <td className="px-2 py-1">{m.modelName}</td>
+                      <td className="px-2 py-1"><ModelRadiusTip modelId={m.modelId} register="term">{m.modelName}</ModelRadiusTip></td>
                       <td className="px-2 py-1 text-right tabular-nums">{m.cosineSimilarity.toFixed(4)}</td>
                       <td className="px-2 py-1 text-right tabular-nums">{m.cosineDistance.toFixed(4)}</td>
                       <td className="px-2 py-1 text-right tabular-nums">{m.angularDistance.toFixed(1)}</td>
@@ -852,7 +853,7 @@ function DeepDive({ result }: { result: GrammarOfVectorsResult }) {
             <tbody className="divide-y divide-parchment">
               {modelAggregates.map(ma => (
                 <tr key={ma.modelId}>
-                  <td className="px-2 py-1 font-medium">{ma.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={ma.modelId} register="term">{ma.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{ma.pairCount}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{ma.meanCosine.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{ma.stdDevCosine.toFixed(4)}</td>

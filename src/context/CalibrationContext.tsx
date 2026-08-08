@@ -46,14 +46,48 @@ const EMBED_CHUNK = 48;
 
 export type CalibrationStatus = "idle" | "running" | "done" | "error";
 
+/**
+ * Turn a provider error into something the user can act on.
+ *
+ * A rejected key is the most common calibration failure and the raw
+ * message from the provider ("Invalid username or password") does not
+ * say which key, or where to change it. Anything not recognised is
+ * passed through unaltered rather than being flattened into a generic
+ * apology.
+ */
+export function calibrationErrorHint(message: string): string | null {
+  if (/\b(401|403)\b/.test(message) || /invalid username or password|unauthor|invalid api key|forbidden/i.test(message)) {
+    return "The provider rejected the API key. Open Settings and check the key for this provider.";
+  }
+  if (/\b429\b/.test(message) || /rate limit/i.test(message)) {
+    return "The provider rate-limited the run. Wait a moment and calibrate again; texts already embedded are cached, so the retry resumes rather than restarting.";
+  }
+  if (/\b(500|502|503|504)\b/.test(message)) {
+    return "The provider returned a server error. This is usually transient; try again shortly.";
+  }
+  if (/failed to fetch|networkerror|econnrefused/i.test(message)) {
+    return "Could not reach the provider. For Ollama, check the server is running at the base URL in Settings.";
+  }
+  return null;
+}
+
 export interface CalibrationProgress {
   modelId: string;
   modelName: string;
+  providerId: string;
   status: CalibrationStatus;
+  /** What the run is doing right now, for the live readout. */
+  stage: "queued" | "cache" | "embedding" | "computing" | "done" | "error";
   /** Texts embedded so far, out of the corpus total. */
   completed: number;
   total: number;
+  /** How many of the corpus texts were already cached. */
+  fromCache?: number;
+  /** Running commentary, appended as the measurement proceeds. */
+  log: string[];
   error?: string;
+  /** Seconds the model took, stamped on completion. */
+  seconds?: number;
 }
 
 interface CalibrationContextType {
@@ -63,6 +97,13 @@ interface CalibrationContextType {
   progress: CalibrationProgress[];
   /** Calibrate the given models, or every enabled model when omitted. */
   calibrate: (modelIds?: string[]) => Promise<void>;
+  /**
+   * Live readout visibility. Opens automatically whenever a run starts,
+   * from wherever it was triggered, and stays open when the run ends so
+   * the measurements can be read.
+   */
+  modalOpen: boolean;
+  setModalOpen: (open: boolean) => void;
   recalibrate: (modelId: string) => Promise<void>;
   forget: (modelId: string) => void;
   forgetAll: () => void;
@@ -78,6 +119,7 @@ export function CalibrationProvider({ children }: { children: React.ReactNode })
   const [calibrations, setCalibrations] = useState<Map<string, ModelCalibration>>(new Map());
   const [progress, setProgress] = useState<CalibrationProgress[]>([]);
   const [running, setRunning] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     setCalibrations(loadCalibrations());
@@ -91,14 +133,17 @@ export function CalibrationProvider({ children }: { children: React.ReactNode })
     async (
       model: { id: string; providerId: EmbeddingProviderId; apiKey: string; baseUrl?: string },
       texts: string[],
-      onChunk: (completed: number) => void
+      onChunk: (completed: number, fromCache?: number) => void
     ): Promise<number[][]> => {
       const cached = await cache.getMany(model.id, texts);
-      const missing = texts.filter(t => !cached.has(t));
+      // The corpus reuses a few short declaratives as the first half of
+      // topical pairs, so `missing` can contain duplicates. Dedupe before
+      // sending, or those texts are paid for twice in a single run.
+      const missing = [...new Set(texts.filter(t => !cached.has(t)))];
 
       const fetched = new Map<string, number[]>();
       let done = texts.length - missing.length;
-      onChunk(done);
+      onChunk(done, done);
 
       for (let i = 0; i < missing.length; i += EMBED_CHUNK) {
         const chunk = missing.slice(i, i + EMBED_CHUNK);
@@ -134,26 +179,57 @@ export function CalibrationProvider({ children }: { children: React.ReactNode })
 
       const texts = calibrationTextList();
       setRunning(true);
+      setModalOpen(true);
       setProgress(
         targets.map(m => ({
           modelId: m.id,
           modelName: m.name,
-          status: "running" as const,
+          providerId: m.providerId,
+          status: "idle" as const,
+          stage: "queued" as const,
           completed: 0,
           total: texts.length,
+          log: [],
         }))
       );
 
       const update = (modelId: string, patch: Partial<CalibrationProgress>) =>
         setProgress(prev => prev.map(p => (p.modelId === modelId ? { ...p, ...patch } : p)));
 
+      const say = (modelId: string, line: string) =>
+        setProgress(prev =>
+          prev.map(p => (p.modelId === modelId ? { ...p, log: [...p.log, line] } : p))
+        );
+
       // Sequential across models. Providers rate-limit per key, and a
       // calibration is not urgent enough to risk tripping that.
       for (const model of targets) {
+        const startedAt = Date.now();
         try {
-          const vectors = await embedCorpus(model, texts, completed =>
-            update(model.id, { completed })
-          );
+          update(model.id, { status: "running", stage: "cache" });
+          say(model.id, `Corpus: ${texts.length} texts across four strata.`);
+
+          let announcedFetch = false;
+          const vectors = await embedCorpus(model, texts, (completed, fromCache) => {
+            if (fromCache !== undefined) {
+              update(model.id, { fromCache });
+              say(
+                model.id,
+                fromCache > 0
+                  ? `${fromCache} of ${texts.length} already cached; embedding the remaining ${texts.length - fromCache}.`
+                  : `Nothing cached for this model; embedding all ${texts.length}.`
+              );
+            }
+            if (!announcedFetch && completed > (fromCache ?? 0)) {
+              announcedFetch = true;
+              update(model.id, { stage: "embedding" });
+            }
+            update(model.id, { completed });
+          });
+
+          update(model.id, { stage: "computing", completed: texts.length });
+          say(model.id, `Embedded. Computing pairwise cosines and the radius profile.`);
+
           const cal = computeCalibration(
             { id: model.id, name: model.name, providerId: model.providerId },
             vectors,
@@ -161,11 +237,32 @@ export function CalibrationProvider({ children }: { children: React.ReactNode })
           );
           saveCalibration(cal);
           setCalibrations(prev => new Map(prev).set(cal.modelId, cal));
-          update(model.id, { status: "done", completed: texts.length });
+
+          // Print the measurement as it lands, rather than only leaving
+          // it in a panel the user has to go and find.
+          say(model.id, `Term floor ${cal.termFloor.mean.toFixed(4)} (sd ${cal.termFloor.sd.toFixed(4)}, n ${cal.termFloor.n}), radius ${cal.coneByRegister.term.toFixed(1)}°.`);
+          say(model.id, `Declarative floor ${cal.shortFloor.mean.toFixed(4)} (sd ${cal.shortFloor.sd.toFixed(4)}, n ${cal.shortFloor.n}), radius ${cal.coneByRegister.short.toFixed(1)}°.`);
+          say(model.id, `Prose floor ${cal.proseFloor.mean.toFixed(4)} (sd ${cal.proseFloor.sd.toFixed(4)}, n ${cal.proseFloor.n}), radius ${cal.coneByRegister.prose.toFixed(1)}°.`);
+          say(model.id, `Topical ceiling ${cal.topicalCeiling.mean.toFixed(4)}.`);
+          say(model.id, `Effective dimension ${cal.radius.effectiveDim.toFixed(0)} of ${cal.radius.effectiveDimCeiling.toFixed(0)} reachable at this sample size; top coordinate carries ${(cal.radius.topDimShare * 100).toFixed(1)}% of the variance.`);
+          say(model.id, cal.radius.apiNormalised ? `Vectors returned unit-normalised.` : `Vectors not unit-normalised: mean norm ${cal.radius.meanNorm.toFixed(3)}.`);
+
+          update(model.id, {
+            status: "done",
+            stage: "done",
+            completed: texts.length,
+            seconds: (Date.now() - startedAt) / 1000,
+          });
         } catch (e) {
+          const message = e instanceof Error ? e.message : String(e);
+          say(model.id, message);
+          const hint = calibrationErrorHint(message);
+          if (hint) say(model.id, hint);
           update(model.id, {
             status: "error",
-            error: e instanceof Error ? e.message : String(e),
+            stage: "error",
+            error: message,
+            seconds: (Date.now() - startedAt) / 1000,
           });
         }
       }
@@ -218,6 +315,8 @@ export function CalibrationProvider({ children }: { children: React.ReactNode })
         running,
         progress,
         calibrate,
+        modalOpen,
+        setModalOpen,
         recalibrate,
         forget,
         forgetAll,

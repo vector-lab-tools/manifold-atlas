@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import { Loader2, Play, Pause, RotateCcw } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { projectPCA3D, spreadPoints3D } from "@/lib/geometry/pca";
@@ -327,7 +328,7 @@ function WalkDeepDive({ results }: { results: WalkResult[] }) {
             <tbody className="divide-y divide-parchment">
               {perModel.map(p => (
                 <tr key={p.modelId}>
-                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={p.modelId} register="term">{p.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.stepCount}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.conceptCount}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.meanNearest.toFixed(4)}</td>
@@ -391,7 +392,7 @@ function WalkPlayer({ result, isDark }: { result: WalkResult; isDark: boolean })
   return (
     <div className="card-editorial overflow-hidden">
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-        <span className="font-sans text-body-sm font-semibold">{result.modelName}</span>
+        <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={result.modelId} register="term">{result.modelName}</ModelRadiusTip></span>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setWalking(!walking)}

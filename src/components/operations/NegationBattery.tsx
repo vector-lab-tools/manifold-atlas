@@ -6,6 +6,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useCalibration } from "@/context/CalibrationContext";
 import { MetricTerm } from "@/components/shared/MetricTerm";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
 import { negationSimilarityLevel, levelFromPosition } from "@/lib/similarity-scale";
@@ -504,7 +505,7 @@ function NegationBatteryDeepDive({ results, threshold }: { results: BatteryResul
             <tbody className="divide-y divide-parchment">
               {perModel.map(p => (
                 <tr key={p.modelId}>
-                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={p.modelId} register="short">{p.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.collapsed} / {stmtCount}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{(p.collapseRate * 100).toFixed(0)}%</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.mean.toFixed(4)}</td>

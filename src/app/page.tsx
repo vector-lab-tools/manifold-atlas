@@ -18,6 +18,7 @@ import { Header } from "@/components/layout/Header";
 import { TabNav, type TabId } from "@/components/layout/TabNav";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { SettingsPanel } from "@/components/layout/SettingsPanel";
+import { CalibrationModal } from "@/components/layout/CalibrationModal";
 import { Calibration } from "@/components/operations/Calibration";
 import { ConceptDistance } from "@/components/operations/ConceptDistance";
 import { DistanceMatrix } from "@/components/operations/DistanceMatrix";
@@ -75,6 +76,7 @@ function AppContent() {
 
       <StatusBar lastQueryTime={lastQueryTime} />
       <SettingsPanel />
+      <CalibrationModal />
       <Clippy />
     </div>
   );

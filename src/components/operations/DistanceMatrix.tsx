@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { useFloors } from "@/components/shared/useFloors";
 import { useCalibration } from "@/context/CalibrationContext";
@@ -165,7 +166,7 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
                   <th className="text-left px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Pair</th>
                   <th className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Variance</th>
                   {result.models.map(r => (
-                    <th key={r.modelId} className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{r.modelName}</th>
+                    <th key={r.modelId} className="text-right px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold"><ModelRadiusTip modelId={r.modelId} register="term">{r.modelName}</ModelRadiusTip></th>
                   ))}
                 </tr>
               </thead>
@@ -204,7 +205,7 @@ export function DistanceMatrix({ onQueryTime }: DistanceMatrixProps) {
       {result && result.models.map(r => (
         <div key={r.modelId} className="card-editorial overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <span className="font-sans text-body-sm font-semibold">{r.modelName}</span>
+            <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={r.modelId} register="term">{r.modelName}</ModelRadiusTip></span>
             <button onClick={() => exportCSV(r, result.concepts)} className="btn-editorial-ghost text-caption px-3 py-1.5">
               <Download size={14} className="mr-1" />
               Export CSV
@@ -336,7 +337,7 @@ function DistanceMatrixDeepDive({ result }: { result: DistanceMatrixResult }) {
             <tbody className="divide-y divide-parchment">
               {models.map((m: DistanceMatrixModelResult) => (
                 <tr key={m.modelId}>
-                  <td className="px-2 py-1 font-medium">{m.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={m.modelId} register="term">{m.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.avgSimilarity.toFixed(4)}</td>
                   <td className="px-2 py-1">{m.mostSimilar.a} ↔ {m.mostSimilar.b}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.mostSimilar.sim.toFixed(4)}</td>

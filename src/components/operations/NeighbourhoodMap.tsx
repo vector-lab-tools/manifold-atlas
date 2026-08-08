@@ -5,6 +5,7 @@ import { Loader2, Plus, X, Zap } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
 import { expandConcept, getExpansionProvider } from "@/lib/expand";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { projectPCA, projectPCA3D } from "@/lib/geometry/pca";
 import { projectUMAP, projectUMAP3D } from "@/lib/geometry/umap-wrapper";
@@ -547,7 +548,7 @@ function NeighbourhoodMapDeepDive({
             <tbody className="divide-y divide-parchment">
               {perModel.map(p => (
                 <tr key={p.modelId}>
-                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={p.modelId} register="term">{p.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.pointCount}</td>
                   <td className="px-2 py-1 uppercase">{p.method}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.dimensions}</td>

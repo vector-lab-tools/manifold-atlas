@@ -15,6 +15,7 @@ import { RateLimitError } from "@/lib/embeddings/client";
 import { useRateLimitCountdown } from "@/components/shared/useRateLimitCountdown";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { useFloors } from "@/components/shared/useFloors";
 import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
@@ -927,7 +928,7 @@ function TopologyResultCard({ result, isDark, conceptTopics }: { result: Topolog
   return (
     <div className="card-editorial overflow-hidden">
       <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-        <span className="font-sans text-body-sm font-semibold">{result.modelName}</span>
+        <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={result.modelId} register="term">{result.modelName}</ModelRadiusTip></span>
         <span className="font-sans text-caption text-muted-foreground">
           {result.concepts.length} concepts, {result.filtrationEdges.length} edges
         </span>

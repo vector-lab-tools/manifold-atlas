@@ -28,6 +28,7 @@ import type {
 import type { DistanceMatrixResult } from "@/lib/operations/distance-matrix";
 import type { GrammarOfVectorsResult } from "@/lib/operations/grammar-of-vectors";
 import { renderCompassSvgString, CompassSvg } from "@/components/viz/CompassSvg";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 
 interface ProtocolStepDeepDiveProps {
   step: ProtocolStepResult;
@@ -146,7 +147,7 @@ function DistanceDeepDive({ result }: { result: ConceptDistanceResult }) {
         <tbody className="divide-y divide-parchment">
           {result.models.map(m => (
             <tr key={m.modelId}>
-              <Td>{m.modelName}</Td>
+              <Td><ModelRadiusTip modelId={m.modelId} register="short">{m.modelName}</ModelRadiusTip></Td>
               <Td align="right" mono>{m.cosineSimilarity.toFixed(4)}</Td>
               <Td align="right" mono>{m.cosineDistance.toFixed(4)}</Td>
               <Td align="right" mono>{m.angularDistance.toFixed(1)}</Td>
@@ -222,7 +223,7 @@ function NegationDeepDive({ result }: { result: NegationGaugeResult }) {
         <tbody className="divide-y divide-parchment">
           {result.models.map(m => (
             <tr key={m.modelId}>
-              <Td>{m.modelName}</Td>
+              <Td><ModelRadiusTip modelId={m.modelId} register="short">{m.modelName}</ModelRadiusTip></Td>
               <Td align="right" mono>{m.cosineSimilarity.toFixed(4)}</Td>
               <Td align="right" mono>{m.cosineDistance.toFixed(4)}</Td>
               <Td align="right" mono>{m.angularDistance.toFixed(1)}</Td>
@@ -570,7 +571,7 @@ function GrammarDeepDive({ result }: { result: GrammarOfVectorsResult }) {
           <tbody className="divide-y divide-parchment">
             {result.modelAggregates.map(ma => (
               <tr key={ma.modelId}>
-                <Td className="font-medium">{ma.modelName}</Td>
+                <Td className="font-medium"><ModelRadiusTip modelId={ma.modelId} register="short">{ma.modelName}</ModelRadiusTip></Td>
                 <Td align="right" mono>{ma.pairCount}</Td>
                 <Td align="right" mono>{ma.meanCosine.toFixed(4)}</Td>
                 <Td align="right" mono>{ma.stdDevCosine.toFixed(4)}</Td>

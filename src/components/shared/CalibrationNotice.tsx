@@ -36,15 +36,17 @@ export function CalibrationNotice({ register, missing }: CalibrationNoticeProps)
             ? `${missing[0].name} has no baseline.`
             : `${missing.length} enabled models have no baseline.`}{" "}
           Cosines below are shown against stipulated bands rather than against a measured{" "}
-          <MetricTerm termKey="floor">floor</MetricTerm> for {REGISTER_LABELS[register]}, so
-          they have no origin to be read from and cannot be compared across models.
+          <MetricTerm termKey="floor">floor</MetricTerm> and{" "}
+          <MetricTerm termKey="coneHalfAngle">radius</MetricTerm> for{" "}
+          {REGISTER_LABELS[register]}, so they have no origin to be read from and cannot be
+          compared across models.
         </p>
         <button
           onClick={() => calibrate(missing.map(m => m.id))}
           disabled={running}
           className="btn-editorial-secondary text-[11px] px-2 py-1 disabled:opacity-50"
         >
-          {running ? "Calibrating…" : "Calibrate now"}
+          {running ? "Measuring…" : "Measure the radius"}
         </button>
       </div>
     </div>

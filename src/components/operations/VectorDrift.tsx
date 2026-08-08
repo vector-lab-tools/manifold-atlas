@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { Loader2, Waypoints, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { useFloors } from "@/components/shared/useFloors";
 import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
@@ -333,7 +334,7 @@ export function ConceptDrift({ onQueryTime }: ConceptDriftProps) {
         return (
           <div key={m.modelId} className="card-editorial overflow-hidden">
             <div className="px-5 pt-5 pb-3">
-              <span className="font-sans text-body-sm font-semibold">{m.modelName}</span>
+              <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={m.modelId} register="short">{m.modelName}</ModelRadiusTip></span>
               <span className="font-sans text-caption text-muted-foreground ml-2">
                 Sentence Sensitivity for &ldquo;{sensitivityResult.concept}&rdquo;
               </span>
@@ -566,7 +567,7 @@ function DriftDeepDive({ result }: { result: DriftResult }) {
             <tbody className="divide-y divide-parchment">
               {perModel.map(p => (
                 <tr key={p.modelId}>
-                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={p.modelId} register="short">{p.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.meanDisp.toFixed(4)}</td>
                   <td className="px-2 py-1 max-w-[260px] truncate" title={p.maxVariant}>{p.maxVariant}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.maxDisp.toFixed(4)}</td>
@@ -750,7 +751,7 @@ function DriftModelPanel({ model, concept, variants, isDark }: {
   return (
     <div className="card-editorial overflow-hidden">
       <div className="px-5 pt-5 pb-3">
-        <span className="font-sans text-body-sm font-semibold">{model.modelName}</span>
+        <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={model.modelId} register="short">{model.modelName}</ModelRadiusTip></span>
       </div>
 
       <div className="thin-rule mx-5" />

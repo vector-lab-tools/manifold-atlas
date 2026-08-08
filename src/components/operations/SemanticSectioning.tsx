@@ -5,6 +5,7 @@ import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/share
 import { Loader2, GitBranch, Download, ChevronRight, ChevronDown } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { useFloors } from "@/components/shared/useFloors";
 import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
@@ -111,7 +112,7 @@ export function SemanticSectioning({ onQueryTime }: SemanticSectioningProps) {
         <div key={r.modelId} className="card-editorial overflow-hidden">
           <div className="px-5 pt-5 pb-3">
             <div className="flex items-center gap-2">
-              <span className="font-sans text-body-sm font-semibold">{r.modelName}</span>
+              <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={r.modelId} register="term">{r.modelName}</ModelRadiusTip></span>
             </div>
           </div>
 
@@ -339,7 +340,7 @@ function SemanticSectioningDeepDive({ results }: { results: SemanticSectioningMo
             <tbody className="divide-y divide-parchment">
               {perModel.map(p => (
                 <tr key={p.modelId}>
-                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={p.modelId} register="term">{p.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.anchorSim.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.meanNearest.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.conceptCount}</td>

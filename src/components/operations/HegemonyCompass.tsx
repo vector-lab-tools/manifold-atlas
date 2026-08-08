@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2, Plus, ChevronRight, ChevronDown, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { useFloors } from "@/components/shared/useFloors";
 import { useCalibration } from "@/context/CalibrationContext";
@@ -966,7 +967,7 @@ function CompassDeepDive({ axisStats }: { axisStats: ModelAxisStats[] }) {
             <tbody className="divide-y divide-parchment">
               {axisStats.map(a => (
                 <tr key={a.modelId}>
-                  <td className="py-1 pr-3 font-medium">{a.modelName}</td>
+                  <td className="py-1 pr-3 font-medium"><ModelRadiusTip modelId={a.modelId} register="term">{a.modelName}</ModelRadiusTip></td>
                   <td className="py-1 pr-3 text-right">{a.xInterPoleCosine.toFixed(4)}</td>
                   <td className="py-1 pr-3 text-right">
                     {a.xInterPolePosition !== null

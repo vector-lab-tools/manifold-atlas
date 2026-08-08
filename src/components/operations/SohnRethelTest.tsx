@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { cosineSimilarity } from "@/lib/geometry/cosine";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
@@ -301,7 +302,7 @@ function SohnRethelDeepDive({ results }: { results: Array<AbstractionPair & { mo
             <tbody className="divide-y divide-parchment">
               {perModel.map(p => (
                 <tr key={p.modelId}>
-                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={p.modelId} register="term">{p.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.mean.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.completed} / {pairCount}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{(p.completionRate * 100).toFixed(0)}%</td>

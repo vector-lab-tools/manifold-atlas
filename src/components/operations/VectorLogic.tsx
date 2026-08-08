@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, Download, ChevronRight, ChevronDown } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { useFloors } from "@/components/shared/useFloors";
 import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
@@ -173,7 +174,7 @@ export function VectorLogic({ onQueryTime }: VectorLogicProps) {
       {results.map(r => (
         <div key={r.modelId} className="card-editorial overflow-hidden">
           <div className="px-5 pt-5 pb-3">
-            <span className="font-sans text-body-sm font-semibold">{r.modelName}</span>
+            <span className="font-sans text-body-sm font-semibold"><ModelRadiusTip modelId={r.modelId} register="term">{r.modelName}</ModelRadiusTip></span>
           </div>
           <div className="thin-rule mx-5" />
 
@@ -399,7 +400,7 @@ function VectorLogicDeepDive({ results }: { results: VectorLogicModelResult[] })
             <tbody className="divide-y divide-parchment">
               {results.map(r => (
                 <tr key={r.modelId}>
-                  <td className="px-2 py-1 font-medium">{r.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={r.modelId} register="term">{r.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1">{r.nearest[0]?.concept ?? "—"}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{r.nearest[0]?.similarity.toFixed(4) ?? "—"}</td>
                   <td className="px-2 py-1">{r.nearest[1]?.concept ?? "—"}</td>

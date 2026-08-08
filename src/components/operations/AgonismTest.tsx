@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, Download } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { normalisedPosition } from "@/lib/calibration/baseline";
 import { useFloors } from "@/components/shared/useFloors";
@@ -393,7 +394,7 @@ function AgonismDeepDive({ results }: { results: AgonismResult[] }) {
             <tbody className="divide-y divide-parchment">
               {perModel.map(p => (
                 <tr key={p.modelId}>
-                  <td className="px-2 py-1 font-medium">{p.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={p.modelId} register="short">{p.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.collapsed} / {pairCount}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{(p.collapseRate * 100).toFixed(0)}%</td>
                   <td className="px-2 py-1 text-right tabular-nums">{p.mean.toFixed(4)}</td>

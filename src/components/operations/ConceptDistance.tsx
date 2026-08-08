@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowRight, Loader2, ChevronRight, ChevronDown } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useEmbedAll } from "@/components/shared/useEmbedAll";
+import { ModelRadiusTip } from "@/components/shared/ModelRadiusTip";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { SimilarityBridge } from "@/components/viz/SimilarityBridge";
 import { SimilarityMeter } from "@/components/viz/SimilarityMeter";
@@ -14,7 +15,7 @@ import { useFloors } from "@/components/shared/useFloors";
 import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
 import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { CalibratedBar } from "@/components/viz/CalibratedBar";
-import { normalisedPosition } from "@/lib/calibration/baseline";
+import { normalisedPosition, angleDegrees } from "@/lib/calibration/baseline";
 import { ResetButton } from "@/components/shared/ResetButton";
 import {
   computeConceptDistance,
@@ -184,7 +185,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                 {/* Bridge display */}
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-sans text-body-sm font-medium">{m.modelName}</span>
+                    <span className="font-sans text-body-sm font-medium"><ModelRadiusTip modelId={m.modelId} register="term">{m.modelName}</ModelRadiusTip></span>
                     <span className="font-sans text-caption text-muted-foreground">{m.providerId}</span>
                   </div>
                   <SimilarityBridge
@@ -255,7 +256,12 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                           {m.cosineSimilarity.toFixed(4)}
                         </div>
                         <div className="font-sans text-caption text-muted-foreground mt-0.5">
-                          1.0 = identical, 0.0 = orthogonal
+                          {(() => {
+                            const f = floors.floor(m.modelId);
+                            return f === null
+                              ? "1.0 = identical; the low end is unmeasured"
+                              : `1.0 = identical, ${f.toFixed(3)} = the floor for this model`;
+                          })()}
                         </div>
                       </div>
 
@@ -279,7 +285,12 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                           {m.angularDistance.toFixed(1)}&deg;
                         </div>
                         <div className="font-sans text-caption text-muted-foreground mt-0.5">
-                          of 180&deg; maximum separation
+                          {(() => {
+                            const f = floors.floor(m.modelId);
+                            if (f === null) return "no measured arc for this model, and not of 180\u00B0";
+                            const arc = angleDegrees(f);
+                            return `of ${arc.toFixed(1)}\u00B0, the largest separation this model's radius allows`;
+                          })()}
                         </div>
                       </div>
 
@@ -483,7 +494,7 @@ function ConceptDistanceDeepDive({ result }: { result: ConceptDistanceResult }) 
             <tbody className="divide-y divide-parchment">
               {models.map(m => (
                 <tr key={m.modelId}>
-                  <td className="px-2 py-1 font-medium">{m.modelName}</td>
+                  <td className="px-2 py-1 font-medium"><ModelRadiusTip modelId={m.modelId} register="term">{m.modelName}</ModelRadiusTip></td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.cosineSimilarity.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.cosineDistance.toFixed(4)}</td>
                   <td className="px-2 py-1 text-right tabular-nums">{m.angularDistance.toFixed(1)}</td>

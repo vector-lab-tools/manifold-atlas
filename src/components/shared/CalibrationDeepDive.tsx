@@ -130,7 +130,7 @@ export function CalibrationDeepDive({
                   <MetricTerm termKey="topicalCeiling">ceiling</MetricTerm>
                 </th>
                 <th className="py-1 pr-3 font-medium text-right">
-                  <MetricTerm termKey="coneHalfAngle">cone</MetricTerm>
+                  <MetricTerm termKey="coneHalfAngle">radius</MetricTerm>
                 </th>
                 <th className="py-1 pr-3 font-medium text-right">
                   <MetricTerm termKey="usableRange">range</MetricTerm>
@@ -166,15 +166,16 @@ export function CalibrationDeepDive({
           </table>
         </div>
         <p className="font-sans text-[10px] text-muted-foreground mt-1.5">
-          n = {floorFor(records[0], register).n} pairs per model. Arc is the largest angular
-          separation two texts of this register can show in that model, which is the
+          n = {floorFor(records[0], register).n} pairs per model. Radius is the half-angle of the
+          cone the model actually uses for this register, and arc is the largest angular
+          separation two texts of this register can show in it. The arc, not 180°, is the
           denominator any angle above should be read against.
         </p>
       </DeepDiveSection>
 
       <DeepDiveSection
-        title="Radius profile"
-        tip="Properties of the model's output rather than of a register: how many dimensions the variance really uses, whether a single coordinate dominates, and whether the provider returns unit vectors."
+        title="Radius profile — the shape of the space these numbers were measured in"
+        tip="The radius is not one number. These are the properties of the model's output rather than of a register: how many dimensions the variance really uses, whether a single coordinate dominates, and whether the provider returns unit vectors. Read them beside the cone angle, which describes the space as a cap around one mean direction and is only a first-order description."
       >
         <div className="overflow-x-auto">
           <table className="w-full font-sans text-caption tabular-nums">
@@ -309,7 +310,9 @@ export function CalibrationDeepDive({
           </table>
         </div>
         <p className="font-sans text-[10px] text-muted-foreground mt-1.5">
-          The column this operation uses is in bold.
+          The column this operation uses is in bold. The radius differs by register in the same
+          model, which is why a figure taken on bare terms cannot be quoted against a floor
+          measured on sentences.
         </p>
       </DeepDiveSection>
 
@@ -380,7 +383,7 @@ export function CalibrationDeepDive({
 
       <DeepDiveSection
         title="Reporting lines"
-        tip="Paste alongside any figure taken from this run, so the number carries the scale it was measured on."
+        tip="Paste alongside any figure taken from this run. The line names the radius, the floor and the ceiling, so a cosine quoted from here arrives with the scale it was measured on rather than as a bare number."
       >
         <div className="space-y-1">
           {records.map(cal => (
