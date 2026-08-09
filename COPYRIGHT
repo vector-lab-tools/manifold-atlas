@@ -1,0 +1,47 @@
+Manifold Atlas
+Comparative geometry of AI vector spaces
+
+Copyright (C) 2026 David M. Berry <https://orcid.org/0000-0001-5106-4407>
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+The full text of the licence is in the file LICENSE.
+
+
+RELICENSING NOTICE
+------------------
+
+Manifold Atlas was released under the MIT Licence from its first public
+version up to and including version 1.17.2.
+
+I, David M. Berry, am the sole copyright holder in this work. As of
+version 1.18.0 I relicense it under the GNU General Public License,
+version 3 or (at your option) any later version.
+
+This relicensing applies to every prior version of Manifold Atlas as
+well as to the current one. All previously released versions, including
+every version distributed under the MIT Licence, may from this date be
+used, copied, modified and redistributed under the terms of the GPL,
+version 3 or later.
+
+Copies already obtained under the MIT Licence remain validly licensed
+under those terms, since a licence already granted cannot be withdrawn.
+Recipients of those copies may continue under the MIT Licence or, at
+their option, proceed under the GPL version 3 or later.
+
+Third-party dependencies retain their own licences. Every dependency in
+this project is distributed under terms compatible with the GPL version
+3: MIT, ISC, BSD-2-Clause, BSD-3-Clause, 0BSD, Zlib, Apache-2.0,
+MPL-2.0, LGPL-3.0-or-later, Python-2.0, CC0-1.0, CC-BY-4.0,
+BlueOak-1.0.0 and Unlicense. Their terms are unaffected by this notice.

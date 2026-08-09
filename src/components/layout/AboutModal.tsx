@@ -92,7 +92,21 @@ export function AboutModal() {
                 </span>
 
                 <span className="text-muted-foreground">Licence</span>
-                <span className="font-medium">MIT</span>
+                <span className="font-medium">
+                  <a
+                    href="https://www.gnu.org/licenses/gpl-3.0.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-burgundy underline underline-offset-2"
+                  >
+                    GPL-3.0-or-later
+                  </a>
+                  <span className="block text-muted-foreground font-normal">
+                    Free software. You may redistribute and modify it under the terms of the
+                    GNU General Public License, version 3 or any later version, with no
+                    warranty.
+                  </span>
+                </span>
               </div>
             </div>
 
