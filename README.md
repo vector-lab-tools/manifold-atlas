@@ -17,7 +17,9 @@
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, projections, and topological features that reveal the geometry's structure. It also maps the discursive grammars LLM text generation falls into — the "Not X but Y" family of antithetical constructions — against the actual cosine geometry of the fragments they claim to oppose, surfacing what the tool calls the *synthetic dialectic*: rhetoric performing thesis-and-antithesis while the underlying geometric move is a slight rotation between near-neighbours.
 
-![Manifold Atlas - Neighbourhood Map](docs/screenshot-neighbourhood.png)
+![Manifold Atlas, with Concept Distance computed across four models](docs/overview.png)
+
+*Manifold Atlas: the comparative instrument for reading the geometry of embedding models.*
 
 The tool operationalises [vector theory](https://doi.org/10.1007/s13347-026-01162-w) as set out by David M. Berry. This includes the embedding API as telescope, the manifold as the object of study, and cosine similarity as the primary instrument. Without the framework, the numbers are curiosities. With it, they are evidence for geometric ideology, the negation deficit, and the proprietary encoding of human language.
 
@@ -67,6 +69,60 @@ Manifold Atlas is organised as a tabbed workspace with seventeen operations. Eac
 | Text Vectorisation | What is the shape of reading through the manifold? | Reading as geometric trajectory |
 | Persistent Homology | What can the geometry not represent? | The unthinkable of the machine |
 
+## The Radius of a Model
+
+A cosine on its own cannot be read. Embedding vectors do not spread over the whole sphere: they cluster into a cone around a single mean direction, so two entirely unrelated texts already sit at a high cosine, and where that floor falls differs from model to model. The radius is the half-angle of that cone, and it is the scale every other number has to be read against.
+
+![Cone diagrams for four models across three registers](docs/radius-cones.png)
+
+*Four models, three registers each, drawn to the same scale. The shaded cap is the part of the sphere the model reaches; the dashed outline is every direction it does not. The two dark lines are where a pair of unrelated texts actually sits.*
+
+### How it is measured
+
+Normalise every calibration vector to unit length and average them. If the vectors pointed in all directions the average would cancel to nearly zero; the further its length sits above zero, the tighter the cone. Writing each vector as a rotation away from that mean direction, and taking the residuals to be roughly orthogonal in high dimensions, the expected cosine between two of them is the square of the mean cosine angle:
+
+```
+E[cos]  =  (‖mean of the unit vectors‖² − 1/n) / (1 − 1/n)
+radius  =  arccos( √E[cos] )
+```
+
+The `1/n` term is a sample-size correction. The average of *n* unit vectors has squared length `1/n` even in a perfectly isotropic space, so without it a sixty-text sample could never report a cone wider than about 83°.
+
+Two angles follow from this and they are not the same, which is the usual confusion. The **radius** is how far one text sits from the mean direction. The **floor angle**, `arccos(floor)`, is how far apart two unrelated texts sit from *each other*, and it is the widest separation any real pair will show. It is wider than the radius but narrower than twice it. Angular distances in the application are reported against that arc rather than against 180°, because no pair of real texts ever approaches 180°.
+
+### Why it matters
+
+Because the same cosine means different things in different models, and across models it may mean nothing at all. Measured on four models:
+
+| model | provider | floor (declaratives) | radius | usable range |
+|---|---|---|---|---|
+| All-MiniLM (384d) | Ollama | 0.1220 | 69.6° | 0.878 |
+| BGE Small (384d) | Hugging Face | 0.5387 | 42.8° | 0.461 |
+| Nomic Embed Text (768d) | Ollama | 0.4223 | 49.5° | 0.578 |
+| Snowflake Arctic Embed (1024d) | Ollama | 0.7817 | 27.9° | 0.218 |
+
+A cosine of 0.80 sits well above the floor in All-MiniLM and *below* it in Snowflake Arctic Embed. Snowflake has roughly a quarter of the scale All-MiniLM has: 78% of the nominal zero-to-one range is unreachable, so a reading of 0.80 there is not a strong result but a weak one. Comparing raw cosines between those two models is not a comparison.
+
+### The radius differs by register, and not in the same direction
+
+Measured across six models on bare terms, short declaratives and prose, three different orderings appear, two models to each:
+
+| ordering | models |
+|---|---|
+| narrows as text lengthens | Nomic Embed Text, Granite Embedding |
+| widens as text lengthens | mxbai Embed Large, BGE Large |
+| non-monotonic | All-MiniLM, Snowflake Arctic Embed |
+
+Register-dependence is real, but its *direction* is a property of the individual model rather than of embedding spaces. No single correction derived from one model has the right sign for the others, which is why the floor is measured per register rather than once.
+
+### Reading it in the application
+
+<img src="docs/radius-hover.png" alt="The radius hover card for one model" width="420">
+
+*Hovering any model name gives its radius, the floor and the topical ceiling drawn against the full zero-to-one scale, and a note on how to read a cosine against those two anchors. A cone icon beside the name opens the drawing above.*
+
+The radius is a first-order figure. It describes the space as a symmetric cap around one mean direction, which real embedding spaces only approximate, and the effective dimension and top-coordinate share reported alongside it are what show how far off that description is. The glossary entry says so on hover rather than leaving it implied.
+
 ## Features
 
 ### Calibration
@@ -98,6 +154,14 @@ A cosine has no meaning without the scale it sits on. Embedding vectors occupy a
 
 **Calibration reports itself as it runs.** A run opens a live panel from wherever it was triggered and prints each model's measurements as they land, then leaves them on screen with a copyable reporting line. Failures are named there too, with an actionable hint: a rejected API key now says so instead of looking like a button that did nothing.
 
+![The calibration run printing each model's floors, radii and dimension statistics as they land](docs/calibration-run.png)
+
+*A completed run across four models and two providers. Each model prints its floors and radius for all three registers, its topical ceiling, its effective dimension against the ceiling the sample size allows, and a reporting line to paste beside a figure. The verification step is in the log: six sampled vectors re-embedded and checked against the run, here agreeing to 1e-16 on the local models and 4.5e-13 on the remote one.*
+
+![The Calibration tab showing a radius card per model](docs/calibration-panel.png)
+
+*The Calibration tab afterwards. Floors run from 0.12 in All-MiniLM to 0.78 in Snowflake Arctic Embed, so the usable range runs from 0.88 down to 0.22: a cosine of 0.80 sits well above the floor in one of these models and below it in another.*
+
 Every calibration number carries its definition on hover: what it is, how it is computed, and how to read a value. The definitions live in one glossary module, so the tooltip in one panel and the help text in another cannot drift apart.
 
 **Every operation carries the full record.** The headline views show one derived figure each, a position or a band or a colour. The complete calibration sits in each operation's Deep Dive: the floor for every register with its dispersion and percentiles, the topical ceiling, the cone per register, the usable range, the angular range, the dimension statistics against their sample ceiling, the norm behaviour, this run's own cosines rescaled, and a note on how calibration entered that particular computation. Nothing derived is presented without the numbers behind it.
@@ -105,8 +169,18 @@ Every calibration number carries its definition on hover: what it is, how it is 
 ### Concept Distance
 Measure the geometric relationship between any two concepts. Enter two terms and see their cosine similarity across all configured embedding models, with detailed metrics (angular separation, euclidean distance, vector norms, top contributing dimensions) and interpretive text explaining what the similarity level means.
 
+
+![Concept Distance across four embedding models](docs/concept-distance.png)
+
+*The same pair of concepts in four models. The raw cosine differs from model to model and so does the floor it has to be read against, so the figure that can be compared is the position on each model's own scale, not the cosine itself.*
+
 ### Neighbourhood Map
 Map the local structure of the manifold around a concept. Enter terms manually, load presets (Philosophy, Carpentry, Critical Theory, Democracy, etc.), or use **Manifold Scan** to auto-generate ~300 related terms and fire them all into the embedding space. Interactive 3D scatter plot with auto-rotation, cluster detection, connection mesh, and cross-domain analysis (border concepts, bridges, inter-manifold distance).
+
+
+![The Neighbourhood Map 3D projection](docs/neighbourhood-map.png)
+
+*The Neighbourhood Map over a preset vocabulary of democracy and power, projected to three dimensions with cluster colouring.*
 
 ### Negation Gauge
 Negation works differently in the manifold than in logic. Where logic treats "A" and "not A" as categorical opposites, the geometry stores them close together, differing in only a few dimensions out of hundreds. The tool embeds the original statement and its negation, measures their cosine similarity, and reports it against the model's measured floor rather than against a stipulated constant.
@@ -125,6 +199,15 @@ The inserted-modifier control is the tightest, because it performs exactly the e
 
 Control generation is rule-based and deterministic, and conservative by design. Predicates are only substituted where the predicate is a single word, because swapping the last word of a noun phrase yields strings like "the best form of quarterly", and an ungrammatical control measures what the model does with broken syntax rather than a same-size edit. Antonyms come from a lexicon only, never from prefix derivation, so no probe is offered "ungovernment" as an opposite. Where a control cannot be generated the panel says so instead of substituting a worse one.
 
+
+![The Negation Gauge verdict for one model](docs/negation-gauge.png)
+
+*A claim and its negation in Snowflake Arctic Embed. The raw cosine is 0.9876, which on this model's measured scale is 94% of the reachable range, and the bar shows why: 78% of the nominal scale sits below the floor and is unreachable. The verdict names the distance; the line beneath gives the reason.*
+
+![The Negation Gauge with the supporting sections expanded](docs/negation-controls.png)
+
+*The same card with More information opened: the control family, the matched edits the negation is compared against, and the per-model geometry. The control comparison is the claim that survives the token-overlap objection, so it is the one stated outright.*
+
 ### Negation Battery
 Run a battery of negation tests automatically against pre-built sets or custom statements. Ships with seven built-in batteries covering political, ethical, factual, epistemological, economic, aesthetic, and technology claims (10 statements each, 70 total). Users can save their own custom statements as named batteries that appear in the dropdown alongside the built-ins and are addressable by name from protocol steps. Produces a report card with collapse rate, average similarity, mean floor-to-identity position, the count of tests where the negation beat every same-size control, a per-statement results table, and CSV export.
 
@@ -140,11 +223,21 @@ Measure how much context displaces a concept's position in the manifold. Embed t
 ### Hegemony Compass
 Place a contested concept ("freedom", "democracy", "intelligence") between two competing ideological clusters and measure which side the manifold pulls it toward. Pre-loaded tests for Freedom (market liberalism vs emancipatory politics), Democracy (liberal proceduralism vs radical democracy), Intelligence (techno-rationalism vs embodied cognition), Security, and Progress. The result reveals which ideological framing the geometry has naturalised as the default meaning.
 
+
+![Six contested concepts plotted on the Hegemony Compass](docs/hegemony-compass.png)
+
+*Six contested concepts placed between two ideological axes. A compass coordinate is a difference of two cosines, so the floor cancels and calibration does not move any point; what it supplies is the scale, since the reachable interval for a difference is bounded by the usable range and that differs by model.*
+
 ### Real Abstraction Test
 Measure how far the manifold has performed the real abstraction (after Sohn-Rethel). Each pair contrasts a concrete use-value description ("a warm coat that keeps the rain off") with its abstract exchange-value equivalent ("a commodity worth twenty yards of linen"). If the distance is small, the abstraction is already complete in the geometry. If large, the use-value has partially resisted encoding. 12 pre-loaded pairs across domains from clothing to care work.
 
 ### Distance Matrix
 Enter a list of concepts and get a full pairwise cosine similarity heatmap across all enabled models. Highlights the most and least similar pairs, and when multiple models are enabled, identifies pairs where models disagree most (politically contested geometry). CSV export.
+
+
+![The Contested Geometry table, ranked on floor-to-identity position](docs/distance-matrix.png)
+
+*Contested Geometry: the concept pairs the models most disagree about. The ranking runs on each model's floor-to-identity position rather than on raw cosine, so a difference between the models' floors does not read as a disagreement about the concepts.*
 
 ### Agonism Test
 Does the manifold preserve genuine philosophical opposition, or collapse it into proximity? Eight pre-loaded debates (Marx vs Burke, Hegel vs Kierkegaard, Arendt vs Schmitt, Foucault vs Aristotle, and more). The agonism score measures how much intellectual conflict survives geometrisation. This is the negation deficit extended from logic to philosophical antagonism.
@@ -161,10 +254,17 @@ Paste a passage of text and watch a particle trace its reading path through the 
 ### Grammar of Vectors
 Maps discursive quirks of LLM text generation — the "Not X but Y" family of constructions that perform antithesis while the underlying geometric move is a slight rotation to a near-neighbour. Ships with five grammars: Not X but Y (the core), Not just X but Y (RLHF-flavoured intensifier), It's not X, it's Y (false-correction), While X, Y (conciliation pivot), and What matters is not X but Y (cleft emphasis). Each grammar carries four register batteries (Marketing, AI pedagogical, Political op-ed, Technology discourse) with ~12 curated constructions each. The operation embeds the X and Y fragments the construction claims are opposed and measures cosine similarity, cosine distance, angular distance, Euclidean distance, and vector norms per model. The gap between rhetorical opposition and geometric reality — what the tool calls *synthetic dialectic* (or *syn-dialectic* in tight UI contexts) — is the empirical object. Results show a per-construction × per-model matrix with expandable rows for the full geometry, sortable by any column (construction, number, range, or per-model cosine). A Deep Dive panel adds per-model aggregates, a threshold sweep to check how robust the finding is to the 0.55 default, a cosine distribution histogram across all tests, the most-contested constructions, and top-10 most-deceptive / most-preserved extremes. Custom mode accepts pasted prose or `X | Y` pipe pairs; Load template and Load example buttons give a running start. CSV export carries every metric. Companion protocol "Grammar of Vectors Sweep" runs all five grammars across four registers in eleven steps (~280 embeddings). The operation is embedding-only: the X and Y fragments either come from the preset register batteries or are supplied by the user.
 
+
+![The Grammar of Vectors measuring 'Not X but Y' constructions](docs/grammar-of-vectors.png)
+
+*The "Not X but Y" family measured against the geometry of the fragments it claims to oppose. The cutoff is each model's measured topical ceiling rather than a stipulated constant.*
+
 ### Persistent Homology
 Persistent homology (Topological Data Analysis) applied to embedding spaces. Measures the shape of the manifold across all scales simultaneously by gradually increasing a distance threshold and tracking when topological features (clusters, loops) appear and disappear. Pure TypeScript Vietoris-Rips implementation. Four visualisation modes: persistence diagram (birth vs death scatter), barcode diagram (horizontal bars sorted by persistence), Rips complex (Three.js 3D scene with component colouring, hover tooltips, auto-rotate, and PNG export), and Betti curve (connected components and loops vs threshold). The Rips complex view includes an optional void cloud: a nebulous particle fog (custom shader with depth-based size attenuation) that fills empty regions inside the manifold, making the unthinkable of the machine visible as ghostly matter. Void colour (amber, burgundy, blue, smoke) and intensity are adjustable. Twenty toggle-chip presets spanning political claims, knowledge domains, critical theory, AI and computation, labour and capital, ecology, media and culture, body and phenomenology, tech company claims, accelerationism, effective altruism, finance, feminism, ecology, neoliberalism, philosophy of mind, existentialism, media archaeology, literary critique, and semiotics. Select multiple presets to overlay them with topic colouring and centroid labels. Double-click the threshold slider to snap to the intra-topic connectivity threshold.
 
-![Manifold Atlas - Rips Complex](docs/rips-complex-example.png)
+![Rips complex of twenty political claims, with isolated concepts listed beneath](docs/persistent-homology.png)
+
+*Persistent homology over twenty political claims. At this threshold the complex has seventeen components and no loops, so most of the claims are still isolated points: the conceptual islands are listed underneath the plot.*
 
 ## Library
 
@@ -175,6 +275,11 @@ Every step of every protocol is editable before running. The per-step editor let
 Eight of the sixteen operations are wired to the Runner (Concept Distance, Distance Matrix, Vector Logic, Negation Gauge, Negation Battery, Semantic Sectioning, Agonism Test, Hegemony Compass). The remaining visualisation-heavy operations (Neighbourhood Map, Vector Drift, Vector Walk, Text Vectorisation, Persistent Homology, Real Abstraction Test, Silence Detector) remain available in their own tabs.
 
 You can also add your own tests. The Add Test modal accepts either pasted markdown or an uploaded .md file. A Start-from dropdown lets you load any built-in test as a template to edit, or start from a minimal three-step example. Added tests are persisted in browser storage, appear in the Library alongside the built-ins with a Custom badge, and can be edited, downloaded as .md, or removed at any time. This makes the tool extensible without any code changes: researchers can distribute their own test markdown alongside a paper, and anyone with the link can load it into Manifold Atlas.
+
+
+![The protocol Library](docs/library-runner.png)
+
+*The Library: curated sequences of operations, each producing an exportable report.*
 
 ### PDF export for researchers
 
