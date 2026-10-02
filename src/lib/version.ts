@@ -7,4 +7,4 @@
  * All UI components should import from here.
  */
 export const VERSION = "1.19.0";
-export const VERSION_DATE = "8 August 2026";
+export const VERSION_DATE = "2 October 2026";
