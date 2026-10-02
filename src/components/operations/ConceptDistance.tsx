@@ -26,30 +26,51 @@ import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/share
 const DEFAULT_A = "solidarity";
 const DEFAULT_B = "compliance";
 
-function interpretSimilarity(sim: number): { text: string; detail: string } {
-  if (sim >= 0.95) return {
-    text: "Near-identical",
-    detail: "The manifold treats these concepts as virtually the same point. This is either a genuine semantic equivalence or a failure of geometric discrimination.",
+/**
+ * The long-form reading beneath the verdict.
+ *
+ * This used to band the raw cosine against fixed cutoffs, which put it
+ * in direct conflict with the verdict printed above it. In a model
+ * whose floor is 0.708 a cosine of 0.787 fell in the ">= 0.7" bucket
+ * and was described as "High similarity ... a strong associative
+ * relationship", while the calibrated verdict correctly read the same
+ * figure as 27% of the reachable range and near the floor. Two voices
+ * in one card, and the uncalibrated one was wrong.
+ *
+ * It now reads the same floor-to-identity position the verdict reads,
+ * so there is one reading rather than two.
+ */
+function interpretSimilarity(
+  sim: number,
+  floor: number | null
+): { text: string; detail: string } {
+  if (floor === null) {
+    return {
+      text: "Unmeasured scale",
+      detail:
+        "This model has no measured floor, so the cosine above has no origin to be read from. It cannot be called high or low, and it cannot be compared with the same figure from another model. Calibrate the model to place it.",
+    };
+  }
+  const p = normalisedPosition(sim, floor);
+  if (p >= 0.95) return {
+    text: "Indistinguishable",
+    detail: "The two sit at effectively the same point on this model\u2019s scale. That is either a genuine equivalence or a failure of discrimination, and the geometry alone does not say which.",
   };
-  if (sim >= 0.85) return {
-    text: "Very high similarity",
-    detail: "The manifold positions these concepts as close neighbours. They occupy overlapping regions of the geometry, suggesting the model treats them as closely related or interchangeable in many contexts.",
+  if (p >= 0.85) return {
+    text: "Very close",
+    detail: "The pair sits near the top of what this model can express. Within the range this model actually uses, there is little room left between them.",
   };
-  if (sim >= 0.7) return {
-    text: "High similarity",
-    detail: "The concepts share a significant portion of their geometric neighbourhood. The manifold encodes a strong associative relationship between them, though they remain distinguishable.",
+  if (p >= 0.6) return {
+    text: "Close",
+    detail: "The pair is clearly nearer to each other than two unrelated texts are, and above where merely sharing a subject would put them.",
   };
-  if (sim >= 0.5) return {
-    text: "Moderate similarity",
-    detail: "The concepts are related but occupy distinct regions. The manifold recognises a connection but maintains geometric separation. This is typical of concepts within the same broad domain.",
-  };
-  if (sim >= 0.3) return {
-    text: "Low similarity",
-    detail: "The concepts are geometrically distant. The manifold positions them in different regions of the space, suggesting they belong to distinct semantic domains with limited overlap.",
+  if (p >= 0.3) return {
+    text: "Somewhat apart",
+    detail: "The pair sits about midway between unrelated text and identity on this model\u2019s scale. The model registers a relation without placing them together.",
   };
   return {
-    text: "Very low similarity",
-    detail: "The concepts are near-orthogonal in the manifold. The geometry encodes no meaningful relationship between them. They occupy effectively independent regions of the space.",
+    text: "Far apart",
+    detail: "The pair is about as distant as two unrelated texts in this model. Note that the raw cosine may still look high: in a model with a narrow range, most of the nominal zero-to-one scale is unreachable, and a figure that reads as large on that scale can sit at the bottom of the range the model actually uses.",
   };
 }
 
@@ -177,7 +198,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
       {result && (
         <div className="space-y-4">
           {result.models.map(m => {
-            const interp = interpretSimilarity(m.cosineSimilarity);
+            const interp = interpretSimilarity(m.cosineSimilarity, floors.floor(m.modelId));
             const isExpanded = expandedModel === m.modelId;
 
             return (

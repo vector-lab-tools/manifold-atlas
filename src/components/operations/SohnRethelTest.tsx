@@ -56,30 +56,54 @@ const PRELOADED_PAIRS: AbstractionPair[] = [
  * Same decision as the Agonism Test's move to observation-only labels
  * and the Negation Gauge's move away from "registered / lost".
  */
-function abstractionLevel(similarity: number): { label: string; detail: string; color: string } {
-  if (similarity >= 0.85) return {
-    label: "Almost the same",
-    detail: "the qualitative and the quantitative description sit at nearly the same point",
-    color: "#dc2626",
-  };
-  if (similarity >= 0.7) return {
-    label: "Barely different",
-    detail: "the qualitative description sits close to the exchange-value wording",
+/**
+ * How far apart the model puts the use-value and exchange-value
+ * descriptions of the same thing, on that model's measured scale.
+ *
+ * The labels describe distance and nothing else. An earlier version
+ * said "Fully abstracted: the manifold has completed the real
+ * abstraction", which delivers the theoretical conclusion as though it
+ * were the measurement. Two descriptions sitting close together is
+ * evidence a reader may take as real abstraction; it is not itself real
+ * abstraction. The Sohn-Rethel reading belongs in the interpretation,
+ * where it can be argued with.
+ *
+ * It also banded the raw cosine against fixed cutoffs, which put it at
+ * odds with the calibrated verdict above it in the same card.
+ */
+function abstractionLevel(
+  similarity: number,
+  floor: number | null
+): { label: string; detail: string; color: string } {
+  if (floor === null) return {
+    label: "Unmeasured scale",
+    detail: "this model has no measured floor, so the cosine has no origin",
     color: "#ea580c",
   };
-  if (similarity >= 0.5) return {
-    label: "Somewhat different",
-    detail: "some geometric distance survives between the two descriptions",
+  const p = normalisedPosition(similarity, floor);
+  if (p >= 0.95) return {
+    label: "Indistinguishable",
+    detail: "the qualitative and the quantitative description sit at effectively the same point",
+    color: "#dc2626",
+  };
+  if (p >= 0.85) return {
+    label: "Very close",
+    detail: "near the top of the range this model can express",
+    color: "#ea580c",
+  };
+  if (p >= 0.6) return {
+    label: "Close",
+    detail: "clearly nearer each other than two unrelated texts are",
     color: "#d97706",
   };
-  if (similarity >= 0.3) return {
-    label: "Clearly different",
-    detail: "the qualitative description holds a position of its own",
+  if (p >= 0.3) return {
+    label: "Somewhat apart",
+    detail: "about midway between unrelated text and identity on this model\u2019s scale",
     color: "#65a30d",
   };
   return {
     label: "Far apart",
-    detail: "the two descriptions are barely more alike than unrelated text",
+    detail: "about as distant as two unrelated texts in this model",
     color: "#16a34a",
   };
 }
@@ -250,7 +274,7 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
                       avgPos !== null
                         ? { ...levelFromPosition(avgPos), bgColor: "transparent" }
                         : {
-                            ...abstractionLevel(avgSimilarity),
+                            ...abstractionLevel(avgSimilarity, floors.floor(firstModel)),
                             bgColor: "transparent",
                             severity:
                               avgSimilarity >= 0.7 ? "high" : avgSimilarity >= 0.5 ? "moderate" : "low",
@@ -283,7 +307,7 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
                   </div>
                 </div>
                 {r.models.map(m => {
-                  const level = abstractionLevel(m.similarity);
+                  const level = abstractionLevel(m.similarity, floors.floor(m.modelId));
                   return (
                     <div key={m.modelId} className="mt-3">
                       <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">

@@ -23,6 +23,7 @@ import { addHistoryEntry, type HistoryEntry } from "@/lib/history";
 
 import { ResetButton } from "@/components/shared/ResetButton";
 import { generateNegation } from "@/lib/negation";
+import { normalisedPosition } from "@/lib/calibration/baseline";
 import {
   computeNegationGauge,
   negationGaugeTextList,
@@ -33,26 +34,45 @@ import { DeepDivePanel, DeepDiveSection, DeepDiveStat } from "@/components/share
 
 const DEFAULT_STATEMENT = "This policy is fair";
 
-function negationVerdict(sim: number, threshold: number): { severity: string; explanation: string } {
-  if (sim >= 0.98) return {
-    severity: "Almost the same",
-    explanation: "The claim and its opposite are at almost the same place. Adding \u201Cnot\u201D has barely moved anything. Note what this does and does not say: the two sentences occupy nearly the same position, which is a fact about distance. It does not follow that the model has failed to understand the reversal, only that its geometry does not express one.",
-  };
+/**
+ * The long-form reading. Takes the model's floor so the rungs below the
+ * cutoff are positions on the measured scale rather than raw cosines;
+ * a raw 0.5 means different things in a model whose floor is 0.12 and
+ * one whose floor is 0.78.
+ */
+function negationVerdict(
+  sim: number,
+  threshold: number,
+  floor: number | null
+): { severity: string; explanation: string } {
+  if (floor === null) {
+    return {
+      severity: "Unmeasured scale",
+      explanation:
+        "This model has no measured floor, so the cosine above has no origin. It cannot be called high or low until the model is calibrated.",
+    };
+  }
+  const p = normalisedPosition(sim, floor);
+
   if (sim >= threshold) return {
-    severity: "Almost the same",
-    explanation: "Adding \u201Cnot\u201D moved the sentence a little, but not past the point where this model starts telling texts apart. Most of the position is unchanged. In logic a negation reverses the meaning; here it is a small nudge.",
+    severity: p >= 0.95 ? "Indistinguishable" : "Indistinguishable",
+    explanation: "Adding \u201Cnot\u201D moved the sentence, but not past the point where this model starts telling texts apart. Most of the position is unchanged. In logic a negation reverses the meaning; here it is a small nudge. Note what this does and does not say: the two sentences sit close together, which is a fact about distance. It does not follow that the model failed to understand the reversal, only that its geometry does not express one.",
   };
-  if (sim >= threshold - 0.07) return {
+  if (threshold - sim <= 0.02) return {
     severity: "Borderline",
     explanation: "There is a gap between the claim and its opposite, but a thin one, sitting right at the point where this model starts telling texts apart. A small change of wording could move it either way.",
   };
-  if (sim >= 0.5) return {
-    severity: "Somewhat different",
-    explanation: "The model puts the claim and its opposite in different places, but not far apart, and closer to each other than to unrelated text.",
+  if (p >= 0.85) return {
+    severity: "Very close",
+    explanation: "The opposite sits near the top of the range this model can express. It cleared the cutoff, but there is little room left between the two.",
+  };
+  if (p >= 0.3) return {
+    severity: "Somewhat apart",
+    explanation: "The model puts the claim and its opposite in different places, about midway between unrelated text and identity on its own scale.",
   };
   return {
-    severity: "Clearly different",
-    explanation: "The model puts the claim and its opposite well apart. That is the least it has to do for the distinction to be usable, but distance is not the same thing as logical negation: it measures what tends to occur together, not what is true, so a wide gap is not evidence that the model has grasped the reversal.",
+    severity: "Far apart",
+    explanation: "The model puts the claim and its opposite about as far apart as two unrelated texts. That is the least it has to do for the distinction to be usable, but distance is not logical negation: it measures what tends to occur together, not what is true, so a wide gap is not evidence the model grasped the reversal.",
   };
 }
 
@@ -333,7 +353,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
           {/* Per-model results */}
           <div className="space-y-3">
             {result.models.map(m => {
-              const verdict = negationVerdict(m.cosineSimilarity, m.threshold.value);
+              const verdict = negationVerdict(m.cosineSimilarity, m.threshold.value, m.floorMean);
 
               return (
                 <div key={m.modelId} className="card-editorial overflow-hidden">
