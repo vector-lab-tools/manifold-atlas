@@ -48,35 +48,15 @@ const NONE_STRONG = { color: "#15803d", bgColor: "rgba(21,128,61,0.08)", severit
  */
 export function conceptSimilarityLevel(similarity: number): SimilarityLevel {
   if (similarity >= 0.95) return {
-    label: "Almost the same",
-    detail: "on an unmeasured scale",
-    ...CRITICAL, uncalibrated: true,
-  };
+    label: "Indistinguishable", detail: "on an unmeasured scale", ...CRITICAL, uncalibrated: true };
   if (similarity >= 0.85) return {
-    label: "Barely different",
-    detail: "on an unmeasured scale",
-    ...HIGH, uncalibrated: true,
-  };
+    label: "Very close", detail: "on an unmeasured scale", ...HIGH, uncalibrated: true };
   if (similarity >= 0.7) return {
-    label: "Somewhat different",
-    detail: "on an unmeasured scale",
-    ...MODERATE, uncalibrated: true,
-  };
+    label: "Close", detail: "on an unmeasured scale", ...MODERATE, uncalibrated: true };
   if (similarity >= 0.5) return {
-    label: "Clearly different",
-    detail: "on an unmeasured scale",
-    ...LOW, uncalibrated: true,
-  };
-  if (similarity >= 0.3) return {
-    label: "Far apart",
-    detail: "on an unmeasured scale",
-    ...NONE, uncalibrated: true,
-  };
+    label: "Somewhat apart", detail: "on an unmeasured scale", ...LOW, uncalibrated: true };
   return {
-    label: "Far apart",
-    detail: "near the bottom of an unmeasured scale",
-    ...NONE_STRONG, uncalibrated: true,
-  };
+    label: "Far apart", detail: "on an unmeasured scale", ...NONE_STRONG, uncalibrated: true };
 }
 
 /**
@@ -104,28 +84,28 @@ export function calibratedConceptLevel(
  */
 export function levelFromPosition(p: number): SimilarityLevel {
   if (p >= 0.95) return {
-    label: "Almost the same",
-    detail: "the two sit at nearly the same point on this model\u2019s scale",
+    label: "Indistinguishable",
+    detail: "effectively the same point on this model\u2019s scale",
     ...CRITICAL,
   };
   if (p >= 0.85) return {
-    label: "Barely different",
+    label: "Very close",
     detail: "near the top of what this model can express",
     ...HIGH,
   };
   if (p >= 0.6) return {
-    label: "Somewhat different",
-    detail: "closer to each other than to unrelated text",
+    label: "Close",
+    detail: "clearly nearer each other than two unrelated texts are",
     ...MODERATE,
   };
   if (p >= 0.3) return {
-    label: "Clearly different",
-    detail: "well apart on this model\u2019s scale",
+    label: "Somewhat apart",
+    detail: "about midway between unrelated text and identical",
     ...LOW,
   };
   return {
     label: "Far apart",
-    detail: "barely above where unrelated text sits",
+    detail: "about as distant as two unrelated texts in this model",
     ...NONE_STRONG,
   };
 }
@@ -154,7 +134,7 @@ export function levelFromPosition(p: number): SimilarityLevel {
  */
 export function negationSimilarityLevel(similarity: number, threshold: number): SimilarityLevel {
   if (similarity >= threshold) return {
-    label: "Almost the same",
+    label: "Indistinguishable",
     detail: "the claim and its opposite sit together, on an unmeasured scale",
     ...CRITICAL, uncalibrated: true,
   };
@@ -164,17 +144,17 @@ export function negationSimilarityLevel(similarity: number, threshold: number): 
     ...HIGH, uncalibrated: true,
   };
   if (similarity >= 0.7) return {
-    label: "Barely different",
+    label: "Very close",
     detail: "the opposite sits close to the claim, on an unmeasured scale",
     ...MODERATE, uncalibrated: true,
   };
   if (similarity >= 0.5) return {
-    label: "Somewhat different",
+    label: "Somewhat apart",
     detail: "on an unmeasured scale",
     ...LOW, uncalibrated: true,
   };
   return {
-    label: "Clearly different",
+    label: "Far apart",
     detail: "claim and opposite well apart, on an unmeasured scale",
     ...NONE, uncalibrated: true,
   };
@@ -200,7 +180,7 @@ export function calibratedNegationLevel(
 
   if (exceedsControls === true) {
     return {
-      label: "Almost the same",
+      label: "Indistinguishable",
       detail:
         "\u201CNot\u201D is counterintuitively closer to its opposite than swapping in an unrelated word",
       ...CRITICAL,
@@ -208,7 +188,7 @@ export function calibratedNegationLevel(
   }
   if (similarity >= threshold.value) {
     return {
-      label: "Almost the same",
+      label: "Indistinguishable",
       detail: "above the point where this model starts telling texts apart",
       ...CRITICAL,
     };
@@ -225,27 +205,27 @@ export function calibratedNegationLevel(
     const p = normalisedPosition(similarity, floorMean);
     if (p >= 0.7) {
       return {
-        label: "Barely different",
+        label: "Very close",
         detail: "the opposite sits close to the claim on this model\u2019s scale",
         ...MODERATE,
       };
     }
     if (p >= 0.4) {
       return {
-        label: "Somewhat different",
+        label: "Somewhat apart",
         detail: "about midway between the claim and unrelated text",
         ...LOW,
       };
     }
     return {
-      label: "Clearly different",
-      detail: "the claim and its opposite are well apart on this model\u2019s scale",
+      label: "Far apart",
+      detail: "the claim and its opposite are as distant as unrelated texts",
       ...NONE,
     };
   }
 
   return {
-    label: "Clearly different",
+    label: "Far apart",
     detail: "below this model\u2019s cutoff",
     ...NONE,
   };
