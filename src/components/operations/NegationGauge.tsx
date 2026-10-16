@@ -449,10 +449,10 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                       On this model&apos;s scale
                     </h4>
                     <p className="font-sans text-caption text-muted-foreground mb-3">
-                      The same cosine plotted against what this model can actually reach. The
-                      hatched region below the{" "}
-                      <MetricTerm termKey="floor">floor</MetricTerm> is unreachable: no pair of
-                      real texts lands there. The controls beneath perform edits of the same
+                      The same cosine plotted against the scale this model actually uses. The{" "}
+                      <MetricTerm termKey="floor">floor</MetricTerm> is where two typical unrelated
+                      texts sit, and the hatched region is rarely reached: only 5 per cent of
+                      unrelated pairs land there. The controls beneath perform edits of the same
                       size as the negation without reversing the claim.
                     </p>
                     <ControlFamily m={m} negated={result.negated} />
@@ -479,7 +479,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="bg-muted rounded-sm p-2.5">
-                        <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">Cosine Similarity</div>
+                        <div className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider"><MetricTerm termKey="cosineSimilarity" placement="top">Cosine Similarity</MetricTerm></div>
                         <div className="font-sans text-body-sm font-bold tabular-nums mt-0.5">{m.cosineSimilarity.toFixed(4)}</div>
                         <div className="font-sans text-[9px] text-muted-foreground mt-0.5">dot product / (norm A &times; norm B)</div>
                       </div>
@@ -622,6 +622,7 @@ function ControlFamily({
         modelName={negated}
         value={m.cosineSimilarity}
         floor={m.floorMean}
+        floorLow={m.floorLow ?? null}
         normalised={m.normalised}
         marks={marks}
         valueColour={m.exceedsControls ? "#dc2626" : "#d97706"}

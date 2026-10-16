@@ -74,7 +74,7 @@ export function ConeDiagram({ cal, register, compact = false }: ConeDiagramProps
         viewBox={`0 0 ${W} ${H}`}
         className="w-full h-auto"
         role="img"
-        aria-label={`${cal.modelName}: cone half-angle ${half.toFixed(1)} degrees for ${REGISTER_LABELS[register]}`}
+        aria-label={`${cal.modelName}: angular radius ${half.toFixed(1)} degrees for ${REGISTER_LABELS[register]}`}
       >
         {/* The sphere the vectors all terminate on. */}
         <circle cx={CX} cy={CY} r={S} className="fill-foreground/[0.04] stroke-muted-foreground/25" strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />

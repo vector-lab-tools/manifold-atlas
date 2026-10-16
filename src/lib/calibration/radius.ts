@@ -346,7 +346,7 @@ export function rawCosineComparable(floorA: number, floorB: number): boolean {
 /** One-line description of a model's radius, for captions and exports. */
 export function describeRadius(r: ModelRadius, floorMean: number): string {
   return (
-    `${r.nominalDim}d, cone half-angle ${r.coneHalfAngleDeg.toFixed(1)}°, ` +
+    `${r.nominalDim}d, angular radius ${r.coneHalfAngleDeg.toFixed(1)}°, ` +
     `floor ${floorMean.toFixed(3)}, usable range ${r.usableRange.toFixed(3)}, ` +
     `effective dim ${r.effectiveDim.toFixed(0)}`
   );

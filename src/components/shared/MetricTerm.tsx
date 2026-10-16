@@ -15,7 +15,8 @@
  * different things about the same metric.
  */
 
-import { useState, useRef, type ReactNode } from "react";
+import { useState, useRef, useLayoutEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { glossary } from "@/lib/calibration/glossary";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,34 @@ export function MetricTerm({
   const entry = glossary(termKey);
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anchor = useRef<HTMLSpanElement | null>(null);
+  const card = useRef<HTMLSpanElement | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  // The card is portalled to the body and placed against the viewport, so a
+  // panel with overflow hidden cannot clip it and it never runs off screen.
+  useLayoutEffect(() => {
+    if (!open || !anchor.current || !card.current) {
+      setPos(null);
+      return;
+    }
+    const a = anchor.current.getBoundingClientRect();
+    const c = card.current.getBoundingClientRect();
+    const margin = 8;
+    const left = Math.max(margin, Math.min(a.left, window.innerWidth - c.width - margin));
+    const above = a.top - c.height - 6;
+    const below = a.bottom + 6;
+    const fitsBelow = below + c.height <= window.innerHeight - margin;
+    const fitsAbove = above >= margin;
+    const top =
+      placement === "top"
+        ? fitsAbove || !fitsBelow ? Math.max(margin, above) : below
+        : fitsBelow || !fitsAbove ? below : above;
+    setPos({ left, top });
+    const close = () => setOpen(false);
+    window.addEventListener("scroll", close, true);
+    return () => window.removeEventListener("scroll", close, true);
+  }, [open, placement]);
 
   // A short delay on close keeps the card from flickering away when the
   // pointer crosses the gap between the label and the card.
@@ -61,27 +90,31 @@ export function MetricTerm({
       onBlur={hide}
     >
       <span
+        ref={anchor}
         tabIndex={0}
         role="button"
         aria-describedby={open ? `metric-${termKey}` : undefined}
-        // The native title is the fallback for touch and for screen
-        // readers that do not follow aria-describedby to a hover card.
-        title={`${entry.term}. ${entry.short}`}
         className="cursor-help underline decoration-dotted decoration-muted-foreground/50 underline-offset-2 outline-none focus-visible:ring-1 focus-visible:ring-burgundy rounded-sm"
       >
         {children ?? entry.term}
       </span>
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <span
+          ref={card}
           id={`metric-${termKey}`}
           role="tooltip"
           onMouseEnter={show}
           onMouseLeave={hide}
+          style={{
+            left: pos?.left ?? 0,
+            top: pos?.top ?? 0,
+            visibility: pos ? "visible" : "hidden",
+          }}
           className={cn(
-            "absolute z-50 left-0 w-80 max-w-[85vw] p-3 rounded-sm shadow-lg",
+            "fixed z-[1000] block w-80 max-w-[calc(100vw-16px)] p-3 rounded-sm shadow-lg",
             "bg-background border border-parchment-dark text-left normal-case tracking-normal",
-            placement === "bottom" ? "top-full mt-1.5" : "bottom-full mb-1.5"
+            "whitespace-normal break-words font-normal text-foreground"
           )}
         >
           <span className="block font-display text-body-sm font-bold">{entry.term}</span>
@@ -101,7 +134,8 @@ export function MetricTerm({
               {entry.reads}
             </span>
           )}
-        </span>
+        </span>,
+        document.body
       )}
     </span>
   );

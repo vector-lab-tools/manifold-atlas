@@ -4,11 +4,14 @@
  * A cosine plotted on the scale it was measured on.
  *
  * The plain similarity bar fills from zero, which implies the whole
- * interval is available. It is not: nothing sits below the model's
- * unrelated-pair floor, so the region under the floor is drawn as
- * unreachable rather than as empty. Against that, the marks that make
- * the value readable are the floor, the topical ceiling, the control
- * ceiling where one was measured, and identity.
+ * interval is in use. It is not: almost nothing lands below the 5th
+ * percentile of the model's unrelated pairs, so that region is drawn as
+ * rarely reached rather than as empty. The floor, the mean of unrelated
+ * pairs, is a baseline and not a limit: about half of unrelated pairs fall
+ * below it, so it is drawn as a mark, and the value is filled from the floor
+ * in whichever direction it lies. Against that, the marks that make the
+ * value readable are the floor, the topical ceiling, the control ceiling
+ * where one was measured, and identity.
  */
 
 import { MetricTerm } from "@/components/shared/MetricTerm";
@@ -30,8 +33,10 @@ interface CalibratedBarProps {
   providerId?: string;
   /** The measurement being reported. */
   value: number;
-  /** Measured unrelated-pair floor. Null renders the uncalibrated bar. */
+  /** Measured unrelated-pair floor (mean). Null renders the uncalibrated bar. */
   floor: number | null;
+  /** 5th percentile of unrelated pairs: the scale's lower edge. Falls back to the floor. */
+  floorLow?: number | null;
   /** Reference marks: ceiling, control ceiling, threshold. */
   marks?: BarMark[];
   /** Position on the floor-to-identity range, when calibrated. */
@@ -47,6 +52,7 @@ export function CalibratedBar({
   providerId,
   value,
   floor,
+  floorLow = null,
   marks = [],
   normalised,
   valueColour = "#dc2626",
@@ -54,7 +60,13 @@ export function CalibratedBar({
 }: CalibratedBarProps) {
   const x = (v: number) => Math.max(0, Math.min(W, v * W));
   const floorX = floor === null ? 0 : x(floor);
+  const edge = floor === null ? null : floorLow === null ? floor : Math.min(floorLow, floor);
+  const edgeX = edge === null ? 0 : x(edge);
   const valueX = x(value);
+  // A value below the floor is filled back from the floor towards it, so a pair further apart
+  // than typical unrelated texts shows as such instead of as an empty bar.
+  const fillFrom = Math.min(floorX, valueX);
+  const fillTo = Math.max(floorX, valueX);
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -72,7 +84,7 @@ export function CalibratedBar({
           {normalised !== null && normalised !== undefined && (
             <span className="font-sans text-caption text-muted-foreground">
               <MetricTerm termKey="normalisedPosition">
-                {(normalised * 100).toFixed(0)}% of range
+                {normalised < 0 ? "below unrelated" : `${(normalised * 100).toFixed(0)}% of range`}
               </MetricTerm>
             </span>
           )}
@@ -92,7 +104,7 @@ export function CalibratedBar({
       >
         <defs>
           <pattern
-            id="unreachable"
+            id="rarely-reached"
             width="3"
             height="3"
             patternUnits="userSpaceOnUse"
@@ -105,24 +117,24 @@ export function CalibratedBar({
         {/* Track */}
         <rect x="0" y="3" width={W} height="6" rx="1" className="fill-parchment" />
 
-        {/* Region below the floor: no pair of real texts lands here. */}
-        {floor !== null && floorX > 0 && (
+        {/* Below the lower edge: only 5 per cent of unrelated pairs land here. */}
+        {edge !== null && edgeX > 0 && (
           <rect
             x="0"
             y="3"
-            width={floorX}
+            width={edgeX}
             height="6"
             rx="1"
-            fill="url(#unreachable)"
+            fill="url(#rarely-reached)"
             className="text-muted-foreground"
           />
         )}
 
-        {/* Measured value, filled from the floor rather than from zero. */}
+        {/* Measured value, filled from the floor rather than from zero, in either direction. */}
         <rect
-          x={floorX}
+          x={fillFrom}
           y="3"
-          width={Math.max(0, valueX - floorX)}
+          width={Math.max(0, fillTo - fillFrom)}
           height="6"
           rx="1"
           fill={valueColour}

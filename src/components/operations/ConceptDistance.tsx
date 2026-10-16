@@ -15,6 +15,7 @@ import { useFloors } from "@/components/shared/useFloors";
 import { CalibrationNotice } from "@/components/shared/CalibrationNotice";
 import { CalibrationDeepDive } from "@/components/shared/CalibrationDeepDive";
 import { CalibratedBar } from "@/components/viz/CalibratedBar";
+import { MetricTerm } from "@/components/shared/MetricTerm";
 import { normalisedPosition, angleDegrees } from "@/lib/calibration/baseline";
 import { ResetButton } from "@/components/shared/ResetButton";
 import {
@@ -70,7 +71,7 @@ function interpretSimilarity(
   };
   return {
     text: "Far apart",
-    detail: "The pair is about as distant as two unrelated texts in this model. Note that the raw cosine may still look high: in a model with a narrow range, most of the nominal zero-to-one scale is unreachable, and a figure that reads as large on that scale can sit at the bottom of the range the model actually uses.",
+    detail: "The pair is about as distant as two unrelated texts in this model. Note that the raw cosine may still look high: in a model with a narrow range, most of the nominal zero-to-one scale is rarely reached, and a figure that reads as large on that scale can sit at the bottom of the range the model actually uses.",
   };
 }
 
@@ -251,6 +252,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                         modelName={`${result.termA} → ${result.termB}`}
                         value={m.cosineSimilarity}
                         floor={floors.floor(m.modelId)}
+                        floorLow={floors.floorLow(m.modelId)}
                         normalised={
                           floors.floor(m.modelId) !== null
                             ? normalisedPosition(m.cosineSimilarity, floors.floor(m.modelId)!)
@@ -284,7 +286,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="bg-muted rounded-sm p-3">
                         <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">
-                          Cosine Similarity
+                          <MetricTerm termKey="cosineSimilarity" placement="top">Cosine Similarity</MetricTerm>
                         </div>
                         <div className="font-sans text-body-lg font-bold tabular-nums mt-1">
                           {m.cosineSimilarity.toFixed(4)}
@@ -301,7 +303,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
 
                       <div className="bg-muted rounded-sm p-3">
                         <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">
-                          Cosine Distance
+                          <MetricTerm termKey="cosineDistance" placement="top">Cosine Distance</MetricTerm>
                         </div>
                         <div className="font-sans text-body-lg font-bold tabular-nums mt-1">
                           {m.cosineDistance.toFixed(4)}
@@ -313,7 +315,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
 
                       <div className="bg-muted rounded-sm p-3">
                         <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">
-                          Angular Distance
+                          <MetricTerm termKey="angularDistance" placement="top">Angular Distance</MetricTerm>
                         </div>
                         <div className="font-sans text-body-lg font-bold tabular-nums mt-1">
                           {m.angularDistance.toFixed(1)}&deg;
@@ -323,14 +325,14 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                             const f = floors.floor(m.modelId);
                             if (f === null) return "no measured arc for this model, and not of 180\u00B0";
                             const arc = angleDegrees(f);
-                            return `of ${arc.toFixed(1)}\u00B0, the largest separation this model's radius allows`;
+                            return `of ${arc.toFixed(1)}\u00B0, the angle between two typical unrelated texts in this model`;
                           })()}
                         </div>
                       </div>
 
                       <div className="bg-muted rounded-sm p-3">
                         <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">
-                          Euclidean Distance
+                          <MetricTerm termKey="euclideanDistance" placement="top">Euclidean Distance</MetricTerm>
                         </div>
                         <div className="font-sans text-body-lg font-bold tabular-nums mt-1">
                           {m.euclideanDistance.toFixed(4)}
@@ -345,7 +347,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       <div className="bg-muted rounded-sm p-3">
                         <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">
-                          Dimensions
+                          <MetricTerm termKey="dimensions" placement="top">Dimensions</MetricTerm>
                         </div>
                         <div className="font-sans text-body-lg font-bold tabular-nums mt-1">
                           {m.dimensions.toLocaleString()}
@@ -357,7 +359,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
 
                       <div className="bg-muted rounded-sm p-3">
                         <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">
-                          &ldquo;{result.termA}&rdquo; magnitude
+                          <MetricTerm termKey="magnitude" placement="top">&ldquo;{result.termA}&rdquo; magnitude</MetricTerm>
                         </div>
                         <div className="font-sans text-body-lg font-bold tabular-nums mt-1">
                           {m.normA.toFixed(4)}
@@ -369,7 +371,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
 
                       <div className="bg-muted rounded-sm p-3">
                         <div className="font-sans text-caption text-muted-foreground uppercase tracking-wider">
-                          &ldquo;{result.termB}&rdquo; magnitude
+                          <MetricTerm termKey="magnitude" placement="top">&ldquo;{result.termB}&rdquo; magnitude</MetricTerm>
                         </div>
                         <div className="font-sans text-body-lg font-bold tabular-nums mt-1">
                           {m.normB.toFixed(4)}
@@ -383,7 +385,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                     {/* Top contributing dimensions */}
                     <div>
                       <h4 className="font-sans text-caption text-muted-foreground uppercase tracking-wider font-semibold mb-2">
-                        Top Contributing Dimensions
+                        <MetricTerm termKey="topDimensions" placement="top">Top Contributing Dimensions</MetricTerm>
                       </h4>
                       <p className="font-sans text-caption text-muted-foreground mb-2 italic">
                         Dimensions with the largest contribution to the dot product between these
@@ -548,7 +550,7 @@ function ConceptDistanceDeepDive({ result }: { result: ConceptDistanceResult }) 
         measurements={result.models.map(m => ({ modelId: m.modelId, label: `${result.termA} ↔ ${result.termB}`, cosine: m.cosineSimilarity }))}
         notes={[
           "The similarity band above is the position of this pair on each model's floor-to-identity range, not the raw cosine. Two models reporting the same cosine can land in different bands when their floors differ, and that is the point.",
-          "The bar plots the pair from the floor rather than from zero. The hatched region below the floor is unreachable: no pair of real terms lands there.",
+          "The bar plots the pair from the floor rather than from zero. The floor is where two typical unrelated terms sit; about half of unrelated pairs fall a little below it. The hatched region is rarely reached: only 5 per cent of unrelated pairs land there.",
         ]}
       />
     </DeepDivePanel>

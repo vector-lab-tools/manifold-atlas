@@ -341,7 +341,7 @@ function RadiusCard({
               termKey="angularRange"
               label="Angular range"
               value={`${r.angularRangeDeg.toFixed(1)}°`}
-              hint="largest separation available"
+              hint="between typical unrelated texts"
             />
           </div>
 

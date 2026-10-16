@@ -26,7 +26,7 @@ export function radiusLine(cal: ModelCalibration, register: Register = "short"):
   return (
     `${cal.modelName} (${cal.providerId}): ${r.nominalDim}d, ` +
     `${REGISTER_LABELS[register]} floor ${d.mean.toFixed(4)} (sd ${d.sd.toFixed(4)}, n ${d.n}), ` +
-    `cone half-angle ${coneFor(cal, register).toFixed(1)}°, ` +
+    `angular radius ${coneFor(cal, register).toFixed(1)}°, ` +
     `usable range ${(1 - d.mean).toFixed(4)}, ` +
     `topical ceiling ${cal.topicalCeiling.mean.toFixed(4)}, ` +
     `effective dim ${r.effectiveDim.toFixed(0)} of ${r.effectiveDimCeiling.toFixed(0)} reachable`

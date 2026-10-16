@@ -23,6 +23,66 @@ export interface GlossaryEntry {
 }
 
 export const GLOSSARY: Record<string, GlossaryEntry> = {
+  // ---- the basic measurements reported for a pair of texts ----
+  cosineSimilarity: {
+    term: "Cosine similarity",
+    short: "How closely two texts point the same way in the model's space. 1 is identical.",
+    full:
+      "The model turns each text into a long list of numbers, which is a direction in its space. Cosine similarity compares the two directions and ignores how long the vectors are. In these models almost every pair lands well above zero, so read it against this model's floor, not against the nominal scale.",
+    formula: "a · b / (‖a‖ ‖b‖)",
+    reads:
+      "In a model whose floor is 0.47, a reading of 0.53 is only a little closer than two unrelated words.",
+  },
+  cosineDistance: {
+    term: "Cosine distance",
+    short: "One minus the cosine similarity. 0 is identical; bigger is further apart.",
+    full:
+      "The same measurement turned round so that a bigger number means further apart. It tells you nothing the similarity does not; it is shown because some tools and papers report distance instead.",
+    formula: "1 − cosine similarity",
+    reads:
+      "Compare it with one minus this model's floor: a distance close to that is about as far apart as unrelated texts.",
+  },
+  angularDistance: {
+    term: "Angular distance",
+    short: "The angle between the two texts' directions, in degrees.",
+    full:
+      "The cosine turned into an angle. Read it against the angle between two typical unrelated texts in this model, shown beneath it, not against 180 degrees: no pair of real texts comes near 180 degrees in these spaces.",
+    formula: "arccos(cosine similarity)",
+    reads:
+      "57.7° against a typical unrelated angle of 62.0° means the pair is only slightly closer than unrelated texts.",
+  },
+  euclideanDistance: {
+    term: "Euclidean distance",
+    short: "The straight-line distance between the two vectors.",
+    full:
+      "Measures the gap between the two points directly, so unlike the cosine it is affected by how long each vector is. When both vectors have length 1, as most providers return them, it carries exactly the same information as the cosine.",
+    formula: "‖a − b‖, which is √(2 − 2 × cosine) for vectors of length 1",
+    reads: "For vectors of length 1 it runs from 0 (identical) to 2 (opposite); 1.41 is a right angle.",
+  },
+  dimensions: {
+    term: "Dimensions",
+    short: "How many numbers the model uses to represent each text.",
+    full:
+      "The length of every embedding vector, fixed by the model. A model does not spread texts across all of them: the effective dimension in the Calibration tab shows how many directions it really uses.",
+    reads: "1,024 is the model's nominal size, not the number of directions that matter.",
+  },
+  magnitude: {
+    term: "Magnitude",
+    short: "The length of this text's vector.",
+    full:
+      "How long the vector is before any comparison. Many providers scale every vector to length 1, in which case this reads 1.0000 for every text and tells you nothing. Where it does vary, the cosine ignores it, so a difference here is something the cosine cannot see.",
+    formula: "‖a‖, the square root of the sum of the squared numbers",
+    reads: "1.0000 means the provider has scaled the vector to length 1.",
+  },
+  topDimensions: {
+    term: "Top contributing dimensions",
+    short: "The individual numbers in the two vectors that add most to the similarity score.",
+    full:
+      "The cosine is a sum over every position in the two vectors, each pair of numbers multiplied together. This lists the positions adding most to that sum, and those pulling against it. A single position means nothing on its own; what matters is whether the score comes from a few positions or is spread across many.",
+    reads:
+      "If a handful of positions carry most of the score, the similarity is concentrated, and a few dominant directions are shaping the reading.",
+  },
+
   floor: {
     term: "Anisotropy floor",
     short: "Mean cosine between two unrelated texts in this model. A baseline, not the bottom of the scale.",
