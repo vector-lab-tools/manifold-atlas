@@ -16,15 +16,22 @@
  *
  * Two views, because the two things worth seeing pull against each other:
  *
- *   unfolded  the raw 0-to-1 axis with the region below the floor drawn
- *             as unreachable. Shows how much of the nominal scale the
- *             model cannot use, which for a high-floor model is most of
- *             it. This is the view that makes the argument.
- *   folded    the unreachable region removed and the reachable range
- *             stretched across the full width. Shows where the value
+ *   unfolded  the raw 0-to-1 axis with the region below the lower edge
+ *             drawn as rarely reached. Shows how much of the nominal
+ *             scale the model does not use, which for a high-floor model
+ *             is most of it. This is the view that makes the argument.
+ *   folded    the rarely reached region removed and the range the model
+ *             uses stretched across the full width. Shows where the value
  *             sits within what the model can actually express, which is
  *             the view for reading a result rather than arguing about a
  *             scale.
+ *
+ * The floor is the mean cosine of unrelated pairs, so it is a baseline,
+ * not a limit: about half of all unrelated pairs fall below it. The
+ * lower edge of the scale is therefore floorLow, the value only 5 per
+ * cent of unrelated pairs fall below, and the floor is drawn as a mark
+ * on the bar. A reading below the floor is a pair further apart than
+ * typical unrelated texts, and is said so, not shown as a negative share.
  *
  * Clicking the bar swaps them. The folded state is announced rather than
  * implied: a bar that silently changed its own x-axis would be a worse
@@ -41,8 +48,13 @@ import { cn } from "@/lib/utils";
 interface SimilarityMeterProps {
   similarity: number;
   level: SimilarityLevel;
-  /** Measured unrelated-pair floor for this model and register. */
+  /** Measured unrelated-pair floor (mean) for this model and register. */
   floor?: number | null;
+  /**
+   * Lower edge of the scale: the 5th percentile of unrelated-pair
+   * cosines. Falls back to the floor when not given.
+   */
+  floorLow?: number | null;
   /** Measured topical ceiling, drawn as the "merely related" mark. */
   ceiling?: number | null;
 }
@@ -51,23 +63,30 @@ export function SimilarityMeter({
   similarity,
   level,
   floor = null,
+  floorLow = null,
   ceiling = null,
 }: SimilarityMeterProps) {
   const [folded, setFolded] = useState(false);
-  // Nothing to fold when the floor is already at the left edge.
-  const canFold = floor !== null && floor > 0.02;
+  // The scale's lower edge: the 5th percentile of unrelated pairs where
+  // known, never above the floor itself.
+  const edge = floor === null ? null : floorLow === null ? floor : Math.min(floorLow, floor);
+  // Nothing to fold when the lower edge is already at the left of the bar.
+  const canFold = edge !== null && edge > 0.02;
   const isFolded = canFold && folded;
 
   /** Position on whichever axis is currently in force, as a percentage. */
   const x = (v: number) => {
-    const p = isFolded && floor !== null ? ((v - floor) / (1 - floor)) * 100 : v * 100;
+    const p = isFolded && edge !== null ? ((v - edge) / (1 - edge)) * 100 : v * 100;
     return Math.max(0, Math.min(100, p));
   };
 
   const markerPct = Math.max(1.5, Math.min(98.5, x(similarity)));
+  const edgePct = edge === null ? 0 : x(edge);
   const floorPct = floor === null ? 0 : x(floor);
   const ceilingPct = ceiling === null ? null : x(ceiling);
-  const rampStart = isFolded ? 0 : floorPct;
+  const rampStart = isFolded ? 0 : edgePct;
+  // Below the floor is further apart than typical unrelated texts: said in words, not as a negative share.
+  const position = floor === null ? null : normalisedPosition(similarity, floor);
 
   const ramp =
     "linear-gradient(to right, #15803d 0%, #65a30d 30%, #d97706 50%, #ea580c 70%, #dc2626 85%, #991b1b 100%)";
@@ -97,7 +116,9 @@ export function SimilarityMeter({
           {floor !== null && (
             <span className="font-sans text-caption tabular-nums text-muted-foreground">
               <MetricTerm termKey="normalisedPosition" placement="top">
-                {(normalisedPosition(similarity, floor) * 100).toFixed(0)}% of range
+                {position !== null && position < 0
+                  ? "below unrelated"
+                  : `${((position ?? 0) * 100).toFixed(0)}% of range`}
               </MetricTerm>
             </span>
           )}
@@ -125,8 +146,8 @@ export function SimilarityMeter({
           title={
             canFold
               ? isFolded
-                ? "Unfold: show the whole 0-to-1 cosine scale, including the part this model cannot reach"
-                : "Fold away the unreachable region and stretch the reachable range across the bar"
+                ? "Unfold: show the whole 0-to-1 cosine scale, including the part this model rarely reaches"
+                : "Fold away the rarely reached region and stretch the range this model uses across the bar"
               : undefined
           }
           className={cn(
@@ -135,12 +156,12 @@ export function SimilarityMeter({
               "cursor-pointer focus-visible:ring-2 focus-visible:ring-burgundy ring-offset-1 ring-offset-background"
           )}
         >
-          {/* Unreachable region: no two real texts land below the floor. */}
-          {!isFolded && floor !== null && floorPct > 0 && (
+          {/* Rarely reached: only 5 per cent of unrelated pairs land below the lower edge. */}
+          {!isFolded && edge !== null && edgePct > 0 && (
             <div
               className="absolute inset-y-0 left-0"
               style={{
-                width: `${floorPct}%`,
+                width: `${edgePct}%`,
                 backgroundImage:
                   "repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 4px)",
                 opacity: 0.28,
@@ -152,6 +173,13 @@ export function SimilarityMeter({
             className="absolute inset-y-0 transition-all duration-300"
             style={{ left: `${rampStart}%`, right: 0, background: ramp }}
           />
+          {/* The floor: where two typical unrelated texts sit. A baseline, not a limit. */}
+          {floor !== null && (
+            <div
+              className="absolute inset-y-0 w-px bg-foreground/50 transition-all duration-300"
+              style={{ left: `${floorPct}%` }}
+            />
+          )}
           {/* Topical ceiling: the mark a figure has to clear to mean anything. */}
           {ceilingPct !== null && (
             <div
@@ -180,25 +208,15 @@ export function SimilarityMeter({
       {floor !== null ? (
         <>
           <div className="relative h-3.5 font-sans text-[9px] text-muted-foreground">
-            {isFolded ? (
-              <span className="absolute left-0 whitespace-nowrap">
-                <MetricTerm termKey="floor" placement="top">
-                  floor {floor.toFixed(3)}
-                </MetricTerm>
-              </span>
-            ) : (
-              <>
-                <span className="absolute left-0">unreachable</span>
-                <span
-                  className="absolute -translate-x-1/2 whitespace-nowrap"
-                  style={{ left: `${Math.min(84, Math.max(14, floorPct))}%` }}
-                >
-                  <MetricTerm termKey="floor" placement="top">
-                    floor {floor.toFixed(3)}
-                  </MetricTerm>
-                </span>
-              </>
-            )}
+            {!isFolded && <span className="absolute left-0">rarely reached</span>}
+            <span
+              className="absolute -translate-x-1/2 whitespace-nowrap"
+              style={{ left: `${Math.min(84, Math.max(isFolded ? 10 : 14, floorPct))}%` }}
+            >
+              <MetricTerm termKey="floor" placement="top">
+                floor {floor.toFixed(3)}
+              </MetricTerm>
+            </span>
             {ceilingPct !== null &&
               ceiling !== null &&
               (isFolded || Math.abs(ceilingPct - floorPct) > 16) && (
@@ -241,8 +259,8 @@ export function SimilarityMeter({
             >
               {isFolded ? <ChevronsLeftRight size={10} /> : <ChevronsRightLeft size={10} />}
               {isFolded
-                ? `Folded: bar runs ${floor.toFixed(3)} to 1. Show the full scale`
-                : `Fold away the unreachable ${(floor * 100).toFixed(0)}%`}
+                ? `Folded: bar runs ${(edge ?? floor).toFixed(3)} to 1. Show the full scale`
+                : `Fold away the rarely reached ${((edge ?? floor) * 100).toFixed(0)}%`}
             </button>
           )}
         </>

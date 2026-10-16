@@ -82,9 +82,11 @@ export interface NegationGaugeModelResult {
   /** Null when the model has no calibration. */
   normalised: number | null;
   z: number | null;
-  /** Fraction of the model's reachable angular range that the negation covers. */
+  /** The negation's angle as a fraction of the angle between two typical unrelated texts. */
   angularCoverage: number | null;
   floorMean: number | null;
+  /** 5th percentile of unrelated pairs: the meter's lower edge. Absent in older saved results. */
+  floorLow?: number | null;
   floorSd: number | null;
   topicalCeiling: number | null;
   coneHalfAngleDeg: number | null;
@@ -190,6 +192,7 @@ export function computeNegationGauge(
         z: floor ? floorZ(sim, floor.mean, floor.sd) : null,
         angularCoverage: floor ? 1 - angularFraction(sim, floor.mean) : null,
         floorMean: floor ? floor.mean : null,
+        floorLow: floor ? floor.p05 : null,
         floorSd: floor ? floor.sd : null,
         topicalCeiling: cal ? cal.topicalCeiling.mean : null,
         coneHalfAngleDeg: cal ? cal.radius.coneHalfAngleDeg : null,

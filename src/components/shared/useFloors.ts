@@ -12,8 +12,14 @@
  *
  *   const floors = useFloors("term");
  *   const floor = floors.floor(modelId);        // number | null
+ *   const low = floors.floorLow(modelId);       // number | null
  *   floors.calibrated(modelId)                  // boolean
  *   floors.usableRange(modelId)                 // number | null
+ *
+ * The floor is the mean cosine of unrelated pairs, a baseline rather
+ * than a lower bound: about half of all unrelated pairs fall below it.
+ * floorLow is the genuine lower edge, the value only 5 per cent of
+ * unrelated pairs fall below, and is what a scale should start from.
  *
  * A null floor means the model has no calibration. Components render
  * the uncalibrated variant in that case rather than substituting a
@@ -27,6 +33,8 @@ import { floorFor, coneFor, usableRangeFor, type Register } from "@/lib/calibrat
 export interface FloorLookup {
   register: Register;
   floor: (modelId: string) => number | null;
+  /** 5th percentile of unrelated-pair cosines: the scale's lower edge. */
+  floorLow: (modelId: string) => number | null;
   floorSd: (modelId: string) => number | null;
   cone: (modelId: string) => number | null;
   usableRange: (modelId: string) => number | null;
@@ -45,6 +53,17 @@ export function useFloors(register: Register): FloorLookup {
     (modelId: string) => {
       const cal = calibrations.get(modelId);
       return cal ? floorFor(cal, register).mean : null;
+    },
+    [calibrations, register]
+  );
+
+  const floorLow = useCallback(
+    (modelId: string) => {
+      const cal = calibrations.get(modelId);
+      if (!cal) return null;
+      const d = floorFor(cal, register);
+      // Calibrations saved before the percentiles were kept fall back to the mean.
+      return typeof d.p05 === "number" && d.n > 0 ? d.p05 : d.mean;
     },
     [calibrations, register]
   );
@@ -90,6 +109,7 @@ export function useFloors(register: Register): FloorLookup {
     () => ({
       register,
       floor,
+      floorLow,
       floorSd,
       cone,
       usableRange,
@@ -98,6 +118,6 @@ export function useFloors(register: Register): FloorLookup {
       missing: uncalibratedModels,
       anyMissing: uncalibratedModels.length > 0,
     }),
-    [register, floor, floorSd, cone, usableRange, topicalCeiling, calibrated, uncalibratedModels]
+    [register, floor, floorLow, floorSd, cone, usableRange, topicalCeiling, calibrated, uncalibratedModels]
   );
 }

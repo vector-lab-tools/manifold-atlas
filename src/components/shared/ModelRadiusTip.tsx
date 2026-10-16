@@ -128,6 +128,12 @@ function Measured({ cal, register }: { cal: ModelCalibration; register: Register
   // Where the two anchors sit as a proportion of the bar, so the reader
   // can see at a glance how little of the nominal scale is in play.
   const floorPct = d.mean * 100;
+  // The lower edge: only 5 per cent of unrelated pairs fall below it. The
+  // floor is their mean, so it is drawn as a mark, not as the limit.
+  const low = typeof d.p05 === "number" && d.n > 0 ? Math.min(d.p05, d.mean) : d.mean;
+  const lowPct = Math.max(0, low * 100);
+  // The angle reads too small when a few directions dominate the space.
+  const angleUnderstated = r.topDimShare > 0.1 || (r.dimensionEfficiency > 0 && r.dimensionEfficiency < 0.3);
   const ceilingPct = cal.topicalCeiling.mean * 100;
 
   return (
@@ -139,22 +145,28 @@ function Measured({ cal, register }: { cal: ModelCalibration; register: Register
         <ConeDiagram cal={cal} register={register} compact />
       </span>
       <span className="block font-sans text-[11px] leading-relaxed mt-1 text-foreground/90">
-        This model uses a cone of about {cone.toFixed(1)}° for {REGISTER_LABELS[register]}, not
-        the whole sphere. Two unrelated texts already sit at {d.mean.toFixed(4)}, so only{" "}
-        {range.toFixed(4)} of the cosine scale is in play and the largest angle any two texts
-        can show is {angleDegrees(d.mean).toFixed(1)}°, not 180°.
+        For {REGISTER_LABELS[register]}, this model&apos;s texts sit about {cone.toFixed(1)}° from
+        one mean direction instead of spreading over the whole sphere. Two typical unrelated
+        texts already sit at {d.mean.toFixed(4)}, so most readings fall in the top{" "}
+        {range.toFixed(4)} of the cosine scale. Typical unrelated texts are{" "}
+        {angleDegrees(d.mean).toFixed(1)}° apart and the furthest 5 per cent reach{" "}
+        {angleDegrees(low).toFixed(1)}°, nowhere near 180°.
       </span>
 
-      {/* The reachable band, drawn against the full 0–1 cosine scale. */}
+      {/* The band most readings fall in, drawn against the full 0–1 cosine scale. */}
       <span className="block mt-2">
         <span className="block relative h-2 rounded-full bg-parchment overflow-hidden">
           <span
             className="absolute inset-y-0 left-0 bg-foreground/10"
-            style={{ width: `${floorPct}%` }}
+            style={{ width: `${lowPct}%` }}
           />
           <span
             className="absolute inset-y-0 bg-burgundy/30"
-            style={{ left: `${floorPct}%`, right: 0 }}
+            style={{ left: `${lowPct}%`, right: 0 }}
+          />
+          <span
+            className="absolute inset-y-0 w-px bg-foreground/60"
+            style={{ left: `${floorPct}%` }}
           />
           <span
             className="absolute inset-y-0 w-px bg-cyan-600"
@@ -171,7 +183,7 @@ function Measured({ cal, register }: { cal: ModelCalibration; register: Register
 
       <span className="block font-sans text-[10px] leading-relaxed mt-2 text-muted-foreground">
         <span className="font-semibold uppercase tracking-wider text-[9px]">Reading a cosine here </span>
-        Below {d.mean.toFixed(2)} is indistinguishable from unrelated text. Around{" "}
+        At or below {d.mean.toFixed(2)} is no closer than unrelated text. Around{" "}
         {cal.topicalCeiling.mean.toFixed(2)} is where two texts merely on the same subject land.
         A figure only counts as close if it clears that.
       </span>
@@ -182,6 +194,14 @@ function Measured({ cal, register }: { cal: ModelCalibration; register: Register
         Effective dimension {r.effectiveDim.toFixed(0)} of {r.effectiveDimCeiling.toFixed(0)}{" "}
         reachable; top coordinate carries {(r.topDimShare * 100).toFixed(1)}%.
       </span>
+
+      {angleUnderstated && (
+        <span className="block font-sans text-[10px] leading-relaxed mt-2 text-warning-600">
+          This angle is probably too small for this model, so don&apos;t quote it as a measure of
+          how narrow the model is. The verdicts and bars elsewhere don&apos;t use it and are not
+          affected.
+        </span>
+      )}
 
       <span className="block font-sans text-[10px] leading-relaxed mt-2 text-muted-foreground/80 border-t border-parchment pt-1.5">
         The radius is a first-order figure. It describes the space as a cap around a single mean

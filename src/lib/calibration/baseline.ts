@@ -105,10 +105,13 @@ export function pairCosinesAt(
 }
 
 /**
- * Position of a cosine on the floor-to-identity scale, in [0, 1].
+ * Position of a cosine on the floor-to-identity scale.
  *
- * 0 means the pair is no closer than two unrelated texts in this model.
- * 1 means the pair is at identity. This is the number to quote when
+ * 0 means the pair is no closer than two typical unrelated texts in this
+ * model, 1 means the pair is at identity. Negative values are real, not
+ * errors: the floor is a mean, so about half of unrelated pairs fall
+ * below it, and a negative position is a pair further apart than a
+ * typical unrelated pair. This is the number to quote when
  * comparing across models, because the raw cosine is not comparable
  * when the models' floors differ.
  */
@@ -125,11 +128,13 @@ export function floorZ(cos: number, floorMean: number, floorSd: number): number 
 }
 
 /**
- * Angular position as a fraction of the model's reachable angular
- * range. The Negation Gauge previously reported acos(cos) in degrees
- * against an implied 0-180 range, but no pair of sentences in an
- * anisotropic space ever reaches 180 degrees. The reachable maximum is
- * roughly acos(floor), and that is the denominator this uses.
+ * Angular position as a fraction of the angle between two typical
+ * unrelated texts. The Negation Gauge previously reported acos(cos) in
+ * degrees against an implied 0-180 range, but no pair of sentences in an
+ * anisotropic space comes near 180 degrees. acos(floor), the angle of a
+ * typical unrelated pair, is the denominator this uses. It is a typical
+ * value, not a maximum, so a pair further apart than the floor gives a
+ * fraction below zero.
  */
 export function angularFraction(cos: number, floorMean: number): number {
   const clamped = Math.max(-1, Math.min(1, cos));

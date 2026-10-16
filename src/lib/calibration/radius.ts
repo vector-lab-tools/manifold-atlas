@@ -16,14 +16,24 @@
  *
  *         coneHalfAngle = acos(|mean of unit vectors|)
  *
- *     is the model's angular radius in degrees. A model at 40 degrees
+ *     is the model's angular radius in degrees: a typical angle from the
+ *     mean direction, not the edge of the cone, since many vectors lie
+ *     further out. On the same stratum it is the floor re-expressed as an
+ *     angle, acos(sqrt(floor)), not a separate measurement. It also
+ *     assumes the departures from the mean direction are unrelated to one
+ *     another; when texts cluster or one coordinate dominates they are
+ *     not, and the angle reads too small. A model at 40 degrees
  *     has less than half the angular room of a model at 85 degrees, and
  *     the same raw cosine in the two means completely different things.
  *
- *  2. USABLE RANGE. Cosine is nominally [-1, 1] but the reachable range
- *     is [floor, 1], and 1 - floor can be small. When the usable range
- *     is 0.25, a difference of 0.03 is an eighth of everything the
- *     instrument can register.
+ *  2. USABLE RANGE. Cosine is nominally [-1, 1] but most readings fall
+ *     between the floor and 1, and 1 - floor can be small. The floor is
+ *     the mean of unrelated pairs, so it is a baseline, not a limit:
+ *     about half of unrelated pairs fall below it, and the scale's real
+ *     lower edge is a low percentile of them (the bars use the 5th).
+ *     When the usable range is 0.25, a difference of 0.03 is an eighth
+ *     of the scale most readings are taken on.
+ *     Senses 1 and 2 are the same measurement read two ways.
  *
  *  3. NORM RADIUS. Some providers return L2-normalised vectors and some
  *     do not. Where norms vary, cosine is discarding magnitude the model
@@ -55,7 +65,10 @@ export interface ModelRadius {
   meanDirectionNormRaw: number;
   /** acos(meanDirectionNorm) in degrees. The angular radius of the cone. */
   coneHalfAngleDeg: number;
-  /** Implied mean pairwise cosine, meanDirectionNorm^2. Cross-check on the floor. */
+  /**
+   * Implied mean pairwise cosine, meanDirectionNorm^2. On the same stratum
+   * this equals the measured floor by identity, so it is not a check on it.
+   */
   impliedFloor: number;
 
   /** Distribution of raw vector norms before normalisation. */
@@ -66,7 +79,11 @@ export interface ModelRadius {
 
   /** 1 - measured floor. How much of the cosine scale is in play. */
   usableRange: number;
-  /** acos(floor) in degrees. The largest separation two texts can show. */
+  /**
+   * acos(floor) in degrees: the angle between two typical unrelated texts.
+   * Not the largest separation, since about half of unrelated pairs are
+   * further apart than the floor.
+   */
   angularRangeDeg: number;
 
   /** Participation ratio of the covariance spectrum. */

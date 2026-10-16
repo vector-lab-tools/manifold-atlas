@@ -261,6 +261,7 @@ export function AgonismTest({ onQueryTime }: AgonismTestProps) {
             <div className="px-5 py-4">
               <SimilarityMeter
                 floor={floors.floor(results[0]?.models[0]?.modelId ?? "")}
+                floorLow={floors.floorLow(results[0]?.models[0]?.modelId ?? "")}
                 ceiling={floors.topicalCeiling(results[0]?.models[0]?.modelId ?? "")}
                 similarity={avgSimilarity}
                 level={

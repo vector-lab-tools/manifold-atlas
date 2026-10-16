@@ -25,12 +25,12 @@ export interface GlossaryEntry {
 export const GLOSSARY: Record<string, GlossaryEntry> = {
   floor: {
     term: "Anisotropy floor",
-    short: "Mean cosine between two unrelated texts in this model. The bottom of the scale.",
+    short: "Mean cosine between two unrelated texts in this model. A baseline, not the bottom of the scale.",
     full:
       "Embedding vectors do not spread over the whole sphere. They cluster in a narrow cone, so two texts with nothing in common already sit at a high cosine. The floor is that starting value, measured by embedding a corpus of unrelated sentences and taking every pairwise cosine. It differs from model to model, which is why a raw cosine cannot be compared across models without it.",
     formula: "mean cosine over all pairs in the calibration corpus",
     reads:
-      "A floor of 0.15 leaves most of the cosine scale in play. A floor of 0.70 means almost everything you will ever measure lands between 0.70 and 1.00.",
+      "A floor of 0.15 leaves most of the cosine scale in play. A floor of 0.70 means most of what you measure lands between about 0.70 and 1.00. Because the floor is an average, about half of all unrelated pairs fall a little below it; the bars mark the point only 5 per cent fall below as the lower edge.",
   },
 
   floorSd: {
@@ -42,10 +42,10 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
   },
 
   coneHalfAngle: {
-    term: "Cone half-angle (radius)",
-    short: "The angular radius of the region the model actually uses, in degrees.",
+    term: "Angular radius (cone)",
+    short: "A typical angle between a text and the model's mean direction, in degrees.",
     full:
-      "Writing each unit vector as a rotation away from the mean direction, the average of those angles is the half-angle of the cone the embeddings occupy. It is computed as the arc-cosine of the length of the mean of the unit vectors. This is the model's radius in the sense the term is usually meant: how much angular room the space has.",
+      "The embeddings cluster around one mean direction. This is the arc-cosine of the length of the mean of the unit vectors, which gives a typical angle from that direction: how much angular room the space has. It is not the edge of the cone, since many texts lie further out, and it restates the floor as an angle rather than measuring something separate.",
     formula: "acos( ‖ mean of the unit vectors ‖ )",
     reads:
       "90° would be an isotropic space using the full sphere. 60° is a moderately tight cone. Below 45° the model is working in a narrow wedge, and cosine differences there are compressed. Treat it as a first-order figure: it describes the space as a symmetric cap around one mean direction, which real embedding spaces only approximate. The effective dimension and the top-coordinate share are what show how far the description is off.",
@@ -62,9 +62,9 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
 
   usableRange: {
     term: "Usable range",
-    short: "How much of the cosine scale this model can actually reach.",
+    short: "How much of the cosine scale lies between typical unrelated texts and identity.",
     full:
-      "Cosine is nominally bounded by -1 and 1, but nothing in an anisotropic space goes below the floor. The reachable interval is floor to 1, and its width is the usable range. Differences in cosine should be read as a proportion of this, not of the nominal scale.",
+      "Cosine is nominally bounded by -1 and 1, but in an anisotropic space almost everything lands well above -1. The usable range is the distance from the floor to 1. Some unrelated pairs fall below the floor, since it is an average, so this is the scale most readings are taken on rather than a hard limit. Differences in cosine should be read as a proportion of it, not of the nominal scale.",
     formula: "1 − floor",
     reads:
       "With a usable range of 0.25, a cosine gap of 0.03 is an eighth of everything the instrument can register. With a range of 0.86, the same gap is minor.",
@@ -72,9 +72,9 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
 
   angularRange: {
     term: "Angular range",
-    short: "The largest angular separation any two texts can show, in degrees.",
+    short: "The angle between two typical unrelated texts, in degrees.",
     full:
-      "The arc-cosine of the floor. Reporting an angle between two embeddings against an implied 0 to 180 degree scale is misleading, because no pair of real texts ever approaches 180 degrees in these spaces. This is the real denominator.",
+      "The arc-cosine of the floor. Reporting an angle between two embeddings against an implied 0 to 180 degree scale is misleading, because no pair of real texts comes near 180 degrees in these spaces. This is the angle between two typical unrelated texts, so it is the right denominator; some unrelated pairs sit a few degrees further apart than this.",
     formula: "acos(floor)",
     reads: "An angular range of 82° means a measured separation of 30° is roughly a third of what is available.",
   },
@@ -133,9 +133,9 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
 
   normalisedPosition: {
     term: "Normalised position",
-    short: "Where a cosine sits on the floor-to-identity scale, from 0 to 1.",
+    short: "Where a cosine sits on the floor-to-identity scale. 0 is typical unrelated text, 1 is identity.",
     full:
-      "The measured cosine minus the floor, over one minus the floor. Zero means the pair is no closer than two unrelated texts in this model; one means identity. This is the figure to quote when comparing models, because raw cosines from models with different floors are not the same measurement.",
+      "The measured cosine minus the floor, over one minus the floor. Zero means the pair is no closer than two typical unrelated texts in this model; one means identity. Below zero means further apart than typical unrelated texts, which about half of unrelated pairs are; the bars say so in words rather than showing a negative share. This is the figure to quote when comparing models, because raw cosines from models with different floors are not the same measurement.",
     formula: "(cos − floor) / (1 − floor)",
     reads: "A negation at 0.87 of the floor-to-identity range has moved 13% of the distance the model can express.",
   },

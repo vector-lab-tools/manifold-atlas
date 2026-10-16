@@ -269,6 +269,7 @@ export function SohnRethelTest({ onQueryTime }: SohnRethelTestProps) {
                   <SimilarityMeter
                     similarity={avgSimilarity}
                     floor={floors.floor(firstModel)}
+                    floorLow={floors.floorLow(firstModel)}
                     ceiling={floors.topicalCeiling(firstModel)}
                     level={
                       avgPos !== null

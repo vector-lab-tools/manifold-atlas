@@ -11,8 +11,8 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.19.0
-**Date:** 14 May 2026
+**Version:** 1.19.1
+**Date:** 16 October 2026
 **Licence:** GPL-3.0-or-later
 
 Manifold Atlas is a vector-native research tool for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple AI providers to collect coordinates from the manifold, then computes distances, clusters, projections, and topological features that reveal the geometry's structure. It also maps the discursive grammars LLM text generation falls into — the "Not X but Y" family of antithetical constructions — against the actual cosine geometry of the fragments they claim to oppose, surfacing what the tool calls the *synthetic dialectic*: rhetoric performing thesis-and-antithesis while the underlying geometric move is a slight rotation between near-neighbours.
@@ -73,7 +73,7 @@ Manifold Atlas is organised as a tabbed workspace with seventeen operations. Eac
 
 ## The Radius of a Model
 
-A cosine on its own cannot be read. Embedding vectors do not spread over the whole sphere: they cluster into a cone around a single mean direction, so two entirely unrelated texts already sit at a high cosine, and where that floor falls differs from model to model. The radius is the half-angle of that cone, and it is the scale every other number has to be read against.
+A cosine on its own cannot be read. Embedding vectors do not spread over the whole sphere: they cluster into a cone around a single mean direction, so two entirely unrelated texts already sit at a high cosine, and where that floor falls differs from model to model. The radius is a typical angle between a text and that mean direction, and with the floor it sets the scale every other number has to be read against.
 
 ![Cone diagrams for four models across three registers](docs/radius-cones.png)
 
@@ -92,7 +92,7 @@ radius  =  arccos( √E[cos] )
 
 The `1/n` term is a sample-size correction. The average of *n* unit vectors has squared length `1/n` even in a perfectly isotropic space, so without it a sixty-text sample could never report a cone wider than about 83°.
 
-Two angles follow from this and they are not the same, which is the usual confusion. The **radius** is how far one text sits from the mean direction. The **floor angle**, `arccos(floor)`, is how far apart two unrelated texts sit from *each other*, and it is the widest separation any real pair will show. It is wider than the radius but narrower than twice it. Angular distances in the application are reported against that arc rather than against 180°, because no pair of real texts ever approaches 180°.
+Two angles follow from this and they are not the same, which is the usual confusion. The **radius** is how far one text sits from the mean direction. The **floor angle**, `arccos(floor)`, is how far apart two typical unrelated texts sit from *each other*. It is not the widest separation: the floor is an average, so about half of unrelated pairs sit a little further apart, and the bars mark the point only 5 per cent of them fall below as the scale's lower edge. It is wider than the radius but narrower than twice it. Angular distances in the application are reported against that arc rather than against 180°, because no pair of real texts ever approaches 180°.
 
 ### Why it matters
 
@@ -105,7 +105,7 @@ Because the same cosine means different things in different models, and across m
 | Nomic Embed Text (768d) | Ollama | 0.4223 | 49.5° | 0.578 |
 | Snowflake Arctic Embed (1024d) | Ollama | 0.7817 | 27.9° | 0.218 |
 
-A cosine of 0.80 sits well above the floor in All-MiniLM and *below* it in Snowflake Arctic Embed. Snowflake has roughly a quarter of the scale All-MiniLM has: 78% of the nominal zero-to-one range is unreachable, so a reading of 0.80 there is not a strong result but a weak one. Comparing raw cosines between those two models is not a comparison.
+A cosine of 0.80 sits well above the floor in All-MiniLM and only just above it in Snowflake Arctic Embed. Snowflake has roughly a quarter of the scale All-MiniLM has: most of its readings fall in the top 22% of the nominal zero-to-one range, so a reading of 0.80 there is not a strong result but a weak one. Comparing raw cosines between those two models is not a comparison.
 
 ### The radius differs by register, and not in the same direction
 
@@ -123,11 +123,11 @@ Register-dependence is real, but its *direction* is a property of the individual
 
 <img src="docs/radius-hover.png" alt="The radius hover card for one model" width="420">
 
-*The radius card on hover. The bar draws the floor and the topical ceiling against the full zero-to-one scale, so the part the model cannot reach is visible rather than inferred.*
+*The radius card on hover. The bar draws the floor and the topical ceiling against the full zero-to-one scale, so the part most readings never reach is visible rather than inferred.*
 
 <sub>Screenshot from Manifold Atlas v1.19.0.</sub>
 
-The radius is a first-order figure. It describes the space as a symmetric cap around one mean direction, which real embedding spaces only approximate, and the effective dimension and top-coordinate share reported alongside it are what show how far off that description is. The glossary entry says so on hover rather than leaving it implied.
+The radius is a first-order figure. It describes the space as a symmetric cap around one mean direction, which real embedding spaces only approximate, and the effective dimension and top-coordinate share reported alongside it are what show how far off that description is. The glossary entry says so on hover rather than leaving it implied. The radius is also the floor restated as an angle rather than a separate measurement, and when a few directions dominate a model's space it reads too small; the hover card then warns not to quote it, since the verdicts and bars do not use it.
 
 ## Features
 

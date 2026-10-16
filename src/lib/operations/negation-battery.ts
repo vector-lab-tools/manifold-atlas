@@ -143,6 +143,8 @@ export interface NegationBatteryModelResult {
   normalised: number | null;
   /** The model's measured floor for this register. Null if uncalibrated. */
   floorMean: number | null;
+  /** 5th percentile of unrelated pairs: the meter's lower edge. Absent in older saved results. */
+  floorLow?: number | null;
   /** The model's measured topical ceiling. Null if uncalibrated. */
   topicalCeiling: number | null;
   /** Highest same-size non-reversing edit for this statement. Null without controls. */
@@ -292,6 +294,7 @@ export function computeNegationBattery(
           collapsed: sim >= threshold.value,
           normalised: floor ? normalisedPosition(sim, floor.mean) : null,
           floorMean: floor ? floor.mean : null,
+          floorLow: floor ? floor.p05 : null,
           topicalCeiling: cal ? cal.topicalCeiling.mean : null,
           controlCeiling,
           exceedsControls: controlCeiling !== null ? sim >= controlCeiling : null,

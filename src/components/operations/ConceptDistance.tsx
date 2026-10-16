@@ -220,6 +220,7 @@ export function ConceptDistance({ onQueryTime }: ConceptDistanceProps) {
                       similarity={m.cosineSimilarity}
                       level={calibratedConceptLevel(m.cosineSimilarity, floors.floor(m.modelId))}
                       floor={floors.floor(m.modelId)}
+                      floorLow={floors.floorLow(m.modelId)}
                       ceiling={floors.topicalCeiling(m.modelId)}
                     />
                   </div>

@@ -407,6 +407,7 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                         m.floorMean
                       )}
                       floor={m.floorMean}
+                      floorLow={m.floorLow ?? null}
                       ceiling={m.topicalCeiling}
                     />
                   </div>
@@ -509,9 +510,9 @@ export function NegationGauge({ onQueryTime }: NegationGaugeProps) {
                         value={`${m.angularDistance.toFixed(1)}°`}
                         hint={
                           m.calibrated && m.angularCoverage !== null
-                            ? `${(m.angularCoverage * 100).toFixed(0)}% of this model's ${(
+                            ? `${(m.angularCoverage * 100).toFixed(0)}% of the ${(
                                 m.angularDistance / Math.max(1e-9, m.angularCoverage)
-                              ).toFixed(0)}° range`
+                              ).toFixed(0)}° between typical unrelated texts`
                             : "no measured range; not of 180°"
                         }
                       />

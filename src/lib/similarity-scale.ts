@@ -103,6 +103,13 @@ export function levelFromPosition(p: number): SimilarityLevel {
     detail: "about midway between unrelated text and identical",
     ...LOW,
   };
+  // The floor is a mean, so half of all unrelated pairs fall below it:
+  // a position under zero is further apart than a typical unrelated pair.
+  if (p < 0) return {
+    label: "Far apart",
+    detail: "further apart than two typical unrelated texts in this model",
+    ...NONE_STRONG,
+  };
   return {
     label: "Far apart",
     detail: "about as distant as two unrelated texts in this model",
