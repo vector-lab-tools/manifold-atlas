@@ -170,7 +170,7 @@ export function AboutModal() {
               <div className="flex items-start gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/icons/vector-lab-logo-mark.svg"
+                  src="/icons/vector-lab-logo-mark-small.svg"
                   alt=""
                   width={32}
                   height={32}

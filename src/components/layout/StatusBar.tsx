@@ -43,7 +43,7 @@ export function StatusBar({ lastQueryTime }: StatusBarProps) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/icons/vector-lab-logo-mark.svg"
+          src="/icons/vector-lab-logo-mark-small.svg"
           alt=""
           width={14}
           height={14}
