@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manifold Atlas</title>
+<meta name="description" content="A research instrument for reading embedding models: calibration, negation, density and topology across six providers.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9711;</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment:hsl(40 24% 89%); --parchment-dark:hsl(40 20% 82%);
+  --burgundy:hsl(352 47% 33%); --gold:hsl(43 85% 38%);
+  --bg:hsl(40 33% 97%); --fg:hsl(0 0% 10%);
+  --muted:hsl(40 24% 94%); --muted-fg:hsl(0 0% 42%);
+  --card:hsl(0 0% 100%); --ok:hsl(142 60% 28%); --warn:hsl(28 80% 38%);
+  --code-bg:hsl(40 24% 94%);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --parchment:hsl(220 10% 20%); --parchment-dark:hsl(220 10% 26%);
+    --burgundy:hsl(352 55% 60%); --gold:hsl(43 75% 55%);
+    --bg:hsl(220 15% 12%); --fg:hsl(40 20% 92%);
+    --muted:hsl(220 12% 18%); --muted-fg:hsl(40 8% 62%);
+    --card:hsl(220 12% 15%); --ok:hsl(142 45% 58%); --warn:hsl(28 75% 62%);
+    --code-bg:hsl(220 12% 18%);
+  }
+}
+:root[data-theme="dark"]{
+  --parchment:hsl(220 10% 20%); --parchment-dark:hsl(220 10% 26%);
+  --burgundy:hsl(352 55% 60%); --gold:hsl(43 75% 55%);
+  --bg:hsl(220 15% 12%); --fg:hsl(40 20% 92%);
+  --muted:hsl(220 12% 18%); --muted-fg:hsl(40 8% 62%);
+  --card:hsl(220 12% 15%); --ok:hsl(142 45% 58%); --warn:hsl(28 75% 62%);
+  --code-bg:hsl(220 12% 18%);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:5rem}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font-family:"Source Serif 4",Georgia,serif;font-size:18px;line-height:1.65;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:52rem;margin:0 auto;padding:0 16px}
+h1,h2,h3,h4{font-family:"Libre Baskerville",Georgia,serif;line-height:1.25;font-weight:700}
+h1{font-size:2.6rem;margin:0 0 .4rem}
+h2{font-size:1.75rem;margin:3.5rem 0 1rem;padding-bottom:.4rem;border-bottom:2px solid var(--parchment)}
+h3{font-size:1.2rem;margin:2.2rem 0 .6rem}
+h4{font-size:1rem;margin:1.6rem 0 .4rem;font-family:Inter,system-ui,sans-serif}
+p{margin:0 0 1rem}
+a{color:var(--burgundy);text-decoration-thickness:1px;text-underline-offset:2px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.84em;
+  background:var(--code-bg);padding:.12em .36em;border-radius:3px;word-break:break-word}
+pre{background:var(--code-bg);border:1px solid var(--parchment-dark);border-radius:4px;
+  padding:.9rem 1rem;overflow-x:auto;font-size:.82rem;line-height:1.55;margin:0 0 1rem}
+pre code{background:none;padding:0;font-size:1em}
+hr{border:0;border-top:1px solid var(--parchment);margin:2.5rem 0}
+
+header.hero{border-bottom:1px solid var(--parchment);background:var(--muted);padding:3.5rem 0 2.5rem;margin-bottom:0}
+.kicker{font-family:Inter,system-ui,sans-serif;font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted-fg);margin:0 0 .6rem}
+.lede{font-size:1.18rem;color:var(--muted-fg);margin:0 0 1.5rem;max-width:40rem}
+.btnrow{display:flex;flex-wrap:wrap;gap:.6rem}
+.btn{display:inline-block;font-family:Inter,system-ui,sans-serif;font-size:.85rem;font-weight:500;
+  padding:.55rem 1.1rem;border-radius:3px;text-decoration:none;border:1px solid var(--parchment-dark);
+  color:var(--fg);background:var(--card);transition:all .2s}
+.btn:hover{border-color:var(--burgundy)}
+.btn.primary{background:var(--burgundy);color:#fff;border-color:var(--burgundy)}
+.btn.primary:hover{filter:brightness(1.12)}
+
+nav.toc{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--parchment);
+  padding:.6rem 0;font-family:Inter,system-ui,sans-serif;font-size:.78rem;overflow-x:auto}
+nav.toc ul{display:flex;gap:1.25rem;list-style:none;margin:0;padding:0 16px;max-width:52rem;
+  margin-inline:auto;white-space:nowrap}
+nav.toc a{color:var(--muted-fg);text-decoration:none}
+nav.toc a:hover{color:var(--burgundy)}
+
+figure{margin:1.5rem 0 2rem}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--parchment-dark);border-radius:4px;background:var(--card)}
+figcaption{font-family:Inter,system-ui,sans-serif;font-size:.78rem;color:var(--muted-fg);
+  margin-top:.5rem;line-height:1.5}
+
+.cards{display:grid;gap:1rem;grid-template-columns:1fr;margin:1.5rem 0}
+@media(min-width:720px){.cards{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card);border:1px solid var(--parchment-dark);border-radius:4px;padding:1.1rem}
+.card h4{margin-top:0}
+.card p{font-size:.9rem;margin-bottom:.5rem}
+.tag{display:inline-block;font-family:Inter,system-ui,sans-serif;font-size:.65rem;letter-spacing:.08em;
+  text-transform:uppercase;padding:.15rem .5rem;border-radius:2px;margin-bottom:.6rem}
+.tag.free{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.tag.local{background:color-mix(in srgb,var(--burgundy) 13%,transparent);color:var(--burgundy)}
+.tag.paid{background:color-mix(in srgb,var(--gold) 20%,transparent);color:var(--warn)}
+
+table{width:100%;border-collapse:collapse;margin:1.2rem 0;font-size:.88rem;
+  font-family:Inter,system-ui,sans-serif;display:block;overflow-x:auto;white-space:nowrap}
+@media(min-width:720px){table{display:table;white-space:normal}}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--parchment)}
+th{font-weight:600;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-fg)}
+td code{font-size:.8em}
+
+.note{border-left:3px solid var(--parchment-dark);background:var(--muted);
+  padding:.9rem 1.1rem;margin:1.2rem 0;border-radius:0 3px 3px 0;font-size:.92rem}
+.note.warn{border-left-color:var(--warn)}
+.note.trip{border-left-color:var(--burgundy)}
+.note p:last-child{margin-bottom:0}
+.note strong{font-family:Inter,system-ui,sans-serif;font-size:.84rem;letter-spacing:.02em}
+
+ol,ul{margin:0 0 1rem;padding-left:1.4rem}
+li{margin-bottom:.4rem}
+ol.steps{counter-reset:s;list-style:none;padding-left:0}
+ol.steps>li{counter-increment:s;position:relative;padding-left:2.2rem;margin-bottom:.9rem}
+ol.steps>li::before{content:counter(s);position:absolute;left:0;top:.1rem;
+  width:1.5rem;height:1.5rem;border-radius:50%;background:var(--burgundy);color:#fff;
+  font-family:Inter,system-ui,sans-serif;font-size:.78rem;font-weight:600;
+  display:flex;align-items:center;justify-content:center}
+
+footer{border-top:1px solid var(--parchment);background:var(--muted);
+  margin-top:4rem;padding:2.5rem 0;font-size:.85rem;color:var(--muted-fg)}
+footer a{color:var(--burgundy)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Vector Lab &middot; Research Instrument</p>
+    <h1>Manifold Atlas</h1>
+    <p class="lede">Read what an embedding model does to meaning. Seventeen operations measuring
+      position, distance, density and topology across six providers, every number reported against
+      the model's own measured scale rather than a stipulated constant.</p>
+    <div class="btnrow">
+      <a class="btn primary" href="https://manifold-atlas.vercel.app">Open the application</a>
+      <a class="btn" href="https://github.com/vector-lab-tools/manifold-atlas">Source on GitHub</a>
+      <a class="btn" href="https://doi.org/10.1007/s13347-026-01162-w">The theory paper</a>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <ul>
+    <li><a href="#start">Quick start</a></li>
+    <li><a href="#keys">API keys</a></li>
+    <li><a href="#ollama">Ollama</a></li>
+    <li><a href="#using">Using it</a></li>
+    <li><a href="#examples">Worked examples</a></li>
+    <li><a href="#operations">Operations</a></li>
+    <li><a href="#trouble">Troubleshooting</a></li>
+  </ul>
+</nav>
+
+<main class="wrap">
+
+<h2 id="what">What this is</h2>
+
+<p>An embedding model turns text into a point in a space of several hundred dimensions. Manifold
+Atlas measures where those points land and what the distances between them mean. It is built for
+research into how these models encode meaning, not for tuning a retrieval pipeline, so it reports
+no benchmark scores and offers no relevance metrics.</p>
+
+<p>The first thing it does is work out what its own numbers mean. Embedding spaces are anisotropic:
+vectors occupy a narrow cone rather than the whole sphere, so two entirely unrelated texts already
+sit at a high cosine. How high differs sharply by model. Unrelated short sentences sit at 0.12 in
+All-MiniLM and 0.78 in Snowflake Arctic Embed, so a cosine of 0.80 is a strong reading in the first
+and a weak one in the second. Every figure in the application is reported against that measured
+floor.</p>
+
+<figure>
+  <img width="2560" height="1840" loading="lazy" decoding="async" src="overview.png" alt="The Manifold Atlas interface showing the operation tabs and a result card">
+  <figcaption>The main interface. Operations run across every enabled model at once, and the
+    disagreements between models are the finding rather than a nuisance.</figcaption>
+</figure>
+
+<h2 id="start">Quick start: three ways to run it</h2>
+
+<p>You need at least one embedding provider. Pick whichever row fits, then go to the matching
+section below. Nothing here requires a paid account.</p>
+
+<div class="cards">
+  <div class="card">
+    <span class="tag free">Free, no install</span>
+    <h4>Hugging Face</h4>
+    <p>Free account, free token, seven models. Rate-limited but fully functional for research.
+      The fastest way to see the instrument work.</p>
+    <p><a href="#hf">Set up a token &rarr;</a></p>
+  </div>
+  <div class="card">
+    <span class="tag local">Free, local</span>
+    <h4>Ollama</h4>
+    <p>No account, no key, no data leaves your machine. Needs one environment variable set so
+      your browser is allowed to call it. This is what the published figures used.</p>
+    <p><a href="#ollama">Set up Ollama &rarr;</a></p>
+  </div>
+  <div class="card">
+    <span class="tag paid">Paid</span>
+    <h4>OpenAI and others</h4>
+    <p>OpenAI, Voyage, Google Gemini, Cohere, OpenRouter. Embedding calls cost fractions of a
+      penny, but the account needs billing set up first.</p>
+    <p><a href="#paid">Set up a paid key &rarr;</a></p>
+  </div>
+</div>
+
+<p>You can enable several at once, and most of the interesting results come from doing exactly
+that. A single provider returns a single geometry, and from inside one geometry there is no way to
+tell a structural feature of the vectorial regime from an accident of one model's training.</p>
+
+<h2 id="keys">Getting API keys working</h2>
+
+<p>This is where most people get stuck, so it is worth going slowly. The pattern is the same for
+every provider: create a key on the provider's site, paste it into Settings in Manifold Atlas,
+enable the provider, pick models. What differs is the trap each provider sets.</p>
+
+<div class="note">
+  <p><strong>Where keys are stored.</strong> Keys are held in your browser and sent directly to
+  the provider. They are not transmitted to any Vector Lab server, and there is no account,
+  no login and no telemetry. If you are running a local copy with <code>npm run dev</code>, keys
+  are also written to <code>.env.local</code> so they survive a dev server restart.
+  <code>.env.local</code> is gitignored.</p>
+</div>
+
+<h3 id="hf">Hugging Face (free, start here)</h3>
+
+<ol class="steps">
+  <li>Create a free account at <a href="https://huggingface.co/">huggingface.co</a>.</li>
+  <li>Go to <strong>Settings &rarr; Access Tokens</strong>.</li>
+  <li>Create a new token. A <strong>Read</strong> token is enough. If you are offered the
+    fine-grained token form instead, make sure the permission for calling Inference Providers is
+    enabled, or every request will come back unauthorised.</li>
+  <li>Copy the token. It begins <code>hf_</code> and is shown only once.</li>
+  <li>In Manifold Atlas, open <strong>Settings</strong>, enable Hugging Face, paste the token,
+    and tick the models you want.</li>
+</ol>
+
+<div class="note trip">
+  <p><strong>Three things that trip people up here.</strong></p>
+  <p>A fine-grained token without inference permission looks valid and fails on every call. If you
+  get an authorisation error with a token you just made, this is almost always why.</p>
+  <p>The first call to a model that has gone cold can take twenty seconds or more while it loads on
+  the provider's side. It is not hung. Later calls are fast.</p>
+  <p>The free tier is rate-limited. A run across many concepts can hit the limit and return errors
+  partway through. Wait a minute and run it again, or cut the number of enabled models.</p>
+</div>
+
+<h3 id="paid">OpenAI, Voyage, Google Gemini, Cohere, OpenRouter</h3>
+
+<table>
+  <thead><tr><th>Provider</th><th>Models</th><th>Where the key comes from</th></tr></thead>
+  <tbody>
+    <tr><td>OpenAI</td><td>text-embedding-3-small (1536d), text-embedding-3-large (3072d)</td>
+      <td><a href="https://platform.openai.com/">platform.openai.com</a>, under API keys</td></tr>
+    <tr><td>Voyage AI</td><td>voyage-3, voyage-3-large, voyage-3.5 (1024d)</td>
+      <td><a href="https://www.voyageai.com/">voyageai.com</a>, dashboard</td></tr>
+    <tr><td>Google Gemini</td><td>gemini-embedding-001 (3072d)</td>
+      <td><a href="https://ai.google.dev/">ai.google.dev</a></td></tr>
+    <tr><td>Cohere</td><td>embed-v3.0 (1024d)</td>
+      <td><a href="https://cohere.com/">cohere.com</a>, dashboard</td></tr>
+    <tr><td>OpenRouter</td><td>various, OpenAI-compatible</td>
+      <td><a href="https://openrouter.ai/">openrouter.ai</a>, needs a base URL as well as a key</td></tr>
+  </tbody>
+</table>
+
+<div class="note warn">
+  <p><strong>The OpenAI billing trap.</strong> A brand new OpenAI account has a valid API key and
+  no credit. Every call fails with a quota error that reads like a rate limit, which sends people
+  off looking for the wrong problem. You have to add a payment method and buy credit before an
+  OpenAI key will do anything at all. Embeddings are cheap once it works, fractions of a penny for
+  a whole run, but the balance cannot start at zero.</p>
+</div>
+
+<div class="note trip">
+  <p><strong>Copy the whole key.</strong> Keys are long and selecting by double-click often grabs
+  only part of one. A truncated key gives an authorisation error that looks identical to a wrong
+  key. Use the provider's copy button where there is one.</p>
+  <p><strong>OpenRouter needs two fields.</strong> It is configured as an OpenAI-compatible
+  provider, so it takes a base URL alongside the key. Leaving the base URL empty makes the calls
+  go to OpenAI instead, which then fails on the OpenRouter key.</p>
+</div>
+
+<h3>Adding models that are not in the list</h3>
+
+<p>The model registry is plain markdown, one file per provider under <code>public/models/</code>.
+To add a model, add a line and reload. No rebuild.</p>
+
+<pre><code>model-id | Display Name | dimensions
+
+BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
+
+<h2 id="ollama">Ollama: local, free, nothing leaves your machine</h2>
+
+<p>Ollama runs embedding models on your own hardware. There is no key and no account, and once the
+model is resident the latency is single-digit milliseconds. The six models in the published figures
+all ran this way.</p>
+
+<p>Manifold Atlas calls Ollama directly from your browser rather than through a server, which means
+the hosted application can use your local Ollama without you installing anything. The catch is that
+Ollama refuses calls from origins it does not know, so you have to tell it which origin to accept.</p>
+
+<h3>If you are running Atlas locally</h3>
+
+<pre><code>ollama pull nomic-embed-text
+ollama serve</code></pre>
+
+<p>Then <code>npm run dev</code>, open <code>localhost:3000</code>, and enable Ollama in Settings.
+Nothing else is needed, because the origins already match.</p>
+
+<h3>If you are using the hosted Atlas</h3>
+
+<pre><code>ollama pull nomic-embed-text
+
+OLLAMA_ORIGINS="https://manifold-atlas.vercel.app,http://localhost:3000,http://127.0.0.1:3000" ollama serve</code></pre>
+
+<p>The Settings panel detects the origin you are actually on and shows this command pre-filled with
+it, next to a copy button, so there is no need to type it by hand. If a call fails on a CORS
+preflight, the error panel shows the same command.</p>
+
+<p>To make it survive a reboot, on macOS use
+<code>launchctl setenv OLLAMA_ORIGINS "&lt;origins&gt;"</code> and restart Ollama. On Linux with
+systemd, add <code>Environment="OLLAMA_ORIGINS=&lt;origins&gt;"</code> to the service unit.
+<code>OLLAMA_ORIGINS=*</code> also works and is more permissive than you need.</p>
+
+<div class="note warn">
+  <p><strong>Safari does not work for this.</strong> Safari blocks an HTTPS page from calling
+  <code>http://localhost</code> whatever the CORS headers say. Use Chrome, Firefox, Edge, Arc or
+  Brave with the hosted Atlas. Safari is fine for a local copy on <code>localhost:3000</code>.</p>
+</div>
+
+<h2 id="using">Using it</h2>
+
+<p>The workflow is the same for every operation: calibrate once per model, then run probes.</p>
+
+<h3>Step one, calibrate</h3>
+
+<p>Calibration embeds a neutral corpus of 224 texts and measures how much of the sphere each model
+actually uses. It runs once per model and is cached. Until a model is calibrated its results are
+marked as sitting on an unmeasured scale.</p>
+
+<figure>
+  <img width="2040" height="4500" loading="lazy" decoding="async" src="calibration-run.png" alt="The calibration modal printing per-model measurements as they complete">
+  <figcaption>A calibration run. The panel prints each model's floor, radius and usable range as it
+    lands, because the numbers are the point of the run.</figcaption>
+</figure>
+
+<figure>
+  <img width="2560" height="3276" loading="lazy" decoding="async" src="calibration-panel.png" alt="Calibration results for six models, showing floor, radius, usable range and topical ceiling">
+  <figcaption>Six models after calibration. Usable range runs from 0.878 in All-MiniLM down to
+    0.218 in Snowflake Arctic Embed, a factor of four. Raw cosines from these two models are not
+    the same measurement and should not be plotted on a shared axis.</figcaption>
+</figure>
+
+<h3>Step two, read the radius</h3>
+
+<p>The radius is a typical angle between a text and the mean direction of the model's cone. A wider
+cone is not a better model. It means unrelated texts sit further apart, so the scale has more room
+in it and a given cosine difference is a smaller proportion of what the space can express.</p>
+
+<p>It is a first-order figure, describing the space as a symmetric cap around one mean direction,
+which real embedding spaces only approximate. Where a few coordinates dominate a model's space the
+radius reads too small, and the hover card says so rather than leaving it implied. The verdicts and
+the bars are computed from the floor, not from the radius, so a warned radius does not make a
+reading unsafe.</p>
+
+<figure>
+  <img width="2560" height="2357" loading="lazy" decoding="async" src="radius-cones.png" alt="Cone diagrams for six models drawn to a common scale">
+  <figcaption>Each model's cone at a common scale. Every vector is unit length so they all land on
+    the dashed sphere; the shaded cap is the part of that surface the model reaches.</figcaption>
+</figure>
+
+<figure>
+  <img width="1308" height="1914" loading="lazy" decoding="async" src="radius-hover.png" alt="Hover card showing a model's radius, floor and usable range">
+  <figcaption>The radius is available from any result card, so a number can be read against its
+    scale without leaving the operation.</figcaption>
+</figure>
+
+<h3>Step three, run a probe</h3>
+
+<p>Enter concepts or claims, press the button, read the verdict. Every operation uses the same five
+phrases, read as positions on the model's own scale: <strong>Indistinguishable</strong>,
+<strong>Very close</strong>, <strong>Close</strong>, <strong>Somewhat apart</strong>,
+<strong>Far apart</strong>. They describe distance and nothing else. A model that separates two
+sentences has not thereby understood that one denies the other.</p>
+
+<h2 id="examples">Worked examples</h2>
+
+<h3>Does the model register negation?</h3>
+
+<p>Put <em>This law is just</em> against <em>This law is not just</em>. Logic treats a claim and its
+denial as categorical opposites. The geometry does not.</p>
+
+<figure>
+  <img width="2560" height="1072" loading="lazy" decoding="async" src="negation-gauge.png" alt="Negation Gauge results across six models for a claim and its negation">
+  <figcaption>Four of six models place the negated sentence at or above the point where they begin
+    telling texts apart. Snowflake Arctic Embed puts it at 0.9846, which is 93% of that model's
+    usable range.</figcaption>
+</figure>
+
+<p>The obvious objection is that the two sentences share almost every token, so of course they sit
+close. The control answers it.</p>
+
+<figure>
+  <img width="2560" height="3434" loading="lazy" decoding="async" src="negation-controls.png" alt="Matched-edit controls shown beneath a negation result">
+  <figcaption>Each probe is measured against edits of the same size that do not reverse the claim,
+    swapping one predicate for an unrelated one. In four of six models the negation sits closer to
+    the original than any of those controls, so shared tokens do not account for it.</figcaption>
+</figure>
+
+<p>All-MiniLM is the case that settles it. Its floor is 0.12, so it is close to isotropic and the
+cone cannot be blamed, and it still places the negation at 92% of its range.</p>
+
+<h3>How far apart are two contested concepts?</h3>
+
+<p>Enter <em>solidarity</em> and <em>compliance</em> and run it across every enabled model.</p>
+
+<figure>
+  <img width="2560" height="2352" loading="lazy" decoding="async" src="concept-distance.png" alt="Concept Distance comparing solidarity and compliance across six models">
+  <figcaption>The same pair in six models. The per-model position matters more than the raw cosine:
+    the same number means different things in models whose floors differ by 0.65.</figcaption>
+</figure>
+
+<h3>Which concept pairs do models disagree about?</h3>
+
+<figure>
+  <img width="2560" height="799" loading="lazy" decoding="async" src="distance-matrix.png" alt="Distance Matrix with a contested geometry table ranking pairs by cross-model variance">
+  <figcaption>A pairwise matrix across a concept set, with pairs ranked by how much the models
+    disagree. The ranking is computed on floor-to-identity positions, not raw cosines, so a
+    difference between the instruments does not read as a disagreement about the concepts.</figcaption>
+</figure>
+
+<h3>Which ideological framing has the model naturalised?</h3>
+
+<figure>
+  <img width="2560" height="2797" loading="lazy" decoding="async" src="hegemony-compass.png" alt="Hegemony Compass placing contested concepts between two ideological axes">
+  <figcaption>Concepts placed between two axes, each pole defined by a cluster of full sentences
+    rather than single words. A concept sitting far from centre has been pulled toward one pole,
+    which is a measurement of association, not a claim about the concept.</figcaption>
+</figure>
+
+<h3>What shape is a set of claims?</h3>
+
+<figure>
+  <img width="2560" height="1961" loading="lazy" decoding="async" src="neighbourhood-map.png" alt="Three-dimensional projection of a vocabulary with cluster colouring">
+  <figcaption>Local structure around a vocabulary, projected to three dimensions with clusters
+    coloured. Useful for seeing which terms the manifold treats as a single region.</figcaption>
+</figure>
+
+<figure>
+  <img width="2560" height="3892" loading="lazy" decoding="async" src="persistent-homology.png" alt="Vietoris-Rips complex over twenty political claims with the conceptual islands listed">
+  <figcaption>A Vietoris-Rips complex over twenty claims at a chosen threshold, with the isolated
+    concepts listed beneath. Persistence is scaled by the usable range, so a barcode from a
+    high-floor model can be compared with one from a low-floor model.</figcaption>
+</figure>
+
+<h3>Does a rhetorical opposition hold up geometrically?</h3>
+
+<figure>
+  <img width="2560" height="3058" loading="lazy" decoding="async" src="grammar-of-vectors.png" alt="Grammar of Vectors measuring Not X but Y constructions against the geometry">
+  <figcaption>The "Not X but Y" construction measured against the fragments it claims to oppose.
+    Where the asserted opposition sits above the topical ceiling, the shared subject has been
+    registered and the opposition has not.</figcaption>
+</figure>
+
+<h3>Running a whole protocol</h3>
+
+<figure>
+  <img width="2560" height="3058" loading="lazy" decoding="async" src="library-runner.png" alt="The Library showing curated multi-step protocols">
+  <figcaption>Curated sequences run in one pass and produce an exportable report, so a demonstration
+    can be repeated by another researcher on the same inputs. Your own markdown-defined tests can be
+    added and persist in the browser.</figcaption>
+</figure>
+
+<h2 id="operations">Operations</h2>
+
+<table>
+  <thead><tr><th>Operation</th><th>What it measures</th></tr></thead>
+  <tbody>
+    <tr><td>Concept Distance</td><td>Geometric relationship between two concepts, across models</td></tr>
+    <tr><td>Distance Matrix</td><td>Full pairwise matrix, with pairs ranked by cross-model disagreement</td></tr>
+    <tr><td>Negation Gauge</td><td>A claim against its negation, with matched-edit controls</td></tr>
+    <tr><td>Negation Battery</td><td>The same across a themed set of ten claims</td></tr>
+    <tr><td>Neighbourhood Map</td><td>Local structure, 3D projection, cluster and bridge detection</td></tr>
+    <tr><td>Semantic Sectioning</td><td>Interpolation between two anchors, naming the nearest real concept at each step</td></tr>
+    <tr><td>Vector Walk</td><td>Traversal of the space between concepts</td></tr>
+    <tr><td>Vector Drift</td><td>How far context displaces a concept from its bare position</td></tr>
+    <tr><td>Hegemony Compass</td><td>Position between two ideological axes defined by sentence clusters</td></tr>
+    <tr><td>Agonism Test</td><td>Whether philosophical opposition survives geometrisation</td></tr>
+    <tr><td>Real Abstraction Test</td><td>Use-value against exchange-value descriptions of the same thing</td></tr>
+    <tr><td>Vector Logic</td><td>Analogical inference as arithmetic, A &minus; B + C</td></tr>
+    <tr><td>Silence Detector</td><td>How much geometric room one domain gets against another</td></tr>
+    <tr><td>Grammar of Vectors</td><td>The "Not X but Y" family against the geometry it claims</td></tr>
+    <tr><td>Text Vectorisation</td><td>Reading path and word-frequency analysis over a text</td></tr>
+    <tr><td>Persistent Homology</td><td>Persistence diagram, barcode, Rips complex, Betti curve, voids</td></tr>
+    <tr><td>Calibration</td><td>Per-register floors, radius profile, control-derived thresholds</td></tr>
+  </tbody>
+</table>
+
+<h2 id="trouble">Troubleshooting</h2>
+
+<table>
+  <thead><tr><th>Symptom</th><th>Cause and fix</th></tr></thead>
+  <tbody>
+    <tr><td>OpenAI key valid, every call fails on quota</td>
+      <td>No credit on the account. Add a payment method and buy credit.</td></tr>
+    <tr><td>Hugging Face token rejected immediately</td>
+      <td>Fine-grained token without inference permission. Make a Read token instead.</td></tr>
+    <tr><td>First Hugging Face call hangs for ~20s</td>
+      <td>Cold model loading on the provider's side. Wait; later calls are fast.</td></tr>
+    <tr><td>Errors partway through a long run</td>
+      <td>Free-tier rate limit. Wait a minute, or enable fewer models.</td></tr>
+    <tr><td>Ollama enabled but nothing responds</td>
+      <td>Origin not in <code>OLLAMA_ORIGINS</code>. Copy the command from the Settings panel.</td></tr>
+    <tr><td>Ollama works locally, not on the hosted app</td>
+      <td>Same cause, or you are in Safari, which blocks HTTPS pages calling localhost.</td></tr>
+    <tr><td>A result says it is on an unmeasured scale</td>
+      <td>That model has not been calibrated yet. Run Calibration.</td></tr>
+    <tr><td>Cosines look high for unrelated texts</td>
+      <td>Expected. That is anisotropy, and it is what the floor measures.</td></tr>
+    <tr><td>OpenRouter key rejected</td>
+      <td>Base URL field left empty, so the call went to OpenAI.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="cite">Citing and licence</h2>
+
+<p>The theoretical framework is set out in Berry, D. M. (2026) 'Vector Theory: Epistemology,
+Political Economy, and Probabilistic Computation', <em>Philosophy &amp; Technology</em> 39(3), 149.
+<a href="https://doi.org/10.1007/s13347-026-01162-w">doi:10.1007/s13347-026-01162-w</a>. Citation
+metadata for the software itself is in <code>CITATION.cff</code> in the repository.</p>
+
+<p>Manifold Atlas is released under the GNU General Public License, version 3 or later. Versions up
+to 1.17.2 were released under the MIT Licence; the relicensing covers every prior version, and
+copies already obtained under MIT remain validly licensed under those terms.</p>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Manifold Atlas is part of <a href="https://vector-lab-tools.github.io/">Vector Lab</a>.
+      Concept and design by David M. Berry, implemented with Claude Code.
+      Design system adapted from the <a href="https://github.com/dmberry/ccs-wb">CCS Workbench</a>.</p>
+    <p>Thanks to Michael Castelle, Michael Dieter, Richard Rogers and Wolfgang Ernst for comments
+      on the instrument.</p>
+    <p><a href="https://github.com/vector-lab-tools/manifold-atlas">Source</a> &middot;
+      <a href="https://github.com/vector-lab-tools/manifold-atlas/blob/main/README.md">Full README</a> &middot;
+      <a href="https://manifold-atlas.vercel.app">Application</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
