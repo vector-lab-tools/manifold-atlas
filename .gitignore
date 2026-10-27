@@ -4,3 +4,6 @@ node_modules/
 .env
 .env.local
 .DS_Store
+
+# Local scratch and hand-off inbox, never committed
+_tmp/
