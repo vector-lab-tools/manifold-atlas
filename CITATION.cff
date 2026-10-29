@@ -16,6 +16,14 @@ authors:
 repository-code: "https://github.com/vector-lab-tools/manifold-atlas"
 url: "https://vector-lab-tools.github.io"
 license: GPL-3.0-or-later
+doi: "10.5281/zenodo.23762832"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23762832"
+    description: "Concept DOI, always resolving to the latest version"
+  - type: doi
+    value: "10.5281/zenodo.23762833"
+    description: "Version DOI for v1.19.5"
 version: "1.19.5"
 date-released: "2026-10-29"
 keywords:

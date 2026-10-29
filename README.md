@@ -574,3 +574,13 @@ GNU General Public License, version 3 or later (GPL-3.0-or-later). The full text
 Manifold Atlas was released under the MIT Licence up to and including version 1.17.2. As sole copyright holder, David M. Berry relicensed the work under the GPL from version 1.18.0, **and that relicensing covers every prior version as well**, so any earlier release may now be used under the GPL version 3 or later. Copies already obtained under the MIT Licence remain validly licensed under those terms: a licence already granted cannot be withdrawn, so recipients of those copies may continue under MIT or proceed under the GPL, as they prefer.
 
 Every dependency is distributed under GPL-3-compatible terms (MIT, ISC, BSD, Apache-2.0, MPL-2.0, LGPL-3, and similar) and retains its own licence.
+
+## Citing
+
+[![DOI](https://zenodo.org/badge/1194399958.svg)](https://zenodo.org/badge/latestdoi/1194399958)
+
+Every release is archived on Zenodo. Cite the concept DOI below, which always resolves to the most recent version:
+
+> Berry, D. M. (2026) *Manifold Atlas: comparative geometry of AI vector spaces*. Zenodo. https://doi.org/10.5281/zenodo.23762832
+
+To cite a specific release instead, use its own version DOI from the [Zenodo record](https://doi.org/10.5281/zenodo.23762832). Machine-readable metadata is in [CITATION.cff](CITATION.cff).
