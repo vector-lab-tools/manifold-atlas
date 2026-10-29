@@ -577,7 +577,7 @@ Every dependency is distributed under GPL-3-compatible terms (MIT, ISC, BSD, Apa
 
 ## Citing
 
-[![DOI](https://zenodo.org/badge/1194399958.svg)](https://zenodo.org/badge/latestdoi/1194399958)
+[![DOI](https://zenodo.org/badge/1194399958.svg)](https://doi.org/10.5281/zenodo.23762832)
 
 Every release is archived on Zenodo. Cite the concept DOI below, which always resolves to the most recent version:
 
