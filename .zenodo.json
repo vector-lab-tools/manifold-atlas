@@ -1,0 +1,24 @@
+{
+  "upload_type": "software",
+  "title": "Manifold Atlas: comparative geometry of AI vector spaces",
+  "description": "Manifold Atlas is a vector-native research instrument for studying how large language models organise meaning geometrically. It uses embedding APIs from multiple providers to collect coordinates from the manifold, then computes distances, clusters, projections, and topological features that open the geometry of meaning to critical analysis. Part of the Vector Lab family of research instruments.",
+  "license": "gpl-3.0-or-later",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Berry, David M.",
+      "affiliation": "University of Sussex",
+      "orcid": "0000-0001-5106-4407"
+    }
+  ],
+  "keywords": [
+    "vector theory",
+    "critical theory",
+    "embedding models",
+    "manifold",
+    "geometric ideology",
+    "negation deficit",
+    "digital methods",
+    "critical AI studies"
+  ]
+}
