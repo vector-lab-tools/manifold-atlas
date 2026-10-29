@@ -13,11 +13,10 @@ authors:
   - family-names: Berry
     given-names: David M.
     affiliation: University of Sussex
-    orcid: "https://orcid.org/0000-0001-5106-4407"
 repository-code: "https://github.com/vector-lab-tools/manifold-atlas"
 url: "https://vector-lab-tools.github.io"
 license: GPL-3.0-or-later
-version: "1.19.4"
+version: "1.19.5"
 date-released: "2026-10-29"
 keywords:
   - vector theory
@@ -37,7 +36,6 @@ references:
       - family-names: Berry
         given-names: David M.
         affiliation: University of Sussex
-        orcid: "https://orcid.org/0000-0001-5106-4407"
     journal: "Philosophy & Technology"
     volume: 39
     issue: 3
