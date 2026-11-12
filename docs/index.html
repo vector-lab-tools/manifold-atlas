@@ -148,6 +148,8 @@ figcaption .full{font-family:var(--mono);font-size:11.5px;text-transform:upperca
 .tag.local{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-text)}
 .tag.paid{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
 .card .go{font-family:var(--mono);font-size:13px;text-decoration:none}
+.prose .go{font-family:var(--mono);font-size:13px;text-decoration:none;color:var(--accent-text)}
+.prose .go:hover{text-decoration:underline}
 
 /* Tables */
 .tscroll{overflow-x:auto;margin:22px 0}
@@ -196,6 +198,8 @@ footer .doi{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;margin
       <a href="#ollama">Ollama</a>
       <a class="hide-sm" href="#keys">API keys</a>
       <a class="hide-sm" href="#examples">Examples</a>
+      <a class="hide-sm" href="#cases">Case studies</a>
+      <a href="#faq">FAQ</a>
       <a href="#trouble">Help</a>
       <button class="theme-toggle" id="themeBtn" aria-label="Switch between light and dark">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -582,9 +586,105 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
   </div>
 </section>
 
+<section id="cases">
+  <div class="wrap">
+    <p class="num">07 &middot; Case studies</p>
+    <h2>Six fields, six probes</h2>
+    <div class="prose">
+      <p>Each of these was run on the six local Ollama models listed in section 03, against the
+      calibration corpus in the repository. Every figure is a normalised position: 0 is the model's
+      floor, where two unrelated texts of the same kind already sit, and 1 is identity. The position
+      is what travels between models; the raw cosine does not.</p>
+
+      <p>Where a probe compares two sentences, the comparison is matched for edit size: the probe
+      and its control change the same slot by the same amount. An earlier version of the sociology
+      study compared a one-word reversal against a four-word paraphrase and produced a striking
+      result that was an artefact of edit distance. The controls below exist to stop that.</p>
+
+      <h3>Sociology &middot; opposition sits closer than unrelatedness</h3>
+      <p>Take a statement, reverse it with a single word, and separately change that same word to an
+      unrelated attribute. <em>The job is secure</em> against <em>The job is insecure</em>, and
+      against <em>The job is clerical</em>. Both alternatives are one-word edits in the same slot,
+      so shared tokens cannot account for a difference between them.</p>
+      <p>Across six statements and six models, 34 of 36 readings put the reversal nearer than the
+      unrelated attribute. On <em>She is powerful</em>, the reversal <em>She is powerless</em> sits
+      between 0.60 and 0.77 of range while <em>She is elderly</em> sits between 0.26 and 0.46. The
+      two exceptions were both on <em>The area is rich</em> against <em>coastal</em>, and both were
+      under 0.03.</p>
+      <table>
+        <thead><tr><th>Statement</th><th>Reversal</th><th>Unrelated, same slot</th><th>Reversal nearer</th></tr></thead>
+        <tbody>
+          <tr><td>The family is wealthy</td><td>0.66 &ndash; 0.81</td><td>0.52 &ndash; 0.65</td><td>6 of 6</td></tr>
+          <tr><td>He is employed</td><td>0.60 &ndash; 0.73</td><td>0.21 &ndash; 0.52</td><td>6 of 6</td></tr>
+          <tr><td>The area is rich</td><td>0.48 &ndash; 0.79</td><td>0.33 &ndash; 0.62</td><td>4 of 6</td></tr>
+          <tr><td>She is powerful</td><td>0.60 &ndash; 0.77</td><td>0.26 &ndash; 0.46</td><td>6 of 6</td></tr>
+          <tr><td>The job is secure</td><td>0.65 &ndash; 0.94</td><td>0.35 &ndash; 0.59</td><td>6 of 6</td></tr>
+          <tr><td>The country is developed</td><td>0.61 &ndash; 0.82</td><td>0.32 &ndash; 0.66</td><td>6 of 6</td></tr>
+        </tbody>
+      </table>
+      <p>For research on class, employment or power, this is the thing to establish before using
+      embedding similarity as a measure. A claim and its reversal are near-neighbours, and nearer
+      than a claim and an unrelated attribute of the same subject. Clustering on these spaces will
+      group a position with its opposite.</p>
+
+      <h3>Media and Communications &middot; the models disagree about <em>riot</em></h3>
+      <p><em>Protest</em> against <em>demonstration</em>, a near-synonym, and against <em>riot</em>,
+      a hostile reframing of the same event. All three are single terms, so no edit-size question
+      arises.</p>
+      <p>The models do not agree. Granite places <em>riot</em> at 0.156 of range, well below
+      <em>demonstration</em> at 0.323, holding the reframing at a distance. Snowflake Arctic Embed
+      places it at 0.552. All-MiniLM and mxbai put <em>riot</em> nearer to <em>protest</em> than
+      <em>demonstration</em> is. A framing analysis run on one of these models would reach a
+      different conclusion from the same analysis run on another.</p>
+
+      <h3>Journalism &middot; agent deletion moves the sentence, but not far</h3>
+      <p><em>Police shot the man</em> against the passive with the agent kept, <em>The man was shot
+      by police</em>, and against the agent deleted, <em>The man was shot</em>.</p>
+      <p>Deleting the agent does move the sentence: in all six models the agent-retaining passive is
+      nearer. But the agent-deleted version still sits between 0.62 and 0.84 of range, and above
+      0.83 in granite and Snowflake. The deletion that critical linguistics treats as the central
+      move in reporting on state violence is, geometrically, a small displacement. One caveat on
+      reading this: the agent-deleted sentence is also shorter, and length is not controlled here,
+      so some of the movement is length rather than agency.</p>
+
+      <h3>History &middot; period register is held apart, weakly</h3>
+      <p><em>The king taxed the peasants</em> against a period restatement, <em>The monarch taxed
+      the serfs</em>, and against a modern equivalent, <em>The government taxed the citizens</em>.
+      Both alternatives change the same two content words.</p>
+      <p>In 17 of 18 readings across three statements and six models the period restatement is
+      nearer, so the models do not simply collapse a historical relation into its modern equivalent.
+      The margins are thin, from 0.013 to 0.161, and on <em>The priest blessed the harvest</em>
+      three models sit within 0.005 either way. The distinction survives, but not by enough to carry
+      an argument on its own.</p>
+
+      <h3>Literature &middot; sense beats surface frame</h3>
+      <p><em>The sea is a mirror</em> against a paraphrase of its sense, <em>The sea is still and
+      reflective</em>, and against <em>The sea is a danger</em>, which keeps the metaphorical frame
+      and changes the sense.</p>
+      <p>All six models place the paraphrase nearer, by 0.08 to 0.27 of range. The paraphrase is the
+      larger edit, changing four words where the control changes one, so the result holds against
+      the edit-size objection rather than depending on it. For stylistic work this is the
+      encouraging direction: the geometry is not simply tracking the surface frame.</p>
+
+      <h3>Philosophy &middot; determinate negation mostly stays apart</h3>
+      <p><em>Being</em> against <em>existence</em>, and against <em>nothingness</em>. Five of six
+      models place <em>existence</em> nearer; granite reverses it. The positions are low throughout,
+      0.24 to 0.54 for the near-synonym, so neither term sits close to <em>being</em> on these
+      scales. All-MiniLM separates the opposition most clearly, placing <em>nothingness</em> at
+      0.179.</p>
+      <p>Set beside the sociology result, this matters: the collapse of opposition is not uniform.
+      Antonyms in ordinary predicative statements collapse; a philosophical opposition between bare
+      terms does not, at least not in this probe.</p>
+
+      <p class="note">Every number here can be reproduced from a clean install. Pull the six models
+      listed in section 03, run Calibration, then enter the probes. No key is needed.</p>
+    </div>
+  </div>
+</section>
+
 <section id="operations">
   <div class="wrap">
-    <p class="num">07 &middot; Operations</p>
+    <p class="num">08 &middot; Operations</p>
     <h2>Seventeen of them</h2>
     <div class="tscroll">
       <table>
@@ -615,7 +715,7 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
 
 <section id="trouble">
   <div class="wrap">
-    <p class="num">08 &middot; Troubleshooting</p>
+    <p class="num">09 &middot; Troubleshooting</p>
     <h2>Symptom to cause</h2>
     <div class="tscroll">
       <table>
@@ -645,9 +745,132 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
   </div>
 </section>
 
+<section id="faq">
+  <div class="wrap">
+    <p class="num">10 &middot; FAQ</p>
+    <h2>Questions that come up</h2>
+    <div class="prose">
+
+      <h3>I just want to try it. What is the fastest route that needs no key at all?</h3>
+      <p>Install Ollama, run <code>ollama pull nomic-embed-text</code>, then start it with the
+      origin of the page you are on allowed. That last part is the step nearly everyone misses:
+      Ollama refuses calls from origins it does not know, so starting it plainly with
+      <code>ollama serve</code> leaves the browser unable to reach it. The Settings panel detects
+      the origin you are actually on and shows the full command pre-filled, with a copy button.</p>
+      <p><a class="go" href="#ollama">Set up Ollama &rarr;</a></p>
+
+      <h3>Ollama is installed and running, but Manifold Atlas sees nothing.</h3>
+      <p>The origin is not in <code>OLLAMA_ORIGINS</code>. This is the single most common failure
+      and it looks like the tool is broken rather than like a configuration problem, because the
+      request fails on a CORS preflight before Ollama logs anything. Copy the command from Settings
+      and restart Ollama with it. To make it survive a reboot, set the variable at the system level
+      rather than on one shell: <code>launchctl setenv</code> on macOS, an
+      <code>Environment=</code> line in the service unit on Linux with systemd.</p>
+
+      <h3>It works on my local copy but not on the hosted app.</h3>
+      <p>Either the hosted origin is missing from <code>OLLAMA_ORIGINS</code>, or you are in Safari.
+      Safari blocks an HTTPS page from calling <code>http://localhost</code> whatever the CORS
+      headers say, so no amount of configuration will fix it there. Use Chrome, Firefox, Edge, Arc
+      or Brave with the hosted app. Safari is fine against a local copy on
+      <code>localhost:3000</code>, where both sides are on the same origin.</p>
+
+      <h3>If I do want a hosted provider, which one should I start with?</h3>
+      <p>Hugging Face. The account and the token are free, it covers seven models, and it needs no
+      payment method. When you create the token, a Read token is enough. If you are given the
+      fine-grained form instead, you must enable the permission for calling Inference Providers, or
+      every request comes back unauthorised.</p>
+      <p><a class="go" href="#hf">Get a token &rarr;</a></p>
+
+      <h3>My key is definitely correct and every call still fails.</h3>
+      <p>Four causes account for almost all of these, and each produces an error that points at the
+      wrong thing:</p>
+      <ul>
+        <li><b>OpenAI, no credit.</b> A new account has a valid key and a zero balance. Every call
+        fails with a quota error that reads like a rate limit. Add a payment method and buy credit.
+        Embeddings cost fractions of a penny for a whole run, but the balance cannot start at
+        zero.</li>
+        <li><b>Hugging Face, wrong token type.</b> A fine-grained token without inference permission
+        looks valid and fails on everything. If a token you just made is rejected immediately, this
+        is almost always why.</li>
+        <li><b>A truncated key.</b> Keys are long and double-clicking often grabs only part of one.
+        A partial key gives an error identical to a wrong key. Use the provider's copy button.</li>
+        <li><b>OpenRouter with an empty base URL.</b> It is configured as an OpenAI-compatible
+        provider and takes a base URL alongside the key. Leave that field empty and the call goes to
+        OpenAI, which then rejects an OpenRouter key.</li>
+      </ul>
+      <p><a class="go" href="#keys">Provider-by-provider setup &rarr;</a></p>
+
+      <h3>The first Hugging Face call takes twenty seconds. Is it stuck?</h3>
+      <p>No. The model is loading on the provider's side. Later calls are fast. Separately, the free
+      tier is rate-limited, so a run across many concepts can fail partway through; wait a minute
+      and run it again, or enable fewer models.</p>
+
+      <h3>The model I want is not in the list.</h3>
+      <p>The registry is plain markdown, one file per provider under <code>public/models/</code>,
+      in the form <code>model-id | Display Name | dimensions</code>. Add a line and reload. There is
+      no rebuild step.</p>
+
+      <h3>Do I need to pay for anything?</h3>
+      <p>No. Ollama runs on your own hardware with no account and no key, and every figure published
+      from this instrument was produced that way across six local models. Hugging Face gives a free
+      token that works for research, rate-limited but functional. The paid providers are there for
+      coverage, not because the tool needs them.</p>
+
+      <h3>Does my text leave my machine?</h3>
+      <p>With Ollama, no. With a hosted provider, the texts you probe are sent to that provider,
+      the same as any other API call you would make to them. Keys are held in your browser and sent
+      straight to the provider; they do not pass through any server belonging to this project. If
+      you are probing material you cannot send to a third party, use Ollama.</p>
+
+      <h3>Why do two models give different numbers for the same pair?</h3>
+      <p>Because each model's space is anisotropic to a different degree. Vectors cluster into a
+      cone around a mean direction rather than spreading over the sphere, so two unrelated texts
+      already sit at a high cosine before any relationship is measured. Unrelated short sentences
+      sit at 0.12 in All-MiniLM and 0.78 in Snowflake Arctic Embed. The raw cosines are not
+      comparable across models; the position within each model's measured range is.</p>
+
+      <h3>Does a cosine of 0.80 mean the texts are 80% similar?</h3>
+      <p>No, and in most models it does not even mean they are related. Read it against that model's
+      floor. A cosine of 0.80 sits well above the floor in All-MiniLM and below it in Snowflake
+      Arctic Embed, where it would indicate two texts the model cannot tell apart.</p>
+
+      <h3>Which model should I use?</h3>
+      <p>More than one. A single provider returns a single geometry, and from inside one geometry
+      there is no way to separate a structural feature of the vectorial regime from an accident of
+      one model's training data. Where models disagree, the disagreement is the result.</p>
+
+      <h3>Does this read the model's internal states?</h3>
+      <p>No. Embedding APIs return processed representations, not the internal vectors of a model
+      mid-computation. What is measured here is the geometry of the output space. To open a model's
+      weights, attention patterns and hidden states, use Vectorscope.</p>
+
+      <h3>How does this differ from the other Vector Lab tools?</h3>
+      <p>Manifold Atlas compares the geometry of several embedding spaces against each other.
+      Vectorscope opens a single open-weight model locally and makes its internals visible.
+      Manifoldscope works one manifold in depth. Theoryscope works over a corpus of theoretical
+      texts.</p>
+
+      <h3>Can I add my own concepts and tests?</h3>
+      <p>Yes. Protocols are markdown with a short header, and ones you write persist in the browser
+      alongside the built-in library. Negation batteries can be defined and saved by name, then
+      referenced from a protocol step.</p>
+
+      <h3>Can I rely on a number I ran last week?</h3>
+      <p>Embeddings are cached in the browser and each cached vector records the pipeline that
+      produced it, so vectors of unknown provenance are not silently mixed with fresh ones. Before a
+      calibration becomes a measurement, a sample is re-embedded and checked against the cache. A
+      result that was produced on an uncalibrated model says so on its face.</p>
+
+      <h3>Does it work offline?</h3>
+      <p>With Ollama, yes, once the model has been pulled. Hosted providers need a connection.</p>
+
+    </div>
+  </div>
+</section>
+
 <section id="cite">
   <div class="wrap">
-    <p class="num">09 &middot; Citing</p>
+    <p class="num">11 &middot; Citing</p>
     <h2>Reference and licence</h2>
     <div class="prose">
       <p>The theoretical framework is set out in Berry, D. M. (2026) 'Vector Theory: Epistemology,
