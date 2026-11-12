@@ -948,8 +948,17 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
 
       <h3>Does a cosine of 0.80 mean the texts are 80% similar?</h3>
       <p>No, and in most models it does not even mean they are related. Read it against that model's
-      floor. A cosine of 0.80 sits well above the floor in All-MiniLM and below it in Snowflake
-      Arctic Embed, where it would indicate two texts the model cannot tell apart.</p>
+      floor. A cosine of 0.80 sits well above the floor in All-MiniLM and barely off it in Snowflake
+      Arctic Embed, where almost every pair of texts already scores that high.</p>
+      <figure>
+        <img src="cosine-scale.svg" width="820" height="372" loading="lazy" decoding="async"
+          alt="Six models on a 0 to 1 cosine axis. Each has a pale section below its floor and a darker usable range above it. A single line at 0.80 crosses all six at very different points: 0.77 of the way up All-MiniLM's range, 0.08 of the way up Snowflake Arctic Embed's.">
+        <figcaption>The same number, six readings. The pale part of each bar is below that model's
+          floor, where two unrelated texts already sit, so nothing in it carries information. In
+          All-MiniLM a cosine of 0.80 is 0.77 of the way up the usable range; in Snowflake Arctic
+          Embed, whose floor is 0.78, the same cosine is 0.08 of the way up. Floors measured on the
+          six local models with the calibration corpus in the repository.</figcaption>
+      </figure>
 
       <h3>Which model should I use?</h3>
       <p>More than one. A single provider returns a single geometry, and from inside one geometry

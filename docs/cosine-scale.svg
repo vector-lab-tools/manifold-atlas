@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 372" role="img" aria-label="The same cosine of 0.80 falls at a different point on each model's usable range, from 0.77 of the way up in All-MiniLM to 0.08 in Snowflake Arctic Embed">
+<title>Where a cosine of 0.80 falls in six models</title>
+<style>
+  .bg{fill:#fffdf8}.ink{fill:#141518}.mut{fill:#5b5d66}
+  .dead{fill:#e8e0d0}.live{fill:#cfc3aa}.mark{stroke:#7c2d37}.marktx{fill:#7c2d37}
+  text{font-family:"Source Serif 4",Georgia,serif}
+  .lbl{font-size:13px}.num{font-family:"IBM Plex Mono",Menlo,monospace;font-size:10.5px}
+  .hd{font-family:"IBM Plex Mono",Menlo,monospace;font-size:10px;letter-spacing:.09em}
+  @media (prefers-color-scheme: dark){
+    .bg{fill:#141518}.ink{fill:#f6f2e9}.mut{fill:#9a9ca6}
+    .dead{fill:#24262b}.live{fill:#3c3f47}.mark{stroke:#d16170}.marktx{fill:#d16170}
+  }
+</style>
+
+<rect class="bg" width="820" height="372"/>
+<text class="hd mut" x="196" y="24">RAW COSINE, 0 TO 1</text>
+<text class="hd mut" x="196" y="42">PALE BAR: BELOW THE FLOOR, WHERE UNRELATED TEXTS ALREADY SIT</text>
+<text class="hd marktx" x="196" y="60">RED LINE: WHERE 0.80 FALLS</text>
+<text class="num mut" x="196" y="74" text-anchor="middle">0</text>
+<text class="num mut" x="324.0" y="74" text-anchor="middle">0.25</text>
+<text class="num mut" x="452.0" y="74" text-anchor="middle">0.5</text>
+<text class="num mut" x="580.0" y="74" text-anchor="middle">0.75</text>
+<text class="num mut" x="708.0" y="74" text-anchor="middle">1.0</text>
+<text class="lbl ink" x="184" y="95" text-anchor="end">all-minilm</text>
+<rect class="dead" x="196" y="82" width="62.5" height="17" rx="2"/>
+<rect class="live" x="258.5" y="82" width="449.5" height="17" rx="2"/>
+<line class="mark" x1="605.6" y1="78" x2="605.6" y2="103" stroke-width="2"/>
+<text class="num mut" x="263.5" y="94">floor 0.12</text>
+<text class="num marktx" x="716" y="94">0.77 of range</text>
+<text class="lbl ink" x="184" y="135" text-anchor="end">mxbai-embed-large</text>
+<rect class="dead" x="196" y="122" width="205.2" height="17" rx="2"/>
+<rect class="live" x="401.2" y="122" width="306.8" height="17" rx="2"/>
+<line class="mark" x1="605.6" y1="118" x2="605.6" y2="143" stroke-width="2"/>
+<text class="num mut" x="406.2" y="134">floor 0.40</text>
+<text class="num marktx" x="716" y="134">0.67 of range</text>
+<text class="lbl ink" x="184" y="175" text-anchor="end">nomic-embed-text</text>
+<rect class="dead" x="196" y="162" width="216.2" height="17" rx="2"/>
+<rect class="live" x="412.2" y="162" width="295.8" height="17" rx="2"/>
+<line class="mark" x1="605.6" y1="158" x2="605.6" y2="183" stroke-width="2"/>
+<text class="num mut" x="417.2" y="174">floor 0.42</text>
+<text class="num marktx" x="716" y="174">0.65 of range</text>
+<text class="lbl ink" x="184" y="215" text-anchor="end">bge-large</text>
+<rect class="dead" x="196" y="202" width="246.0" height="17" rx="2"/>
+<rect class="live" x="442.0" y="202" width="266.0" height="17" rx="2"/>
+<line class="mark" x1="605.6" y1="198" x2="605.6" y2="223" stroke-width="2"/>
+<text class="num mut" x="447.0" y="214">floor 0.48</text>
+<text class="num marktx" x="716" y="214">0.62 of range</text>
+<text class="lbl ink" x="184" y="255" text-anchor="end">granite-embedding</text>
+<rect class="dead" x="196" y="242" width="293.9" height="17" rx="2"/>
+<rect class="live" x="489.9" y="242" width="218.1" height="17" rx="2"/>
+<line class="mark" x1="605.6" y1="238" x2="605.6" y2="263" stroke-width="2"/>
+<text class="num mut" x="494.9" y="254">floor 0.57</text>
+<text class="num marktx" x="716" y="254">0.53 of range</text>
+<text class="lbl ink" x="184" y="295" text-anchor="end">snowflake-arctic-embed</text>
+<rect class="dead" x="196" y="282" width="400.2" height="17" rx="2"/>
+<rect class="live" x="596.2" y="282" width="111.8" height="17" rx="2"/>
+<line class="mark" x1="605.6" y1="278" x2="605.6" y2="303" stroke-width="2"/>
+<text class="num mut" x="601.2" y="294">floor 0.78</text>
+<text class="num marktx" x="716" y="294">0.08 of range</text>
+<text class="num mut" x="196" y="358">One cosine, six readings. Most of the way up the scale in All-MiniLM; barely off the floor in Snowflake.</text>
+</svg>
