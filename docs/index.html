@@ -589,28 +589,32 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
 <section id="cases">
   <div class="wrap">
     <p class="num">07 &middot; Case studies</p>
-    <h2>Six fields, six probes</h2>
+    <h2>Six fields, six batteries</h2>
     <div class="prose">
-      <p>Each of these was run on the six local Ollama models listed in section 03, against the
-      calibration corpus in the repository. Every figure is a normalised position: 0 is the model's
-      floor, where two unrelated texts of the same kind already sit, and 1 is identity. The position
-      is what travels between models; the raw cosine does not.</p>
+      <p>Each field below is a battery of six probes run on the six local Ollama models listed in
+      section 03, against the calibration corpus in the repository. Thirty-six readings per field.
+      Every figure is a normalised position: 0 is the model's floor, where two unrelated texts of
+      the same kind already sit, and 1 is identity. The position travels between models; the raw
+      cosine does not.</p>
 
-      <p>Where a probe compares two sentences, the comparison is matched for edit size: the probe
-      and its control change the same slot by the same amount. An earlier version of the sociology
-      study compared a one-word reversal against a four-word paraphrase and produced a striking
-      result that was an artefact of edit distance. The controls below exist to stop that.</p>
+      <p>Probe and control are matched for edit size and slot, so a difference between them cannot
+      be explained by shared tokens. The Literature battery is the deliberate exception: there the
+      probe is the <em>larger</em> edit, so a win for the probe holds against the edit-size
+      objection rather than depending on it.</p>
+
+      <p class="note">An earlier version of this section ran one probe per field. Four of the six
+      conclusions did not survive being run as batteries, and two reversed outright. The single-pair
+      numbers are not reproduced here. This is the same failure the calibration layer exists to
+      prevent, arriving one level up: a single reading is not a measurement.</p>
 
       <h3>Sociology &middot; opposition sits closer than unrelatedness</h3>
-      <p>Take a statement, reverse it with a single word, and separately change that same word to an
+      <p>Take a statement, reverse it with one word, and separately change that same word to an
       unrelated attribute. <em>The job is secure</em> against <em>The job is insecure</em>, and
-      against <em>The job is clerical</em>. Both alternatives are one-word edits in the same slot,
-      so shared tokens cannot account for a difference between them.</p>
-      <p>Across six statements and six models, 34 of 36 readings put the reversal nearer than the
-      unrelated attribute. On <em>She is powerful</em>, the reversal <em>She is powerless</em> sits
-      between 0.60 and 0.77 of range while <em>She is elderly</em> sits between 0.26 and 0.46. The
-      two exceptions were both on <em>The area is rich</em> against <em>coastal</em>, and both were
-      under 0.03.</p>
+      against <em>The job is clerical</em>.</p>
+      <p>In 34 of 36 readings the reversal is nearer than the unrelated attribute. On <em>She is
+      powerful</em>, the reversal <em>She is powerless</em> sits at 0.60 to 0.77 of range while
+      <em>She is elderly</em> sits at 0.26 to 0.46. Both exceptions fell on <em>The area is
+      rich</em> against <em>coastal</em>, and both were under 0.03.</p>
       <table>
         <thead><tr><th>Statement</th><th>Reversal</th><th>Unrelated, same slot</th><th>Reversal nearer</th></tr></thead>
         <tbody>
@@ -622,61 +626,82 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
           <tr><td>The country is developed</td><td>0.61 &ndash; 0.82</td><td>0.32 &ndash; 0.66</td><td>6 of 6</td></tr>
         </tbody>
       </table>
-      <p>For research on class, employment or power, this is the thing to establish before using
-      embedding similarity as a measure. A claim and its reversal are near-neighbours, and nearer
-      than a claim and an unrelated attribute of the same subject. Clustering on these spaces will
-      group a position with its opposite.</p>
+      <p>For work on class, employment or power, establish this before using embedding similarity as
+      a measure. A claim and its reversal are near-neighbours, and nearer than a claim and an
+      unrelated attribute of the same subject. Clustering on these spaces will group a position with
+      its opposite.</p>
 
-      <h3>Media and Communications &middot; the models disagree about <em>riot</em></h3>
-      <p><em>Protest</em> against <em>demonstration</em>, a near-synonym, and against <em>riot</em>,
-      a hostile reframing of the same event. All three are single terms, so no edit-size question
-      arises.</p>
-      <p>The models do not agree. Granite places <em>riot</em> at 0.156 of range, well below
-      <em>demonstration</em> at 0.323, holding the reframing at a distance. Snowflake Arctic Embed
-      places it at 0.552. All-MiniLM and mxbai put <em>riot</em> nearer to <em>protest</em> than
-      <em>demonstration</em> is. A framing analysis run on one of these models would reach a
-      different conclusion from the same analysis run on another.</p>
+      <h3>Media and Communications &middot; reframings are held apart, with one exception</h3>
+      <p>A term against a neutral near-synonym, and against a loaded reframing of the same referent.
+      <em>Migrant</em> against <em>immigrant</em> and <em>expatriate</em>; <em>government</em>
+      against <em>administration</em> and <em>regime</em>; <em>soldier</em> against
+      <em>serviceman</em> and <em>terrorist</em>.</p>
+      <p>In 32 of 36 readings the neutral synonym is nearer, so the models do separate the loaded
+      term. <em>Migrant</em> is the cleanest case, 6 of 6: <em>immigrant</em> sits at 0.67 to 0.77
+      of range, <em>expatriate</em> at 0.23 to 0.45. The class coding that distinguishes a migrant
+      from an expatriate is registered by every model tested.</p>
+      <p>The exception is <em>protest</em> against <em>riot</em>, the weakest item at 4 of 6.
+      Granite holds <em>riot</em> at 0.156 of range against <em>demonstration</em> at 0.323;
+      All-MiniLM and mxbai place <em>riot</em> nearer <em>protest</em> than <em>demonstration</em>
+      is. A framing analysis of protest coverage is the case where the choice of model changes the
+      answer, which is not true of the battery as a whole.</p>
 
-      <h3>Journalism &middot; agent deletion moves the sentence, but not far</h3>
-      <p><em>Police shot the man</em> against the passive with the agent kept, <em>The man was shot
-      by police</em>, and against the agent deleted, <em>The man was shot</em>.</p>
-      <p>Deleting the agent does move the sentence: in all six models the agent-retaining passive is
-      nearer. But the agent-deleted version still sits between 0.62 and 0.84 of range, and above
-      0.83 in granite and Snowflake. The deletion that critical linguistics treats as the central
-      move in reporting on state violence is, geometrically, a small displacement. One caveat on
-      reading this: the agent-deleted sentence is also shorter, and length is not controlled here,
-      so some of the movement is length rather than agency.</p>
+      <h3>Journalism &middot; who acts matters less than who it happens to</h3>
+      <p>Hold a sentence and swap one noun. <em>Officers detained the student</em> becomes
+      <em>Guards detained the student</em>, changing who acts, or <em>Officers detained the
+      lawyer</em>, changing who it happens to. Both are one-noun edits, so the comparison is
+      matched.</p>
+      <p>In 27 of 36 readings the agent swap leaves the sentence nearer the original, meaning the
+      geometry moves less when responsibility changes hands than when the person acted upon changes.
+      On the detention item this is uniform across all six models: the agent swap sits at 0.82 to
+      0.91 of range, the patient swap at 0.50 to 0.67. The pattern is clearest where the patient
+      swap names a genuinely different party; it reverses on <em>The bank seized the property</em>
+      against <em>the savings</em>, where the two patients are close in sense.</p>
+      <p>Agent deletion is a separate question and is not matched for length, so it is reported
+      apart from the battery. <em>Police shot the man</em> against <em>The man was shot</em>: all
+      six models register the deletion, but the agent-deleted sentence still sits at 0.62 to 0.84 of
+      range, above 0.83 in granite and Snowflake. Some of that movement is the shorter sentence
+      rather than the missing agent.</p>
 
-      <h3>History &middot; period register is held apart, weakly</h3>
+      <h3>History &middot; period register is held apart, weakly and unevenly</h3>
       <p><em>The king taxed the peasants</em> against a period restatement, <em>The monarch taxed
       the serfs</em>, and against a modern equivalent, <em>The government taxed the citizens</em>.
       Both alternatives change the same two content words.</p>
-      <p>In 17 of 18 readings across three statements and six models the period restatement is
-      nearer, so the models do not simply collapse a historical relation into its modern equivalent.
-      The margins are thin, from 0.013 to 0.161, and on <em>The priest blessed the harvest</em>
-      three models sit within 0.005 either way. The distinction survives, but not by enough to carry
-      an argument on its own.</p>
+      <p>In 28 of 36 readings the period restatement is nearer, so the models do not generally
+      collapse a historical relation into its modern equivalent. The result does not hold evenly.
+      <em>The king taxed the peasants</em> and <em>The lord owned the land</em> are 6 of 6, but
+      <em>The serf worked the land</em> against <em>The villein worked the demesne</em> is 2 of 6:
+      four models place the modern <em>worker in the factory</em> nearer than the period
+      vocabulary. Where the period term is rare, the distinction the battery is testing for
+      disappears.</p>
 
-      <h3>Literature &middot; sense beats surface frame</h3>
-      <p><em>The sea is a mirror</em> against a paraphrase of its sense, <em>The sea is still and
-      reflective</em>, and against <em>The sea is a danger</em>, which keeps the metaphorical frame
-      and changes the sense.</p>
-      <p>All six models place the paraphrase nearer, by 0.08 to 0.27 of range. The paraphrase is the
-      larger edit, changing four words where the control changes one, so the result holds against
-      the edit-size objection rather than depending on it. For stylistic work this is the
-      encouraging direction: the geometry is not simply tracking the surface frame.</p>
+      <h3>Literature &middot; sense beats surface frame about three times in four</h3>
+      <p>A metaphor against a paraphrase of its sense, and against an alternative that keeps the
+      metaphorical frame and changes the sense. <em>The sea is a mirror</em> against <em>The sea is
+      still and reflective</em> and <em>The sea is a danger</em>.</p>
+      <p>27 of 36 readings favour the paraphrase, and the paraphrase is in every case the larger
+      edit, so the result is not an artefact of edit distance. It is far from uniform.
+      <em>The sea is a mirror</em> is 6 of 6; <em>The mind is a garden</em> is 3 of 6, with half the
+      models placing <em>The mind is a machine</em> nearer than <em>The mind can be cultivated</em>.
+      Where a metaphor is conventional enough to be near-lexicalised, the frame wins.</p>
 
-      <h3>Philosophy &middot; determinate negation mostly stays apart</h3>
-      <p><em>Being</em> against <em>existence</em>, and against <em>nothingness</em>. Five of six
-      models place <em>existence</em> nearer; granite reverses it. The positions are low throughout,
-      0.24 to 0.54 for the near-synonym, so neither term sits close to <em>being</em> on these
-      scales. All-MiniLM separates the opposition most clearly, placing <em>nothingness</em> at
-      0.179.</p>
-      <p>Set beside the sociology result, this matters: the collapse of opposition is not uniform.
-      Antonyms in ordinary predicative statements collapse; a philosophical opposition between bare
-      terms does not, at least not in this probe.</p>
+      <h3>Philosophy &middot; determinate negation collapses into its term</h3>
+      <p>A term against a near-synonym, and against its determinate negation. <em>Being</em> against
+      <em>existence</em> and <em>nothingness</em>; <em>subject</em> against <em>self</em> and
+      <em>object</em>; <em>essence</em> against <em>nature</em> and <em>appearance</em>.</p>
+      <p>This is the battery that reverses the single-probe reading. Only 22 of 36 readings place
+      the near-synonym nearer, and two oppositions fail outright. <em>Subject</em> against
+      <em>object</em> is 0 of 6: every model places <em>object</em> nearer <em>subject</em> than
+      <em>self</em> is, by a wide margin in five of them, with <em>object</em> at 0.29 to 0.54 of
+      range against <em>self</em> at 0.16 to 0.40. <em>Essence</em> against <em>appearance</em> is
+      2 of 6.</p>
+      <p>Set beside the Sociology battery, the two results say the same thing from different
+      directions. An opposition that structures a philosophical vocabulary is not held apart by
+      these spaces; it is a near-neighbour relation, and in the subject-object case the nearest one
+      available. Any method that reads conceptual distance off cosine will treat a term and its
+      negation as closely related.</p>
 
-      <p class="note">Every number here can be reproduced from a clean install. Pull the six models
+      <p class="note">Every number here is reproducible from a clean install. Pull the six models
       listed in section 03, run Calibration, then enter the probes. No key is needed.</p>
     </div>
   </div>
