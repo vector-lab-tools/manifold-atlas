@@ -11,7 +11,7 @@
 
 **Author:** David M. Berry
 **Institution:** University of Sussex
-**Version:** 1.19.6
+**Version:** 1.19.7
 **Date:** 12 November 2026
 **Licence:** GPL-3.0-or-later
 
