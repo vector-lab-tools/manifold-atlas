@@ -1,5 +1,5 @@
 > Part of the [Vector Lab](https://github.com/vector-lab-tools). Vector methods for vector theory.
-> [Overview and map](https://vector-lab-tools.github.io) · [Org profile](https://github.com/vector-lab-tools)
+> [Documentation](https://vector-lab-tools.github.io/manifold-atlas/) · [FAQ](https://vector-lab-tools.github.io/manifold-atlas/#faq) · [Case studies](https://vector-lab-tools.github.io/manifold-atlas/#cases) · [Overview and map](https://vector-lab-tools.github.io) · [Org profile](https://github.com/vector-lab-tools)
 >
 > **Tier:** comparative model tool. **Object:** output embeddings across models.
 >
@@ -412,10 +412,15 @@ Agonism Test showed a mean cosine across all models and pairs. A mean of raw cos
 
 ## Getting Started
 
+> **Stuck on setup?** The [FAQ](https://vector-lab-tools.github.io/manifold-atlas/#faq) covers the
+> places people actually stall: the `OLLAMA_ORIGINS` variable that a plain `ollama serve` leaves
+> unset, Safari refusing to call `http://localhost` from an HTTPS page, and the four separate
+> reasons a valid API key still fails on every call.
+
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) 18 or later
-- At least one of: an embedding provider API key (OpenAI, Voyage, Google, or Cohere), or [Ollama](https://ollama.com/) running locally with an embedding model pulled
+- At least one of: an embedding provider API key (OpenAI, Voyage, Google Gemini, Cohere, OpenRouter, or Hugging Face), or [Ollama](https://ollama.com/) running locally with an embedding model pulled. Ollama needs no key and no account, and is the route the published figures used.
 
 ### Install and Run
 
@@ -435,6 +440,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 3. Enter your API key (or for Ollama, ensure it's running with an embedding model pulled: `ollama pull nomic-embed-text`)
 4. Select which models to use
 5. Close settings and start querying
+
+Each provider fails in its own way, and the error rarely names the real cause. A new OpenAI account has a valid key and no credit; a Hugging Face fine-grained token without the Inference Providers permission looks correct and fails on everything; OpenRouter needs a base URL alongside the key or the call goes to OpenAI. Provider-by-provider setup is in the [API keys section](https://vector-lab-tools.github.io/manifold-atlas/#keys) of the documentation, and the short version is in the [FAQ](https://vector-lab-tools.github.io/manifold-atlas/#faq).
 
 ### Adding or Removing Models
 
