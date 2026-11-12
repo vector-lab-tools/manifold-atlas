@@ -592,7 +592,7 @@ Type `clippy` anywhere (outside a text input) for the Manifold Atlas Clippy. Typ
 
 Concept and Design by David M. Berry, implemented with Claude Code 4.6. Design system adapted from the [CCS Workbench](https://github.com/dmberry/ccs-wb).
 
-Manifold Atlas was built in Copenhagen, Denmark, during an Otto Mønsted Visiting Professorship in 2026. The support of the Otto Mønsted Foundation is gratefully acknowledged.
+Manifold Atlas was built at Copenhagen Business School, Denmark, during an Otto Mønsted Visiting Professorship in 2026. The support of the Otto Mønsted Foundation is gratefully acknowledged.
 
 Many thanks to Michael Castelle, Michael Dieter, Richard Rogers, Wolfgang Ernst, and others for feedback and comments on the Manifold Atlas.
 
