@@ -69,6 +69,10 @@ header.site{position:sticky;top:0;z-index:10;
 .brand{font-family:var(--mono);font-weight:500;letter-spacing:.02em;font-size:16px;
   color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:9px}
 .brand .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--accent)}
+.home{display:flex;flex-direction:column;gap:1px;text-decoration:none}
+.home .up{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);line-height:1.2}
+.home:hover .up{color:var(--accent-text)}
 .site-nav{display:flex;align-items:center;gap:20px}
 .site-nav a{color:var(--muted);text-decoration:none;font-size:15px}
 .site-nav a:hover{color:var(--accent-text)}
@@ -91,6 +95,7 @@ header.site{position:sticky;top:0;z-index:10;
 .hero .wrap{padding-block:72px 60px;display:grid;grid-template-columns:1.05fr .95fr;
   gap:48px;align-items:center}
 @media (max-width:860px){.hero .wrap{grid-template-columns:1fr;gap:34px;padding-block:48px 40px}}
+.eyebrow a{color:inherit;text-decoration:none;border-bottom:1px solid currentColor}
 .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--accent-text);margin:0 0 14px}
 h1{font-family:var(--display);font-weight:600;font-size:clamp(50px,8.5vw,88px);line-height:.96;
@@ -129,6 +134,9 @@ li{margin-bottom:.4em}
 
 /* Figures */
 figure{margin:26px 0 30px}
+/* Portrait screenshots fill the column and run to ~1500px tall at this width.
+   Cap them; the click-through still opens the full-size PNG. */
+figure.portrait{max-width:460px}
 figure a{display:block;border:1px solid var(--rule);border-radius:10px;overflow:hidden;
   box-shadow:var(--shadow);background:var(--surface)}
 figcaption{font-family:var(--serif);font-size:15px;color:var(--muted);margin-top:10px;
@@ -191,7 +199,10 @@ footer .doi{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;margin
 
 <header class="site">
   <div class="wrap">
-    <a class="brand" href="#top"><span class="dot"></span>Manifold Atlas</a>
+    <a class="home" href="https://vector-lab-tools.github.io/">
+      <span class="up">&larr; Vector Lab</span>
+      <span class="brand"><span class="dot"></span>Manifold Atlas</span>
+    </a>
     <nav class="site-nav">
       <a class="hide-sm" href="#about">About</a>
       <a class="hide-sm" href="#start">Start</a>
@@ -214,7 +225,7 @@ footer .doi{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;margin
 <div class="hero" id="top">
   <div class="wrap">
     <div>
-      <p class="eyebrow">Vector Lab &middot; A research instrument</p>
+      <p class="eyebrow"><a href="https://vector-lab-tools.github.io/">Vector Lab</a> &middot; A research instrument</p>
       <h1>Manifold <em>Atlas</em></h1>
       <p class="lede">Read what an embedding model does to meaning.</p>
       <p class="sub">Seventeen operations measuring position, distance, density and topology across
@@ -481,7 +492,7 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
           <span class="full">Click for full size</span></figcaption>
       </figure>
 
-      <figure>
+      <figure class="portrait">
         <a href="radius-hover.png"><img src="web/radius-hover.webp" width="1600" height="2342" loading="lazy" decoding="async" alt="Hover card showing a model's radius, floor and usable range"></a>
         <figcaption>The radius is available from any result card, so a number can be read against
           its scale without leaving the operation.
@@ -634,7 +645,7 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       establish that they hold across genuinely unrelated architectures. Models from a different
       lineage, and decoder-based embedding models in particular, remain untested.</p>
 
-      <h3>Sociology &middot; opposition sits closer than unrelatedness</h3>
+      <h3><b>Sociology</b> &middot; opposition sits closer than unrelatedness</h3>
       <p>Take a statement, reverse it with one word, and separately change that same word to an
       unrelated attribute. <em>The job is secure</em> against <em>The job is insecure</em>, and
       against <em>The job is clerical</em>.</p>
@@ -665,7 +676,7 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       unrelated attribute of the same subject. Clustering on these spaces will group a position with
       its opposite.</p>
 
-      <h3>Media and Communications &middot; reframings are held apart, with one exception</h3>
+      <h3><b>Media and Communications</b> &middot; reframings are held apart, with one exception</h3>
       <p>A term against a neutral near-synonym, and against a loaded reframing of the same referent.
       <em>Migrant</em> against <em>immigrant</em> and <em>expatriate</em>; <em>government</em>
       against <em>administration</em> and <em>regime</em>; <em>soldier</em> against
@@ -680,7 +691,7 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       is. A framing analysis of protest coverage is the case where the choice of model changes the
       answer, which is not true of the battery as a whole.</p>
 
-      <h3>Journalism &middot; who acts matters less than who it happens to</h3>
+      <h3><b>Journalism</b> &middot; who acts matters less than who it happens to</h3>
       <p>Hold a sentence and swap one noun. <em>Officers detained the student</em> becomes
       <em>Guards detained the student</em>, changing who acts, or <em>Officers detained the
       lawyer</em>, changing who it happens to. Both are one-noun edits, so the comparison is
@@ -697,7 +708,7 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       range, above 0.83 in granite and Snowflake. Some of that movement is the shorter sentence
       rather than the missing agent.</p>
 
-      <h3>History &middot; period register is held apart, weakly and unevenly</h3>
+      <h3><b>History</b> &middot; period register is held apart, weakly and unevenly</h3>
       <p><em>The king taxed the peasants</em> against a period restatement, <em>The monarch taxed
       the serfs</em>, and against a modern equivalent, <em>The government taxed the citizens</em>.
       Both alternatives change the same two content words.</p>
@@ -709,7 +720,7 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       vocabulary. Where the period term is rare, the distinction the battery is testing for
       disappears.</p>
 
-      <h3>Literature &middot; sense beats surface frame about three times in four</h3>
+      <h3><b>Literature</b> &middot; sense beats surface frame about three times in four</h3>
       <p>A metaphor against a paraphrase of its sense, and against an alternative that keeps the
       metaphorical frame and changes the sense. <em>The sea is a mirror</em> against <em>The sea is
       still and reflective</em> and <em>The sea is a danger</em>.</p>
@@ -719,7 +730,7 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       models placing <em>The mind is a machine</em> nearer than <em>The mind can be cultivated</em>.
       Where a metaphor is conventional enough to be near-lexicalised, the frame wins.</p>
 
-      <h3>Philosophy &middot; determinate negation collapses into its term</h3>
+      <h3><b>Philosophy</b> &middot; determinate negation collapses into its term</h3>
       <p>A term against a near-synonym, and against its determinate negation. <em>Being</em> against
       <em>existence</em> and <em>nothingness</em>; <em>subject</em> against <em>self</em> and
       <em>object</em>; <em>essence</em> against <em>nature</em> and <em>appearance</em>.</p>
