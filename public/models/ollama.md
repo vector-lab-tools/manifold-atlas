@@ -14,8 +14,7 @@ bge-m3 | BGE-M3 (multilingual, 1024d) | 1024
 snowflake-arctic-embed | Snowflake Arctic Embed (1024d) | 1024
 paraphrase-multilingual | Paraphrase Multilingual (768d) | 768
 embeddinggemma | EmbeddingGemma (Google, 768d) | 768
-# Gemma 4 is a chat model. Ollama 0.1.40+ accepts chat models via /api/embed
-# (mean-pooled hidden state). Older Ollama versions reject with "model does not
-# support embeddings" — pull embeddinggemma above for a guaranteed-working
-# Gemma-family embedding model.
-gemma4 | Gemma 4 (Google chat, embed via Ollama 0.1.40+) | 0
+# Chat models do not work here. Gemma 4 was listed until 12 November 2026 on the
+# basis that Ollama would mean-pool a chat model's hidden state for /api/embed.
+# It does not: on Ollama 0.35.1 a gemma4 embed call returns "This server does not
+# support embeddings". Use embeddinggemma above for a Gemma-family embedding model.

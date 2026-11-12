@@ -346,7 +346,7 @@ To use Hugging Face: sign up at [huggingface.co](https://huggingface.co/) (free)
 
 | Provider | Models |
 |----------|--------|
-| Ollama | nomic-embed-text, mxbai-embed-large, all-minilm, embeddinggemma, gemma4, or any embedding model you pull |
+| Ollama | nomic-embed-text, mxbai-embed-large, all-minilm, granite-embedding, bge-large, snowflake-arctic-embed, embeddinggemma, or any embedding model you pull. Chat models do not work: `/api/embed` rejects them. |
 
 **Status: verified working as of v1.6.0+ (12 May 2026).** Manifold Atlas's Ollama path is browser-direct: the browser calls your local Ollama at `http://localhost:11434` itself rather than going through any server-side proxy. This means the **deployed Atlas** at https://manifold-atlas.vercel.app (and on GitHub Pages) can talk to a local Ollama on your machine, with no clone or build needed on your side — provided Ollama is started with the deployed origin in its CORS allow-list via `OLLAMA_ORIGINS`. Embeddings then happen entirely on your laptop. No API key, no data leaves your machine, and the latency is single-digit milliseconds per query once the model is resident in memory.
 
