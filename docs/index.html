@@ -888,6 +888,24 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       </ul>
       <p><a class="go" href="#keys">Provider-by-provider setup &rarr;</a></p>
 
+      <h3>My university runs its own AI gateway. Can I use that instead of a commercial key?</h3>
+      <p>Yes, if it serves embeddings. The option is in Settings under <b>OpenAI-Compatible
+      (OpenRouter)</b>, which is where an institutional endpoint goes despite the name: OpenRouter
+      is one example of an OpenAI-compatible API rather than the only thing that provider talks to.
+      It is the one place in the tool that takes a base URL you type in yourself.</p>
+      <p>Choose that provider, set the Base URL to your endpoint, which should end at
+      <code>/v1</code>, and paste the key your institution issued. If your university runs a gateway
+      at <code>https://ai.example.edu/v1</code>, that is the Base URL. Then type the model id the
+      gateway exposes, by hand: it will not appear in the dropdown, because the tool has no way to
+      know what your institution has deployed. Any server speaking the OpenAI API works this way,
+      including a vLLM or LiteLLM proxy or a departmental gateway.</p>
+      <p>Two things differ from the chat tools in this family. The endpoint must serve
+      <code>/v1/embeddings</code>, not <code>/v1/chat/completions</code>, and many gateways expose
+      only chat. And the model id must be an embedding model, for example
+      <code>text-embedding-3-small</code>, or <code>bge-m3</code> on a vLLM server. If the gateway
+      answers chat but not embeddings, nothing here will work against it and the local Ollama route
+      is the better option.</p>
+
       <h3>The first Hugging Face call takes twenty seconds. Is it stuck?</h3>
       <p>No. The model is loading on the provider's side. Later calls are fast. Separately, the free
       tier is rate-limited, so a run across many concepts can fail partway through; wait a minute
