@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X, Check, AlertCircle, Eye, EyeOff } from "lucide-react";
-import { useSettings } from "@/context/SettingsContext";
+import { useSettings, parseCustomModelInput } from "@/context/SettingsContext";
 import { useCalibration } from "@/context/CalibrationContext";
 import { MetricTerm } from "@/components/shared/MetricTerm";
 import type { ThresholdMode } from "@/lib/calibration/threshold";
@@ -111,12 +111,26 @@ export function SettingsPanel() {
     setSettingsOpen,
     updateProvider,
     providerModels,
+    customModels,
+    addCustomModel,
+    removeCustomModel,
     setThresholdMode,
     setNegationThreshold,
   } = useSettings();
   const { calibrations, uncalibratedModels } = useCalibration();
   const { cacheSize, clearCache } = useEmbeddingCache();
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
+  const [newModel, setNewModel] = useState<Partial<Record<EmbeddingProviderId, string>>>({});
+
+  const submitCustomModel = (pid: EmbeddingProviderId) => {
+    const spec = parseCustomModelInput(newModel[pid] ?? "", pid);
+    if (!spec) return;
+    addCustomModel(pid, { id: spec.id, name: spec.name, dimensions: spec.dimensions });
+    updateProvider(pid, {
+      selectedModels: [...(settings.providers[pid]?.selectedModels ?? []), spec.id],
+    });
+    setNewModel(prev => ({ ...prev, [pid]: "" }));
+  };
 
   const toggleKeyVisibility = (pid: string) => {
     setVisibleKeys(prev => {
@@ -268,8 +282,62 @@ export function SettingsPanel() {
                                   {model.dimensions}d
                                 </span>
                               )}
+                              {(customModels[pid] ?? []).some(m => m.id === model.id) && (
+                                <>
+                                  <span className="font-sans text-caption text-slate">added</span>
+                                  <button
+                                    type="button"
+                                    onClick={e => {
+                                      e.preventDefault();
+                                      removeCustomModel(pid, model.id);
+                                      updateProvider(pid, {
+                                        selectedModels: provSettings.selectedModels.filter(
+                                          m => m !== model.id
+                                        ),
+                                      });
+                                    }}
+                                    aria-label={`Remove ${model.name}`}
+                                    className="text-slate hover:text-burgundy"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </>
+                              )}
                             </label>
                           ))}
+                        </div>
+
+                        <div className="mt-2">
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="text"
+                              value={newModel[pid] ?? ""}
+                              onChange={e =>
+                                setNewModel(prev => ({ ...prev, [pid]: e.target.value }))
+                              }
+                              onKeyDown={e => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  submitCustomModel(pid);
+                                }
+                              }}
+                              placeholder="Add a model by id"
+                              className="input-editorial text-body-sm py-1.5 flex-1"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => submitCustomModel(pid)}
+                              disabled={!(newModel[pid] ?? "").trim()}
+                              className="font-sans text-caption px-2 py-1.5 border border-parchment-dark rounded text-slate hover:text-burgundy disabled:opacity-40"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          <p className="font-sans text-caption text-slate mt-1">
+                            Any model id the provider accepts. Optionally{" "}
+                            <code>id | Display Name | 1024</code>. Added models are stored in this
+                            browser and are not affected by updates to the shipped list.
+                          </p>
                         </div>
                       </div>
 

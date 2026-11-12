@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import type { AppSettings, ProviderSettings } from "@/types/settings";
 import type { EmbeddingProviderId, EmbeddingModelSpec } from "@/types/embeddings";
 import type { ThresholdMode } from "@/lib/calibration/threshold";
@@ -17,9 +17,41 @@ interface SettingsContextType {
   setFloorRelativeK: (k: number) => void;
   setRankedModels: (ranked: string[]) => void;
   getEnabledModels: () => Array<EmbeddingModelSpec & { apiKey: string; baseUrl?: string }>;
+  /** Registry models from /public/models/*.md with the user's own models merged in. */
   providerModels: Partial<Record<EmbeddingProviderId, EmbeddingModelSpec[]>>;
+  /** Only the models the user added by hand, so the UI can offer to remove them. */
+  customModels: Partial<Record<EmbeddingProviderId, EmbeddingModelSpec[]>>;
+  addCustomModel: (id: EmbeddingProviderId, spec: Omit<EmbeddingModelSpec, "providerId">) => void;
+  removeCustomModel: (id: EmbeddingProviderId, modelId: string) => void;
   settingsOpen: boolean;
   setSettingsOpen: (open: boolean) => void;
+}
+
+/**
+ * Models the user typed in themselves, kept apart from the markdown registry.
+ *
+ * The registry ships with the build, so a model that is renamed or withdrawn
+ * upstream can only be corrected by editing a file in the repository. Anyone on
+ * the hosted app cannot do that, and would be left with a tool that lists
+ * nothing it can still call. This key is the way out of that.
+ */
+const CUSTOM_MODELS_KEY = "manifold-atlas.custom-models";
+
+/** Accepts a bare model id, or the registry's `id | Name | dimensions` form. */
+export function parseCustomModelInput(
+  raw: string,
+  providerId: EmbeddingProviderId
+): EmbeddingModelSpec | null {
+  const parts = raw.split("|").map(s => s.trim());
+  const id = parts[0];
+  if (!id) return null;
+  const dimensions = parts[2] ? parseInt(parts[2], 10) : 0;
+  return {
+    id,
+    name: parts[1] || id,
+    providerId,
+    dimensions: Number.isFinite(dimensions) ? dimensions : 0,
+  };
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -28,7 +60,68 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [providerModels, setProviderModels] = useState<Partial<Record<EmbeddingProviderId, EmbeddingModelSpec[]>>>({});
+  const [registryModels, setProviderModels] = useState<Partial<Record<EmbeddingProviderId, EmbeddingModelSpec[]>>>({});
+  const [customModels, setCustomModels] = useState<Partial<Record<EmbeddingProviderId, EmbeddingModelSpec[]>>>({});
+
+  // Custom models load before the registry fetch resolves, so a user who has
+  // added their own still sees them if /models/*.md cannot be reached at all.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(CUSTOM_MODELS_KEY);
+      if (stored) setCustomModels(JSON.parse(stored));
+    } catch (e) {
+      console.warn("Could not read custom models:", e);
+    }
+  }, []);
+
+  const addCustomModel = useCallback(
+    (pid: EmbeddingProviderId, spec: Omit<EmbeddingModelSpec, "providerId">) => {
+      setCustomModels(prev => {
+        const existing = prev[pid] ?? [];
+        if (existing.some(m => m.id === spec.id)) return prev;
+        const next = { ...prev, [pid]: [...existing, { ...spec, providerId: pid }] };
+        try {
+          localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.warn("Could not save custom model:", e);
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const removeCustomModel = useCallback((pid: EmbeddingProviderId, modelId: string) => {
+    setCustomModels(prev => {
+      const next = { ...prev, [pid]: (prev[pid] ?? []).filter(m => m.id !== modelId) };
+      try {
+        localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(next));
+      } catch (e) {
+        console.warn("Could not remove custom model:", e);
+      }
+      return next;
+    });
+  }, []);
+
+  // What the rest of the app sees. A custom model with the same id as a registry
+  // entry replaces it, so a stale shipped dimension or display name can be
+  // corrected without editing the repository.
+  const providerModels = useMemo(() => {
+    const merged: Partial<Record<EmbeddingProviderId, EmbeddingModelSpec[]>> = {};
+    const ids = new Set([
+      ...Object.keys(registryModels),
+      ...Object.keys(customModels),
+    ]) as Set<EmbeddingProviderId>;
+    for (const pid of ids) {
+      const custom = customModels[pid] ?? [];
+      const overridden = new Set(custom.map(m => m.id));
+      merged[pid] = [
+        ...(registryModels[pid] ?? []).filter(m => !overridden.has(m.id)),
+        ...custom,
+      ];
+    }
+    return merged;
+  }, [registryModels, customModels]);
 
   // Load from localStorage + .env.local fallback on mount
   useEffect(() => {
@@ -211,6 +304,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setRankedModels,
         getEnabledModels,
         providerModels,
+        customModels,
+        addCustomModel,
+        removeCustomModel,
         settingsOpen,
         setSettingsOpen,
       }}
