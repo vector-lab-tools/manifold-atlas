@@ -8,6 +8,8 @@ abstract: >-
   then computes distances, clusters, projections, and topological features
   that open the geometry of meaning to critical analysis. Part of
   the Vector Lab family of research instruments.
+
+  Built at Copenhagen Business School, Denmark, during an Otto Mønsted Visiting Professorship in 2026. The support of the Otto Mønsted Fond (grant 25-12-1849) is gratefully acknowledged.
 type: software
 authors:
   - family-names: Berry
@@ -25,8 +27,8 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.23762833"
     description: "Version DOI for v1.19.5"
-version: "1.19.5"
-date-released: "2026-10-29"
+version: "1.19.6"
+date-released: "2026-11-12"
 keywords:
   - vector theory
   - critical theory
