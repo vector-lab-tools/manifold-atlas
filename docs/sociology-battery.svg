@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 400" role="img" aria-label="Sociology battery: a statement sits nearer its own reversal than an unrelated attribute, across twelve models">
+<title>Reversal versus unrelated attribute, twelve models</title>
+<style>
+  .bg{fill:#fffdf8}.ink{fill:#141518}.mut{fill:#5b5d66}.rule{stroke:#e2d9c8}
+  .rev{fill:#7c2d37}.ctl{fill:#b9ad96}
+  text{font-family:"Source Serif 4",Georgia,serif}
+  .lbl{font-size:13px}.num{font-family:"IBM Plex Mono",Menlo,monospace;font-size:10.5px}
+  .hd{font-family:"IBM Plex Mono",Menlo,monospace;font-size:10px;letter-spacing:.09em}
+  @media (prefers-color-scheme: dark){
+    .bg{fill:#141518}.ink{fill:#f6f2e9}.mut{fill:#9a9ca6}.rule{stroke:#2c2e34}
+    .rev{fill:#d16170}.ctl{fill:#5f5a4e}
+  }
+</style>
+
+<rect class="bg" width="820" height="400"/>
+<text class="hd mut" x="210" y="26">NORMALISED POSITION, MEAN OF 12 MODELS</text>
+<text class="hd rev" x="210" y="44">&#9632; ONE-WORD REVERSAL</text>
+<text class="hd mut" x="400" y="44">&#9632; UNRELATED ATTRIBUTE, SAME SLOT</text>
+<line class="rule" x1="210.0" y1="58" x2="210.0" y2="326" stroke-width="1"/>
+<text class="num mut" x="210.0" y="342" text-anchor="middle">0.0</text>
+<line class="rule" x1="345.0" y1="58" x2="345.0" y2="326" stroke-width="1"/>
+<text class="num mut" x="345.0" y="342" text-anchor="middle">0.25</text>
+<line class="rule" x1="480.0" y1="58" x2="480.0" y2="326" stroke-width="1"/>
+<text class="num mut" x="480.0" y="342" text-anchor="middle">0.5</text>
+<line class="rule" x1="615.0" y1="58" x2="615.0" y2="326" stroke-width="1"/>
+<text class="num mut" x="615.0" y="342" text-anchor="middle">0.75</text>
+<line class="rule" x1="750.0" y1="58" x2="750.0" y2="326" stroke-width="1"/>
+<text class="num mut" x="750.0" y="342" text-anchor="middle">1.0</text>
+<text class="lbl ink" x="198" y="76" text-anchor="end">The family is wealthy</text>
+<rect class="rev" x="210" y="64" width="385.8" height="13" rx="1"/>
+<rect class="ctl" x="210" y="80" width="300.3" height="13" rx="1"/>
+<text class="num mut" x="602.8" y="75">0.71</text>
+<text class="num mut" x="517.3" y="91">0.56  &#183;  12/12</text>
+<text class="lbl ink" x="198" y="122" text-anchor="end">He is employed</text>
+<rect class="rev" x="210" y="110" width="355.9" height="13" rx="1"/>
+<rect class="ctl" x="210" y="126" width="195.0" height="13" rx="1"/>
+<text class="num mut" x="572.9" y="121">0.66</text>
+<text class="num mut" x="412.0" y="137">0.36  &#183;  12/12</text>
+<text class="lbl ink" x="198" y="168" text-anchor="end">The area is rich</text>
+<rect class="rev" x="210" y="156" width="329.9" height="13" rx="1"/>
+<rect class="ctl" x="210" y="172" width="275.1" height="13" rx="1"/>
+<text class="num mut" x="546.9" y="167">0.61</text>
+<text class="num mut" x="492.1" y="183">0.51  &#183;  7/12</text>
+<text class="lbl ink" x="198" y="214" text-anchor="end">She is powerful</text>
+<rect class="rev" x="210" y="202" width="368.4" height="13" rx="1"/>
+<rect class="ctl" x="210" y="218" width="198.8" height="13" rx="1"/>
+<text class="num mut" x="585.4" y="213">0.68</text>
+<text class="num mut" x="415.8" y="229">0.37  &#183;  12/12</text>
+<text class="lbl ink" x="198" y="260" text-anchor="end">The job is secure</text>
+<rect class="rev" x="210" y="248" width="389.7" height="13" rx="1"/>
+<rect class="ctl" x="210" y="264" width="285.5" height="13" rx="1"/>
+<text class="num mut" x="606.7" y="259">0.72</text>
+<text class="num mut" x="502.5" y="275">0.53  &#183;  11/12</text>
+<text class="lbl ink" x="198" y="306" text-anchor="end">The country is developed</text>
+<rect class="rev" x="210" y="294" width="379.4" height="13" rx="1"/>
+<rect class="ctl" x="210" y="310" width="284.9" height="13" rx="1"/>
+<text class="num mut" x="596.4" y="305">0.70</text>
+<text class="num mut" x="501.9" y="321">0.53  &#183;  12/12</text>
+<text class="num mut" x="210" y="390">0 = the model&#8217;s floor, where two unrelated texts already sit. 1 = identity.</text>
+</svg>

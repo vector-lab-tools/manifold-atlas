@@ -607,6 +607,33 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       numbers are not reproduced here. This is the same failure the calibration layer exists to
       prevent, arriving one level up: a single reading is not a measurement.</p>
 
+      <h3>Replication on hosted models</h3>
+      <p>Every battery was then re-run on six hosted models through the Hugging Face inference
+      router: all-MiniLM-L6-v2, BGE Small, BGE Large, mxbai-embed-large-v1, multilingual-e5-large
+      and Granite 278M multilingual. Twelve model instances in total, two serving routes, same
+      probes and same calibration corpus.</p>
+      <table>
+        <thead><tr><th>Battery</th><th>Local, 6 models</th><th>Hosted, 6 models</th><th>Combined</th></tr></thead>
+        <tbody>
+          <tr><td>Sociology</td><td>34 of 36</td><td>32 of 36</td><td>66 of 72</td></tr>
+          <tr><td>Media and Communications</td><td>32 of 36</td><td>31 of 36</td><td>63 of 72</td></tr>
+          <tr><td>History</td><td>28 of 36</td><td>28 of 36</td><td>56 of 72</td></tr>
+          <tr><td>Journalism</td><td>27 of 36</td><td>27 of 36</td><td>54 of 72</td></tr>
+          <tr><td>Literature</td><td>27 of 36</td><td>26 of 36</td><td>53 of 72</td></tr>
+          <tr><td>Philosophy</td><td>22 of 36</td><td>24 of 36</td><td>46 of 72</td></tr>
+        </tbody>
+      </table>
+      <p>No battery moves by more than two readings, and Journalism and History land on the same
+      count twice. The figures quoted in each section below are from the local six, because the
+      positions and ranges are theirs; the hosted run is reported here as replication rather than
+      merged into them.</p>
+      <p>What this rules out is narrower than it looks. The two sets overlap in lineage: MiniLM, BGE,
+      mxbai and Granite appear in both, at different sizes or variants, and only
+      multilingual-e5-large is a family absent from the local set. So this establishes that the
+      results are not artefacts of local quantisation or of one serving route, and does not
+      establish that they hold across genuinely unrelated architectures. Models from a different
+      lineage, and decoder-based embedding models in particular, remain untested.</p>
+
       <h3>Sociology &middot; opposition sits closer than unrelatedness</h3>
       <p>Take a statement, reverse it with one word, and separately change that same word to an
       unrelated attribute. <em>The job is secure</em> against <em>The job is insecure</em>, and
@@ -615,6 +642,13 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       powerful</em>, the reversal <em>She is powerless</em> sits at 0.60 to 0.77 of range while
       <em>She is elderly</em> sits at 0.26 to 0.46. Both exceptions fell on <em>The area is
       rich</em> against <em>coastal</em>, and both were under 0.03.</p>
+      <figure>
+        <img src="sociology-battery.svg" width="820" height="400" loading="lazy" decoding="async"
+          alt="Six statements. For each, the one-word reversal sits further along the floor-to-identity scale than an unrelated attribute occupying the same slot.">
+        <figcaption>Mean normalised position across all twelve models, local and hosted. The darker
+          bar is the one-word reversal, the lighter bar an unrelated attribute filling the same
+          slot. The count at the right is how many of the twelve placed the reversal nearer.</figcaption>
+      </figure>
       <table>
         <thead><tr><th>Statement</th><th>Reversal</th><th>Unrelated, same slot</th><th>Reversal nearer</th></tr></thead>
         <tbody>
@@ -695,6 +729,9 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       <em>self</em> is, by a wide margin in five of them, with <em>object</em> at 0.29 to 0.54 of
       range against <em>self</em> at 0.16 to 0.40. <em>Essence</em> against <em>appearance</em> is
       2 of 6.</p>
+      <p>The <em>subject</em> item is the most uniform reading anywhere in these batteries. It is
+      0 of 6 on the hosted models as well, so across all twelve model instances tested, not one
+      places <em>self</em> nearer to <em>subject</em> than <em>object</em> is.</p>
       <p>Set beside the Sociology battery, the two results say the same thing from different
       directions. An opposition that structures a philosophical vocabulary is not held apart by
       these spaces; it is a near-neighbour relation, and in the subject-object case the nearest one
@@ -800,6 +837,30 @@ BAAI/bge-m3 | BGE M3 (1024d) | 1024</code></pre>
       headers say, so no amount of configuration will fix it there. Use Chrome, Firefox, Edge, Arc
       or Brave with the hosted app. Safari is fine against a local copy on
       <code>localhost:3000</code>, where both sides are on the same origin.</p>
+
+      <h3>Which Ollama models should I pull?</h3>
+      <p>Pull three, and choose them so their floors are far apart. The floor is where two unrelated
+      texts of the same kind already sit in a model, and it is the thing that differs most between
+      models. Three models with similar floors tell you much less than three that span the range,
+      because agreement between near-identical geometries is not evidence of anything.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Download</th><th>Floor, terms</th><th>Floor, sentences</th><th>Why this one</th></tr></thead>
+        <tbody>
+          <tr><td><code>all-minilm</code></td><td>44 MB</td><td>0.174</td><td>0.122</td><td>Lowest floor, close to isotropic. Separates most clearly, and the case where a high reading cannot be blamed on the cone.</td></tr>
+          <tr><td><code>nomic-embed-text</code></td><td>262 MB</td><td>0.381</td><td>0.422</td><td>Mid floor. The sensible default if you only pull one.</td></tr>
+          <tr><td><code>snowflake-arctic-embed</code></td><td>638 MB</td><td>0.708</td><td>0.782</td><td>Highest floor measured here. On sentences, unrelated texts already sit at 0.78, so it shows plainly why a raw cosine means nothing on its own.</td></tr>
+        </tbody>
+      </table>
+      <p>That is 944 MB for a set spanning floors from 0.12 to 0.78. If disk is tight, pull
+      <code>all-minilm</code> and <code>granite-embedding</code>: 104 MB together, floors 0.12 and
+      0.57, still a usable spread. The other two of the six used in section 07,
+      <code>bge-large</code> and <code>mxbai-embed-large</code>, are 639 MB each and sit at 0.48 and
+      0.40, close enough to <code>nomic-embed-text</code> that they add size more than information
+      unless you want the full comparison.</p>
+      <p>Chat models do not work. Ollama's <code>/api/embed</code> rejects them, so pulling Gemma or
+      Llama for this will fail; <code>embeddinggemma</code> is the Gemma-family embedding model.
+      Every floor above was measured on these models with the calibration corpus in the repository,
+      not taken from a model card.</p>
 
       <h3>If I do want a hosted provider, which one should I start with?</h3>
       <p>Hugging Face. The account and the token are free, it covers seven models, and it needs no

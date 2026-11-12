@@ -129,6 +129,26 @@ Register-dependence is real, but its *direction* is a property of the individual
 
 The radius is a first-order figure. It describes the space as a symmetric cap around one mean direction, which real embedding spaces only approximate, and the effective dimension and top-coordinate share reported alongside it are what show how far off that description is. The glossary entry says so on hover rather than leaving it implied. The radius is also the floor restated as an angle rather than a separate measurement, and when a few directions dominate a model's space it reads too small; the hover card then warns not to quote it, since the verdicts and bars do not use it.
 
+## Case Studies
+
+Six batteries, one per field, run across twelve embedding models: six local Ollama models and six hosted through Hugging Face. Thirty-six readings per field on each route. In every battery, probe and control are matched for edit size and slot, so a difference between them cannot be put down to shared tokens. Full write-up, with the per-field numbers and the caveats, in [section 07 of the documentation](https://vector-lab-tools.github.io/manifold-atlas/#cases).
+
+![Six statements. For each, the one-word reversal sits further along the floor-to-identity scale than an unrelated attribute in the same slot.](docs/sociology-battery.svg)
+
+*Sociology: take a statement, reverse it with one word, and separately change that same word to an unrelated attribute. In 66 of 72 readings the reversal is the nearer of the two. A claim and its negation are near-neighbours, and nearer than a claim and an unrelated attribute of the same subject.*
+
+The other five, in short:
+
+| Field | Question | Result |
+|---|---|---|
+| Philosophy | Does a near-synonym sit nearer than the determinate negation? | 46 of 72. **`subject` against `object` is 0 of 12**: no model tested places `self` nearer to `subject` than `object` is. |
+| Media and Communications | Is a loaded reframing held further off than a neutral synonym? | 63 of 72. `migrant`/`expatriate` is clean across every model; `protest`/`riot` is the one case where the choice of model changes the answer. |
+| History | Is a period restatement held apart from its modern equivalent? | 56 of 72, unevenly. Where the period term is rare the distinction disappears. |
+| Journalism | Does swapping who acts move a sentence as much as swapping who it happens to? | 54 of 72 favour the agent swap, so the geometry moves less when responsibility changes hands. |
+| Literature | Does a paraphrase of a metaphor's sense beat a same-frame alternative? | 53 of 72. Where a metaphor is near-lexicalised, the frame wins. |
+
+An earlier version of this section ran a single probe per field. Four of the six conclusions did not survive being run as batteries and two reversed, so the single-pair numbers were withdrawn rather than amended. The same holds for the models: these results show the findings are not artefacts of local quantisation or of one serving route, and do not establish that they hold across unrelated architectures, since the two model sets overlap in lineage.
+
 ## Features
 
 ### Calibration
