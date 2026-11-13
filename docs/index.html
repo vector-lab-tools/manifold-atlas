@@ -80,14 +80,18 @@ header.site{position:sticky;top:0;z-index:10;
   width:36px;height:34px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 .theme-toggle:hover{color:var(--accent-text);border-color:var(--accent)}
 .theme-toggle svg{width:18px;height:18px}
-:root:not([data-theme="dark"]) .icon-sun,:root[data-theme="light"] .icon-sun{display:none}
-.icon-moon{display:none}
+/* Light (default): show the moon, click to go dark. Dark: show the sun.
+   Exactly one is visible in every combination of system and chosen theme. */
+.icon-moon{display:block}
+.icon-sun{display:none}
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]) .icon-moon{display:block}
-  :root:not([data-theme="light"]) .icon-sun{display:none}
+  :root:not([data-theme="light"]) .icon-moon{display:none}
+  :root:not([data-theme="light"]) .icon-sun{display:block}
 }
-:root[data-theme="dark"] .icon-moon{display:block}
-:root[data-theme="dark"] .icon-sun{display:none}
+:root[data-theme="light"] .icon-moon{display:block}
+:root[data-theme="light"] .icon-sun{display:none}
+:root[data-theme="dark"] .icon-moon{display:none}
+:root[data-theme="dark"] .icon-sun{display:block}
 @media (max-width:760px){.hide-sm{display:none}}
 
 /* Hero */
