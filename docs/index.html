@@ -93,6 +93,16 @@ header.site{position:sticky;top:0;z-index:10;
 :root[data-theme="dark"] .icon-moon{display:none}
 :root[data-theme="dark"] .icon-sun{display:block}
 @media (max-width:760px){.hide-sm{display:none}}
+/* Phone width. Three things overflowed 375px: the nav row, the wider
+   tables, and the long shell commands. Each scrolls or shrinks in place
+   rather than pushing the document sideways. */
+@media (max-width:430px){
+  .site-nav{gap:13px}
+  .site-nav a{font-size:14px}
+  .brand{font-size:15px}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  pre,.cmd{overflow-x:auto}
+}
 
 /* Hero */
 .hero{border-bottom:1px solid var(--rule)}
