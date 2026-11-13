@@ -25,8 +25,8 @@ identifiers:
     value: "10.5281/zenodo.23762832"
     description: "Concept DOI, always resolving to the latest version"
   - type: doi
-    value: "10.5281/zenodo.23762833"
-    description: "Version DOI for v1.19.5"
+    value: "10.5281/zenodo.24161354"
+    description: "Version DOI for v1.19.7"
 version: "1.19.7"
 date-released: "2026-11-12"
 keywords:
@@ -38,23 +38,16 @@ keywords:
   - negation deficit
   - digital methods
   - critical AI studies
-references:
-  - type: article
-    title: >-
-      Vector Theory: Epistemology, Political Economy, and Probabilistic
-      Computation
-    authors:
-      - family-names: Berry
-        given-names: David M.
-        affiliation: University of Sussex
-        orcid: "https://orcid.org/0000-0002-7737-5586"
-    journal: "Philosophy & Technology"
-    volume: 39
-    issue: 3
-    number: 149
-    year: 2026
-    doi: "10.1007/s13347-026-01162-w"
-    url: "https://doi.org/10.1007/s13347-026-01162-w"
-    notes: >-
-      The theoretical basis for this instrument. Read this first: every
-      operation in Manifold Atlas tests a claim made in this article.
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Berry
+      given-names: David M.
+      affiliation: University of Sussex
+      orcid: "https://orcid.org/0000-0002-7737-5586"
+  title: "Vector Theory: Epistemology, Political Economy, and Probabilistic Computation"
+  journal: "Philosophy & Technology"
+  year: 2026
+  volume: 39
+  doi: 10.1007/s13347-026-01162-w
+  url: "https://doi.org/10.1007/s13347-026-01162-w"
